@@ -1,0 +1,73 @@
+<div class="object-list" (dragover)="onDragOver($event)" (dragleave)="onDragLeave()" (drop)="onDrop($event)" [class.drag-over]="isDragOver">
+  <div class="breadcrumbs" *ngIf="s3.currentBucket()">
+    <span *ngFor="let crumb of s3.breadcrumbs(); let last = last">
+      <a (click)="onBreadcrumbClick(crumb.prefix)" [class.last]="last">{{ crumb.label }}</a>
+      <span class="sep" *ngIf="!last">/</span>
+    </span>
+  </div>
+
+  <div class="list-search" *ngIf="s3.currentBucket() && s3.items().length">
+    <i class="fi fi-rr-search"></i>
+    <input type="text" placeholder="Search this folder…" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
+    <button *ngIf="searchTerm()" class="list-search-clear" title="Clear search" (click)="clearSearch()">
+      <i class="fi fi-rr-cross"></i>
+    </button>
+  </div>
+
+  <div class="empty-state" *ngIf="!s3.currentBucket()">Select a bucket from the left to browse its contents.</div>
+
+  <table class="grid" *ngIf="s3.currentBucket()">
+    <thead>
+      <tr>
+        <th class="col-name">Name</th>
+        <th class="col-size">Size</th>
+        <th class="col-date">Last Modified</th>
+        <th class="col-class">Storage Class</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="let item of filteredItems()"
+        (click)="onRowClick(item, $event)"
+        (dblclick)="onRowDoubleClick(item)"
+        (contextmenu)="onRowContextMenu(item, $event)"
+        [class.selected]="isSelected(item.key)"
+      >
+        <td class="col-name">
+          <span class="icon">
+            <i
+              class="fi"
+              [class.fi-rr-folder]="item.type === 'folder'"
+              [class.ic-amber]="item.type === 'folder'"
+              [class.fi-rr-file]="item.type === 'file'"
+              [class.ic-blue]="item.type === 'file'"
+            ></i>
+          </span>
+          {{ item.name }}
+        </td>
+        <td class="col-size">{{ item.type === 'file' ? formatBytes(item.size) : '' }}</td>
+        <td class="col-date">{{ item.lastModified ? (item.lastModified | date: 'short') : '' }}</td>
+        <td class="col-class">{{ item.storageClass || '' }}</td>
+      </tr>
+      <tr *ngIf="!s3.items().length">
+        <td colspan="4" class="empty-row">This folder is empty.</td>
+      </tr>
+      <tr *ngIf="s3.items().length && !filteredItems().length">
+        <td colspan="4" class="empty-row">No files or folders match "{{ searchTerm() }}".</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="drop-overlay" *ngIf="isDragOver">Drop files here to upload</div>
+
+  <div class="s3b-loading-overlay" *ngIf="s3.loading() && s3.currentBucket()"><span class="s3b-spinner"></span> Loading…</div>
+
+  <app-context-menu
+    *ngIf="contextMenu() as menu"
+    [x]="menu.x"
+    [y]="menu.y"
+    [items]="contextMenuItems()"
+    (itemSelected)="onContextMenuAction($event)"
+    (closed)="contextMenu.set(null)"
+  ></app-context-menu>
+</div>

@@ -1,0 +1,76 @@
+{
+  "name": "flash-s3-browser",
+  "version": "0.1.0",
+  "description": "Flash S3 Browser - an Electron + Angular S3 file manager with fast multi-threaded transfer queues",
+  "author": "Faizan Saiyed",
+  "main": "electron/main.js",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "start": "concurrently -k -n ANGULAR,ELECTRON -c blue,green \"npm run ng:serve\" \"npm run electron:wait\"",
+    "ng:serve": "ng serve --port 4208",
+    "electron:wait": "cross-env NO_PROXY=localhost,127.0.0.1 no_proxy=localhost,127.0.0.1 wait-on --verbose http-get://localhost:4208 && cross-env ELECTRON_START_URL=http://localhost:4208 electron .",
+    "build": "ng build --configuration production",
+    "electron:build": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --publish=never",
+    "dist:win": "npm run build && electron-builder --win --publish=never",
+    "dist:mac": "npm run build && electron-builder --mac --publish=never",
+    "dist:linux": "npm run build && electron-builder --linux --publish=never"
+  },
+  "dependencies": {
+    "@angular/animations": "^17.3.0",
+    "@angular/common": "^17.3.0",
+    "@angular/compiler": "^17.3.0",
+    "@angular/core": "^17.3.0",
+    "@angular/forms": "^17.3.0",
+    "@angular/platform-browser": "^17.3.0",
+    "@angular/platform-browser-dynamic": "^17.3.0",
+    "@angular/router": "^17.3.0",
+    "@aws-sdk/client-s3": "^3.629.0",
+    "@aws-sdk/lib-storage": "^3.629.0",
+    "@aws-sdk/s3-request-presigner": "^3.629.0",
+    "@flaticon/flaticon-uicons": "^3.3.1",
+    "electron-store": "^8.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.6.0",
+    "uuid": "^9.0.1",
+    "zone.js": "~0.14.4"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^17.3.0",
+    "@angular/cli": "^17.3.0",
+    "@angular/compiler-cli": "^17.3.0",
+    "@types/uuid": "^9.0.8",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "typescript": "~5.4.0",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.flash.s3browser",
+    "productName": "Flash S3 Browser",
+    "files": [
+      "dist/s3-browser-clone/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "build-resources"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build-resources/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build-resources/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build-resources/icon.png"
+    }
+  }
+}

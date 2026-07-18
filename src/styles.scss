@@ -1,0 +1,142 @@
+:root {
+  --s3b-blue: #2f6fb0;
+  --s3b-blue-dark: #1f4d7d;
+  --s3b-toolbar-bg: #eef2f7;
+  --s3b-border: #c9d3dc;
+  --s3b-divider: #eef1f4;
+  --s3b-sidebar-bg: #f7f9fb;
+  --s3b-row-hover: #e8f1fb;
+  --s3b-row-selected: #cfe3f7;
+  --s3b-text: #1f2a33;
+  --s3b-muted: #66757f;
+  --s3b-green: #3fa74b;
+  --s3b-red: #c0392b;
+  --s3b-amber: #d69621;
+  --s3b-purple: #7a5fc0;
+  --s3b-teal: #1f9c8f;
+  --s3b-surface: #ffffff;
+  --s3b-surface-alt: #f4f6f8;
+  --s3b-overlay: rgba(0, 0, 0, 0.35);
+  --s3b-shadow: rgba(0, 0, 0, 0.25);
+  --s3b-scrollbar: #c2ccd6;
+  color-scheme: light;
+}
+
+:root.dark {
+  --s3b-blue: #5b9bd9;
+  --s3b-blue-dark: #3f7cb8;
+  --s3b-toolbar-bg: #20252b;
+  --s3b-border: #3a4048;
+  --s3b-divider: #2a2f35;
+  --s3b-sidebar-bg: #1b1f24;
+  --s3b-row-hover: #2a323c;
+  --s3b-row-selected: #2f4a63;
+  --s3b-text: #e6e9ec;
+  --s3b-muted: #93a0aa;
+  --s3b-green: #4fbf5f;
+  --s3b-red: #e0574a;
+  --s3b-amber: #e0ad4b;
+  --s3b-purple: #9c85d9;
+  --s3b-teal: #45c2b3;
+  --s3b-surface: #14171a;
+  --s3b-surface-alt: #1c2126;
+  --s3b-overlay: rgba(0, 0, 0, 0.6);
+  --s3b-shadow: rgba(0, 0, 0, 0.5);
+  --s3b-scrollbar: #3a4048;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 13px;
+  color: var(--s3b-text);
+  background: var(--s3b-surface);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--s3b-scrollbar);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes s3b-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.s3b-spinner {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--s3b-border);
+  border-top-color: var(--s3b-blue);
+  border-radius: 50%;
+  animation: s3b-spin 0.7s linear infinite;
+}
+
+.s3b-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--s3b-surface) 75%, transparent);
+  color: var(--s3b-muted);
+  font-size: 12.5px;
+  z-index: 10;
+}
+
+.fi-spin {
+  display: inline-block;
+  animation: s3b-spin 1s linear infinite;
+}
+
+/* Semantic icon colors - keeps action icons legible/distinct at a glance
+   instead of every glyph inheriting plain button text color. */
+.ic-blue {
+  color: var(--s3b-blue);
+}
+.ic-green {
+  color: var(--s3b-green);
+}
+.ic-red {
+  color: var(--s3b-red);
+}
+.ic-amber {
+  color: var(--s3b-amber);
+}
+.ic-purple {
+  color: var(--s3b-purple);
+}
+.ic-teal {
+  color: var(--s3b-teal);
+}
+.ic-muted {
+  color: var(--s3b-muted);
+}

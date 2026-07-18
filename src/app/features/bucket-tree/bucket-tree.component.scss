@@ -1,0 +1,81 @@
+.tree {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--s3b-sidebar-bg);
+}
+.tree__header {
+  padding: 8px 10px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--s3b-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--s3b-border);
+}
+.tree__search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 4px;
+  background: var(--s3b-surface);
+  color: var(--s3b-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.tree__search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--s3b-text);
+  font-size: 12px;
+  min-width: 0;
+}
+.tree__search-clear {
+  background: none;
+  border: none;
+  color: var(--s3b-muted);
+  padding: 0 2px;
+  font-size: 11px;
+  line-height: 1;
+}
+.tree__search-clear:hover {
+  color: var(--s3b-red);
+}
+.tree__body {
+  flex: 1;
+  overflow-y: auto;
+}
+.tree__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12.5px;
+}
+.tree__item:hover {
+  background: var(--s3b-row-hover);
+}
+.tree__item.active {
+  background: var(--s3b-row-selected);
+  font-weight: 600;
+}
+.tree__item .icon {
+  font-size: 13px;
+}
+.tree__item .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tree__empty {
+  padding: 14px;
+  font-size: 12px;
+  color: var(--s3b-muted);
+}

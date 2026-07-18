@@ -1,0 +1,87 @@
+<div class="app-shell">
+  <app-toolbar (newFolderRequested)="openNewFolderDialog()" (manageConnectionsRequested)="showConnectionsPanel.set(true)"> </app-toolbar>
+
+  <div class="tab-bar" *ngIf="s3.tabs().length">
+    <div
+      class="tab"
+      *ngFor="let tab of s3.tabs()"
+      [class.active]="tab.connectionId === s3.activeConnectionId()"
+      (click)="selectTab(tab.connectionId)"
+    >
+      <i class="fi fi-rr-server ic-blue"></i>
+      <span class="tab__label">{{ tab.name }}</span>
+      <button class="tab__close" title="Close connection" (click)="closeTab(tab.connectionId, $event)">
+        <i class="fi fi-rr-cross"></i>
+      </button>
+    </div>
+    <button class="tab-add" title="Open another connection" (click)="showConnectionsPanel.set(true)">
+      <i class="fi fi-rr-plus ic-blue"></i>
+    </button>
+  </div>
+
+  <div class="app-body">
+    <aside class="sidebar" [style.width.px]="sidebarWidth()">
+      <app-bucket-tree></app-bucket-tree>
+    </aside>
+    <div class="resizer resizer-vertical" (mousedown)="startSidebarResize($event)"></div>
+    <main class="main-panel">
+      <app-object-list
+        (renameRequested)="openRenameDialog()"
+        (generateUrlRequested)="openShareUrlDialog()"
+        (copyRequested)="copyMoveMode.set('copy')"
+        (moveRequested)="copyMoveMode.set('move')"
+      ></app-object-list>
+    </main>
+  </div>
+
+  <div class="resizer resizer-horizontal" (mousedown)="startQueueResize($event)"></div>
+  <app-transfer-queue [panelHeight]="queueHeight()"></app-transfer-queue>
+  <app-status-bar></app-status-bar>
+
+  <div class="connections-overlay" *ngIf="showConnectionsPanel()">
+    <div class="connections-modal">
+      <div class="connections-modal__header">
+        <span>Manage Connections</span>
+        <button (click)="showConnectionsPanel.set(false)" [disabled]="!s3.tabs().length">
+          <i class="fi fi-rr-cross"></i>
+        </button>
+      </div>
+      <app-connection-manager (connected)="onConnected($event)"></app-connection-manager>
+    </div>
+  </div>
+
+  <app-prompt-dialog
+    *ngIf="dialogMode() === 'newFolder'"
+    title="New Folder"
+    label="Folder name"
+    confirmLabel="Create"
+    [value]="dialogValue"
+    (confirmed)="onDialogConfirm($event)"
+    (cancelled)="onDialogCancel()"
+  >
+  </app-prompt-dialog>
+
+  <app-prompt-dialog
+    *ngIf="dialogMode() === 'rename'"
+    title="Rename"
+    label="New name"
+    confirmLabel="Rename"
+    [value]="dialogValue"
+    (confirmed)="onDialogConfirm($event)"
+    (cancelled)="onDialogCancel()"
+  >
+  </app-prompt-dialog>
+
+  <app-prompt-dialog
+    *ngIf="dialogMode() === 'shareUrl'"
+    title="Pre-signed URL (expires in 1 hour)"
+    label="Share this link"
+    [value]="dialogValue"
+    [readonlyValue]="true"
+    (confirmed)="onDialogCancel()"
+    (cancelled)="onDialogCancel()"
+  >
+  </app-prompt-dialog>
+
+  <app-copy-move-dialog *ngIf="copyMoveMode()" [mode]="copyMoveMode()!" (closed)="copyMoveMode.set(null)"> </app-copy-move-dialog>
+</div>

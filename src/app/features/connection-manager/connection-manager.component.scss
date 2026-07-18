@@ -1,0 +1,179 @@
+.conn-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--s3b-sidebar-bg);
+}
+.conn-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--s3b-border);
+}
+.btn-add {
+  background: var(--s3b-blue);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+.conn-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.conn-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--s3b-divider);
+  cursor: pointer;
+}
+.conn-item:hover {
+  background: var(--s3b-row-hover);
+}
+.conn-item.active {
+  background: var(--s3b-row-selected);
+}
+.conn-item__main {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.conn-item__name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.conn-item__open-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--s3b-green);
+  flex-shrink: 0;
+}
+.conn-item__meta {
+  font-size: 11px;
+  color: var(--s3b-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conn-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.btn-edit {
+  background: none;
+  border: none;
+  color: var(--s3b-muted);
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.btn-edit:hover {
+  color: var(--s3b-blue);
+}
+.btn-remove {
+  background: none;
+  border: none;
+  color: var(--s3b-muted);
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.btn-remove:hover {
+  color: var(--s3b-red);
+}
+.conn-empty {
+  padding: 16px;
+  color: var(--s3b-muted);
+  font-size: 12px;
+}
+
+.conn-form-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--s3b-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.conn-form {
+  background: var(--s3b-surface);
+  border-radius: 6px;
+  padding: 20px;
+  width: 460px;
+  box-shadow: 0 8px 30px var(--s3b-shadow);
+}
+.conn-form h3 {
+  margin: 0 0 12px;
+}
+.conn-form label {
+  display: block;
+  font-size: 12px;
+  margin: 10px 0 4px;
+  color: var(--s3b-muted);
+}
+.conn-form label .hint {
+  font-style: italic;
+}
+.conn-form input,
+.conn-form select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  font-size: 13px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.test-result {
+  margin-top: 10px;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 3px;
+}
+.test-result.ok {
+  background: color-mix(in srgb, var(--s3b-green) 15%, transparent);
+  color: var(--s3b-green);
+}
+.test-result.fail {
+  background: color-mix(in srgb, var(--s3b-red) 15%, transparent);
+  color: var(--s3b-red);
+}
+.form-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 16px;
+  gap: 8px;
+}
+.form-actions .spacer {
+  flex: 1;
+}
+.form-actions button {
+  padding: 6px 12px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.form-actions button.primary {
+  background: var(--s3b-blue);
+  color: #fff;
+  border-color: var(--s3b-blue);
+}
+.form-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

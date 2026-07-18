@@ -1,0 +1,65 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--s3b-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+.dialog {
+  background: var(--s3b-surface);
+  border-radius: 6px;
+  padding: 18px 20px;
+  width: 380px;
+  box-shadow: 0 8px 30px var(--s3b-shadow);
+}
+.dialog h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--s3b-text);
+}
+.dialog label {
+  display: block;
+  font-size: 12px;
+  color: var(--s3b-muted);
+  margin-bottom: 4px;
+}
+.value-row {
+  display: flex;
+  gap: 6px;
+}
+.value-row input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  font-size: 12.5px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.value-row button {
+  border: 1px solid var(--s3b-border);
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  border-radius: 3px;
+  padding: 0 8px;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+.actions button {
+  padding: 6px 12px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.actions button.primary {
+  background: var(--s3b-blue);
+  color: #fff;
+  border-color: var(--s3b-blue);
+}

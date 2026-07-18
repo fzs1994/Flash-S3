@@ -1,0 +1,226 @@
+.queue-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--s3b-surface);
+  border-top: 1px solid var(--s3b-border);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.queue-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  background: var(--s3b-toolbar-bg);
+  font-size: 12px;
+  user-select: none;
+}
+.queue-header .title {
+  font-weight: 600;
+}
+.queue-header .summary {
+  color: var(--s3b-muted);
+  flex: 1;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.controls label {
+  font-size: 11px;
+  color: var(--s3b-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.controls select {
+  font-size: 11px;
+  padding: 1px 3px;
+}
+.controls button {
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+.collapse-toggle {
+  color: var(--s3b-muted);
+}
+.queue-body {
+  overflow-y: auto;
+}
+.queue-empty {
+  padding: 16px;
+  color: var(--s3b-muted);
+  font-size: 12px;
+  text-align: center;
+}
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--s3b-divider);
+  font-size: 12px;
+}
+.task-icon.status-active {
+  color: var(--s3b-blue);
+}
+.task-icon.status-queued {
+  color: var(--s3b-muted);
+}
+.task-icon.status-error {
+  color: var(--s3b-red);
+}
+.task-icon.status-completed {
+  color: var(--s3b-green);
+}
+.task-icon.status-paused {
+  color: var(--s3b-amber);
+}
+.task-icon.status-canceled {
+  color: var(--s3b-muted);
+}
+.task-type .fi-rr-upload {
+  color: var(--s3b-blue);
+}
+.task-type .fi-rr-download {
+  color: var(--s3b-green);
+}
+.task-name {
+  flex: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 120px;
+}
+.task-progress {
+  flex: 2;
+  height: 8px;
+  background: var(--s3b-surface-alt);
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 100px;
+}
+.task-progress__bar {
+  height: 100%;
+  background: var(--s3b-blue);
+  transition: width 0.2s ease;
+}
+.task-pct {
+  width: 36px;
+  text-align: right;
+  color: var(--s3b-muted);
+}
+.task-size {
+  width: 150px;
+  color: var(--s3b-muted);
+  text-align: right;
+}
+.task-speed {
+  width: 90px;
+  color: var(--s3b-muted);
+  text-align: right;
+}
+.task-eta {
+  width: 60px;
+  color: var(--s3b-muted);
+  text-align: right;
+}
+.task-error {
+  color: var(--s3b-red);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-actions {
+  display: flex;
+  gap: 2px;
+}
+.task-actions button {
+  background: none;
+  border: none;
+  padding: 2px 5px;
+  font-size: 12px;
+  color: var(--s3b-muted);
+}
+.task-actions button:hover {
+  color: var(--s3b-blue);
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--s3b-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 70;
+}
+.settings-dialog {
+  background: var(--s3b-surface);
+  border-radius: 6px;
+  padding: 20px;
+  width: 360px;
+  box-shadow: 0 8px 30px var(--s3b-shadow);
+}
+.settings-dialog h3 {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--s3b-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-dialog label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 12px 0 4px;
+  color: var(--s3b-text);
+}
+.settings-dialog label .hint {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--s3b-muted);
+  margin-top: 2px;
+}
+.settings-dialog select,
+.settings-dialog input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  font-size: 13px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.settings-error {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--s3b-red);
+}
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.settings-actions button {
+  padding: 6px 12px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.settings-actions button.primary {
+  background: var(--s3b-blue);
+  color: #fff;
+  border-color: var(--s3b-blue);
+}

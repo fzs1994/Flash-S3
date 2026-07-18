@@ -1,0 +1,22 @@
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--s3b-muted);
+  background: var(--s3b-toolbar-bg);
+  border-top: 1px solid var(--s3b-border);
+}
+.sep {
+  color: var(--s3b-border);
+}
+.fill {
+  flex: 1;
+}
+.loading {
+  color: var(--s3b-blue);
+}
+.error {
+  color: var(--s3b-red);
+}

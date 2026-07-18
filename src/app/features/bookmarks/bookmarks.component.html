@@ -1,0 +1,63 @@
+<div class="bookmarks-widget">
+  <button (click)="toggleOpen()" title="Bookmarks">
+    <i class="fi fi-rr-bookmark ic-purple"></i> Bookmarks
+    <span class="bookmarks-count" *ngIf="bookmarks.bookmarks().length">{{ bookmarks.bookmarks().length }}</span>
+  </button>
+
+  <div class="bookmarks-panel" *ngIf="open()">
+    <div class="bookmarks-panel__header">
+      <span>Bookmarks</span>
+      <button *ngIf="s3.currentBucket() && !adding()" (click)="startAdd()" title="Bookmark current folder">
+        <i class="fi fi-rr-plus ic-blue"></i> Add current
+      </button>
+    </div>
+
+    <p class="bookmarks-error" *ngIf="errorMsg()">{{ errorMsg() }}</p>
+
+    <div class="bookmark-row bookmark-row--new" *ngIf="adding()">
+      <input
+        #addNameInput
+        class="bookmark-row__input"
+        [(ngModel)]="editValue"
+        placeholder="Bookmark name"
+        (keyup.enter)="confirmAdd()"
+        (keyup.escape)="cancelAdd()"
+      />
+      <div class="bookmark-row__actions">
+        <button (click)="confirmAdd()" title="Save"><i class="fi fi-rr-check ic-green"></i></button>
+        <button (click)="cancelAdd()" title="Cancel"><i class="fi fi-rr-cross ic-muted"></i></button>
+      </div>
+    </div>
+
+    <div class="bookmarks-empty" *ngIf="!bookmarks.bookmarks().length && !adding()">No bookmarks yet.</div>
+
+    <div class="bookmark-row" *ngFor="let b of bookmarks.bookmarks()">
+      <ng-container *ngIf="editingId() !== b.id; else editRow">
+        <button class="bookmark-row__main" (click)="goTo(b)" [title]="pathLabel(b)">
+          <i class="fi fi-rr-bookmark ic-purple"></i>
+          <span class="bookmark-row__text">
+            <span class="bookmark-row__name">{{ b.name }}</span>
+            <span class="bookmark-row__path">{{ b.connectionName }} &middot; {{ pathLabel(b) }}</span>
+          </span>
+        </button>
+        <div class="bookmark-row__actions">
+          <button (click)="startEdit(b)" title="Rename"><i class="fi fi-rr-edit ic-amber"></i></button>
+          <button (click)="remove(b)" title="Delete"><i class="fi fi-rr-trash ic-red"></i></button>
+        </div>
+      </ng-container>
+      <ng-template #editRow>
+        <input
+          #editNameInput
+          class="bookmark-row__input"
+          [(ngModel)]="editValue"
+          (keyup.enter)="confirmEdit(b)"
+          (keyup.escape)="cancelEdit()"
+        />
+        <div class="bookmark-row__actions">
+          <button (click)="confirmEdit(b)" title="Save"><i class="fi fi-rr-check ic-green"></i></button>
+          <button (click)="cancelEdit()" title="Cancel"><i class="fi fi-rr-cross ic-muted"></i></button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

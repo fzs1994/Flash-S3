@@ -1,0 +1,79 @@
+<div class="conn-panel">
+  <div class="conn-panel__header">
+    <span>Connections</span>
+    <button class="btn-add" (click)="newConnection()" title="New connection"><i class="fi fi-rr-plus"></i> New</button>
+  </div>
+
+  <div class="conn-list">
+    <div
+      class="conn-item"
+      *ngFor="let c of connectionService.connections()"
+      [class.active]="isActive(c.id)"
+      (click)="select(c.id)"
+      [title]="isOpen(c.id) ? 'Already open - click to switch to its tab' : 'Click to open'"
+    >
+      <div class="conn-item__main">
+        <div class="conn-item__name">
+          {{ c.name }}
+          <span class="conn-item__open-dot" *ngIf="isOpen(c.id)" title="Open in a tab"></span>
+        </div>
+        <div class="conn-item__meta">{{ c.accessKeyId }} &middot; {{ c.region }}</div>
+      </div>
+      <div class="conn-item__actions">
+        <button class="btn-edit" title="Edit" (click)="editConnection(c, $event)"><i class="fi fi-rr-edit ic-amber"></i></button>
+        <button class="btn-remove" title="Remove" (click)="remove(c, $event)"><i class="fi fi-rr-cross ic-red"></i></button>
+      </div>
+    </div>
+    <div class="conn-empty" *ngIf="!connectionService.connections().length">
+      No connections yet. Click "+ New" to add your AWS S3 credentials.
+    </div>
+  </div>
+
+  <div class="conn-form-overlay" *ngIf="showForm()">
+    <div class="conn-form">
+      <h3>{{ isEditing() ? 'Edit S3 Connection' : 'New S3 Connection' }}</h3>
+
+      <label>Profile name</label>
+      <input [(ngModel)]="form.name" placeholder="e.g. Production Account" />
+
+      <label>Access Key ID</label>
+      <input [(ngModel)]="form.accessKeyId" placeholder="AKIA..." />
+
+      <label>
+        Secret Access Key
+        <span class="hint" *ngIf="isEditing()">(leave blank to keep the existing secret)</span>
+      </label>
+      <input
+        [(ngModel)]="form.secretAccessKey"
+        type="password"
+        [placeholder]="isEditing() ? 'Leave blank to keep existing secret' : 'Secret access key'"
+      />
+
+      <label>Region</label>
+      <select [(ngModel)]="form.region">
+        <option *ngFor="let r of regions" [value]="r">{{ r }}</option>
+      </select>
+
+      <div class="test-result" *ngIf="testResult() as r" [class.ok]="r.ok" [class.fail]="!r.ok">
+        {{ r.ok ? 'Connection successful.' : 'Failed: ' + r.error }}
+      </div>
+
+      <div class="form-actions">
+        <button (click)="testConnection()" [disabled]="testing()">
+          <i class="fi fi-rr-refresh ic-blue" *ngIf="testing()" [class.fi-spin]="testing()"></i>
+          {{ testing() ? 'Testing…' : 'Test Connection' }}
+        </button>
+        <div class="spacer"></div>
+        <button (click)="cancel()">Cancel</button>
+        <button
+          class="primary"
+          (click)="save()"
+          [disabled]="saving() || !form.name || !form.accessKeyId || (!isEditing() && !form.secretAccessKey)"
+        >
+          <i class="fi fi-rr-refresh" *ngIf="saving()" [class.fi-spin]="saving()"></i>
+          {{ saving() ? 'Saving…' : isEditing() ? 'Save Changes' : 'Save & Connect' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

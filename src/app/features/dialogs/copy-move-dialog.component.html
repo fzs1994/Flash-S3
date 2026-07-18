@@ -1,0 +1,43 @@
+<div class="cm-overlay" (click)="cancel()">
+  <div class="cm-dialog" (click)="$event.stopPropagation()">
+    <h3>
+      <i class="fi" [class.fi-rr-copy]="mode === 'copy'" [class.fi-rr-arrow-right]="mode === 'move'" [class.ic-blue]="true"></i>
+      {{ title() }}
+    </h3>
+
+    <p class="cm-summary">
+      {{ selectedItems().length }} item{{ selectedItems().length === 1 ? '' : 's' }} selected
+    </p>
+
+    <label>Destination connection</label>
+    <select [ngModel]="destConnectionId()" (ngModelChange)="onConnectionChange($event)">
+      <option [value]="null" disabled>Choose a connection…</option>
+      <option *ngFor="let c of connectionService.connections()" [value]="c.id">{{ c.name }}</option>
+    </select>
+
+    <label>
+      Destination bucket
+      <span class="hint" *ngIf="loadingBuckets()">Loading buckets…</span>
+    </label>
+    <select [ngModel]="destBucket()" (ngModelChange)="destBucket.set($event)" [disabled]="loadingBuckets() || !destConnectionId()">
+      <option [value]="null" disabled>Choose a bucket…</option>
+      <option *ngFor="let b of destBuckets()" [value]="b.name">{{ b.name }}</option>
+    </select>
+
+    <label>
+      Destination folder
+      <span class="hint">Leave blank for the bucket root, e.g. "backups/2024/"</span>
+    </label>
+    <input type="text" [(ngModel)]="destPrefix" placeholder="e.g. backups/2024/" />
+
+    <p class="cm-error" *ngIf="errorMsg()">{{ errorMsg() }}</p>
+
+    <div class="cm-actions">
+      <button (click)="cancel()" [disabled]="running()">Cancel</button>
+      <button class="primary" (click)="confirm()" [disabled]="running() || !destConnectionId() || !destBucket()">
+        <i class="fi fi-rr-refresh" *ngIf="running()" [class.fi-spin]="running()"></i>
+        {{ confirmLabel() }}
+      </button>
+    </div>
+  </div>
+</div>

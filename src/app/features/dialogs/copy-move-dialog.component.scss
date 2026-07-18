@@ -1,0 +1,86 @@
+.cm-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--s3b-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 55;
+}
+.cm-dialog {
+  background: var(--s3b-surface);
+  border-radius: 6px;
+  padding: 20px;
+  width: 420px;
+  box-shadow: 0 8px 30px var(--s3b-shadow);
+}
+.cm-dialog h3 {
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--s3b-text);
+}
+.cm-summary {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--s3b-muted);
+}
+.cm-dialog label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 12px 0 4px;
+  color: var(--s3b-text);
+}
+.cm-dialog label .hint {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--s3b-muted);
+  margin-top: 2px;
+}
+.cm-dialog select,
+.cm-dialog input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  font-size: 13px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.cm-dialog select:disabled {
+  opacity: 0.6;
+}
+.cm-error {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--s3b-red);
+}
+.cm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.cm-actions button {
+  padding: 6px 12px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.cm-actions button.primary {
+  background: var(--s3b-blue);
+  color: #fff;
+  border-color: var(--s3b-blue);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cm-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

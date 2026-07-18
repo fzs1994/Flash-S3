@@ -1,0 +1,14 @@
+<div class="ctx-menu" [style.left.px]="left()" [style.top.px]="top()">
+  <ng-container *ngFor="let entry of items">
+    <div class="ctx-menu__divider" *ngIf="entry.type === 'divider'"></div>
+    <button
+      *ngIf="entry.type === 'item'"
+      class="ctx-menu__item"
+      [class.danger]="entry.danger"
+      (click)="select(entry)"
+    >
+      <i class="fi" [class]="entry.icon + ' ' + (entry.colorClass || '')"></i>
+      <span>{{ entry.label }}</span>
+    </button>
+  </ng-container>
+</div>

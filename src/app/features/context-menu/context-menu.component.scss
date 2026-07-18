@@ -1,0 +1,46 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+.ctx-menu {
+  position: fixed;
+  min-width: 180px;
+  background: var(--s3b-surface);
+  border: 1px solid var(--s3b-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px var(--s3b-shadow);
+  padding: 4px;
+  pointer-events: auto;
+}
+.ctx-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: var(--s3b-text);
+  text-align: left;
+}
+.ctx-menu__item:hover {
+  background: var(--s3b-row-hover);
+}
+.ctx-menu__item.danger:hover {
+  background: color-mix(in srgb, var(--s3b-red) 15%, transparent);
+  color: var(--s3b-red);
+}
+.ctx-menu__item i {
+  width: 14px;
+  text-align: center;
+  font-size: 13px;
+}
+.ctx-menu__divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--s3b-divider);
+}

@@ -1,0 +1,90 @@
+<div class="queue-panel" [class.collapsed]="collapsed()" [style.height.px]="collapsed() ? 34 : panelHeight">
+  <div class="queue-header" (click)="toggleCollapsed()">
+    <span class="title">Transfer Queue</span>
+    <span class="summary">
+      {{ summary().active }} active &middot; {{ summary().queued }} queued
+      <ng-container *ngIf="summary().errors"> &middot; {{ summary().errors }} failed</ng-container>
+      &middot; total speed {{ formatBytes(transfers.totalSpeedBps()) }}/s
+    </span>
+
+    <div class="controls" (click)="$event.stopPropagation()">
+      <button (click)="transfers.pauseAll()">Pause All</button>
+      <button (click)="transfers.resumeAll()">Resume All</button>
+      <button (click)="transfers.clearCompleted()">Clear Completed</button>
+      <button title="Transfer settings" (click)="openSettings()">
+        <i class="fi fi-rr-settings-sliders ic-blue"></i>
+      </button>
+    </div>
+
+    <i class="fi collapse-toggle" [class.fi-rr-angle-small-up]="!collapsed()" [class.fi-rr-angle-small-down]="collapsed()"></i>
+  </div>
+
+  <div class="queue-body" *ngIf="!collapsed()">
+    <div class="queue-empty" *ngIf="!transfers.tasks().length">No transfers yet.</div>
+
+    <div class="task-row" *ngFor="let task of transfers.tasks(); trackBy: trackByTaskId">
+      <span class="task-icon" [class]="'status-' + task.status"><i class="fi" [class]="statusIcon(task.status)"></i></span>
+      <span class="task-type"
+        ><i class="fi" [class.fi-rr-upload]="task.type === 'upload'" [class.fi-rr-download]="task.type === 'download'"></i
+      ></span>
+      <span class="task-name" [title]="task.key">{{ task.key }}</span>
+
+      <div class="task-progress">
+        <div class="task-progress__bar" [style.width.%]="task.progressPct"></div>
+      </div>
+
+      <span class="task-pct">{{ task.progressPct }}%</span>
+      <span class="task-size">{{ formatBytes(task.transferred) }} / {{ formatBytes(task.size) }}</span>
+      <span class="task-speed">{{ task.status === 'active' ? formatBytes(task.speedBps) + '/s' : '' }}</span>
+      <span class="task-eta">{{ task.status === 'active' ? formatEta(task.etaSeconds) : '' }}</span>
+
+      <span class="task-error" *ngIf="task.error" [title]="task.error">{{ task.error }}</span>
+
+      <div class="task-actions">
+        <button *ngIf="task.status === 'active'" (click)="transfers.pause(task.id)" title="Pause">
+          <i class="fi fi-rr-pause ic-amber"></i>
+        </button>
+        <button *ngIf="task.status === 'paused'" (click)="transfers.resume(task.id)" title="Resume">
+          <i class="fi fi-rr-play ic-green"></i>
+        </button>
+        <button *ngIf="task.status === 'error'" (click)="transfers.retry(task.id)" title="Retry">
+          <i class="fi fi-rr-refresh ic-blue"></i>
+        </button>
+        <button *ngIf="!['completed', 'canceled'].includes(task.status)" (click)="transfers.cancel(task.id)" title="Cancel">
+          <i class="fi fi-rr-cross ic-red"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-overlay" *ngIf="showSettings()" (click)="closeSettings()">
+    <div class="settings-dialog" (click)="$event.stopPropagation()">
+      <h3><i class="fi fi-rr-settings-sliders ic-blue"></i> Transfer Settings</h3>
+
+      <label
+        >Concurrent transfers
+        <span class="hint">How many files upload/download at the same time.</span>
+      </label>
+      <select [(ngModel)]="settingsForm.concurrency">
+        <option *ngFor="let n of concurrencyOptions" [value]="n">{{ n }}</option>
+      </select>
+
+      <label
+        >Part size (MB)
+        <span class="hint">
+          Large files are uploaded in parallel parts this size. S3 requires at least 5 MB per part; 500 MB max.
+        </span>
+      </label>
+      <input type="number" min="5" max="500" step="1" [(ngModel)]="settingsForm.partSizeMB" />
+
+      <p class="settings-error" *ngIf="settingsError()">{{ settingsError() }}</p>
+
+      <div class="settings-actions">
+        <button (click)="closeSettings()" [disabled]="settingsSaving()">Cancel</button>
+        <button class="primary" (click)="applySettings()" [disabled]="settingsSaving()">
+          {{ settingsSaving() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

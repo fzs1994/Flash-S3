@@ -1,0 +1,31 @@
+<div class="tree">
+  <div class="tree__header">Buckets</div>
+
+  <div class="tree__search" *ngIf="s3.buckets().length">
+    <i class="fi fi-rr-search"></i>
+    <input type="text" placeholder="Search buckets…" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
+    <button *ngIf="searchTerm()" class="tree__search-clear" title="Clear search" (click)="clearSearch()">
+      <i class="fi fi-rr-cross"></i>
+    </button>
+  </div>
+
+  <div class="tree__body">
+    <div
+      class="tree__item"
+      *ngFor="let b of filteredBuckets()"
+      [class.active]="b.name === s3.currentBucket()"
+      (click)="select(b.name)"
+    >
+      <span class="icon"><i class="fi fi-rr-box ic-amber"></i></span>
+      <span class="name">{{ b.name }}</span>
+    </div>
+    <div class="tree__empty" *ngIf="!s3.buckets().length && !s3.loading()">
+      No buckets loaded. Connect to an account to see your buckets.
+    </div>
+    <div class="tree__empty" *ngIf="s3.buckets().length && !filteredBuckets().length">
+      No buckets match "{{ searchTerm() }}".
+    </div>
+  </div>
+
+  <div class="s3b-loading-overlay" *ngIf="s3.loading() && !s3.buckets().length"><span class="s3b-spinner"></span> Loading buckets…</div>
+</div>
