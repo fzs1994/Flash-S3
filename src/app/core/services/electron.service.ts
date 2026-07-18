@@ -15,7 +15,7 @@ declare global {
 export class ElectronService {
   get api(): any {
     if (!window.electronAPI) {
-      throw new Error('electronAPI bridge is not available. This app must run inside the Flash S3 Browser Electron shell.');
+      throw new Error('electronAPI bridge is not available. This app must run inside the Flash S3 Electron shell.');
     }
     return window.electronAPI;
   }

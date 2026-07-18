@@ -21,7 +21,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 640,
     backgroundColor: '#f0f2f5',
-    title: 'Flash S3 Browser',
+    title: 'Flash S3',
     icon: windowIconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -41,7 +41,7 @@ function createWindow() {
     // instead of failing silently in the UI.
     // mainWindow.webContents.openDevTools({ mode: 'right' });
   } else {
-    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 's3-browser-clone', 'index.html'));
+    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'flash-s3', 'index.html'));
   }
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {

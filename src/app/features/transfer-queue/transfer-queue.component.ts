@@ -95,7 +95,7 @@ export class TransferQueueComponent {
       // only refreshes the Angular renderer, not the Electron shell itself.
       this.settingsError.set(
         err?.message?.includes('No handler registered') || err?.message?.includes('electronAPI bridge')
-          ? 'Could not reach the app backend. Please fully quit and restart Flash S3 Browser, then try again.'
+          ? 'Could not reach the app backend. Please fully quit and restart Flash S3, then try again.'
           : err?.message || 'Failed to save settings.'
       );
     } finally {

@@ -1,7 +1,7 @@
 {
-  "name": "flash-s3-browser",
+  "name": "flash-s3",
   "version": "0.0.1",
-  "description": "Flash S3 Browser - an Electron + Angular S3 file manager with fast multi-threaded transfer queues",
+  "description": "Flash S3 - an Electron + Angular S3 file manager with fast multi-threaded transfer queues",
   "author": "Faizan Saiyed",
   "main": "electron/main.js",
   "private": true,
@@ -49,10 +49,10 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.flash.s3browser",
-    "productName": "Flash S3 Browser",
+    "appId": "com.flash.s3",
+    "productName": "Flash S3",
     "files": [
-      "dist/s3-browser-clone/**/*",
+      "dist/flash-s3/**/*",
       "electron/**/*",
       "build-resources/icon.ico",
       "build-resources/icon.png",

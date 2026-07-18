@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "s3-browser-clone": {
+    "flash-s3": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,16 +13,13 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/s3-browser-clone",
+            "outputPath": "dist/flash-s3",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/assets", "src/favicon.ico"],
-            "styles": [
-              "node_modules/@flaticon/flaticon-uicons/css/regular/rounded.css",
-              "src/styles.scss"
-            ],
+            "styles": ["node_modules/@flaticon/flaticon-uicons/css/regular/rounded.css", "src/styles.scss"],
             "scripts": []
           },
           "configurations": {
@@ -46,8 +43,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "s3-browser-clone:build:production" },
-            "development": { "buildTarget": "s3-browser-clone:build:development" }
+            "production": { "buildTarget": "flash-s3:build:production" },
+            "development": { "buildTarget": "flash-s3:build:development" }
           },
           "defaultConfiguration": "development"
         }

@@ -192,7 +192,7 @@ export class BookmarksComponent {
   private describeError(err: any): string {
     const msg = err?.message || String(err ?? 'Unknown error');
     if (/electronAPI bridge|Cannot read propert(y|ies) of undefined|is not a function|No handler registered/i.test(msg)) {
-      return 'Could not reach the app backend. Please fully quit and restart Flash S3 Browser, then try again.';
+      return 'Could not reach the app backend. Please fully quit and restart Flash S3, then try again.';
     }
     return msg;
   }
