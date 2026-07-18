@@ -84,6 +84,43 @@ icon is used if they're missing, which electron-builder will warn about).
 - S3-compatible custom endpoints (MinIO, Wasabi, Backblaze B2, DigitalOcean
   Spaces) — currently AWS S3 only, per initial scope.
 
+# Next Features
+
+**Object management & metadata**
+
+- Version history: view, download, or restore previous versions of an object if bucket versioning is on
+- Tags editor: view/add/remove S3 object tags
+- Storage class control: pick Standard/IA/Glacier/etc. on upload, or transition existing objects
+
+**Bucket administration**
+
+- Bucket policy and CORS editor (raw JSON with validation)
+- ACL viewer/editor per object or bucket
+
+**Sync & automation**
+
+- One-way or two-way folder sync between a local directory and an S3 prefix (S3 Browser Pro's signature "Directory Sync" feature) — this is probably the single biggest missing "Pro" feature
+- Scheduled backups (e.g., "sync this folder nightly")
+
+**Viewing & navigation**
+
+- Inline preview for images/text/PDF without downloading
+- Sort/filter columns in the file list (by size, date, extension)
+- Global search across all buckets in a connection, not just the current folder
+- Dual-pane view (source/destination side by side, classic Total Commander style) — would make copy/move even faster
+- Recently visited folders history, separate from bookmarks
+
+**Transfers & reliability**
+
+- True resumable pause (currently restarts from byte 0 — noted as a known limitation)
+- Bandwidth throttling for transfers
+- A persistent transfer log/report you can export
+
+**Security & accounts**
+
+- A "why don't I have access" IAM diagnostics helper
+- A log of presigned URLs you've generated, with the ability to revoke by rotating
+
 ## Security notes
 
 - Secrets are encrypted at rest with `safeStorage`; if the OS has no available

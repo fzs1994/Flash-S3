@@ -1,7 +1,7 @@
 <div class="app-shell">
   <app-toolbar (newFolderRequested)="openNewFolderDialog()" (manageConnectionsRequested)="showConnectionsPanel.set(true)"> </app-toolbar>
 
-  <div class="tab-bar" *ngIf="s3.tabs().length">
+  <div class="tab-bar" *ngIf="s3.tabs().length && !s3.dualPaneMode()">
     <div
       class="tab"
       *ngFor="let tab of s3.tabs()"
@@ -19,7 +19,7 @@
     </button>
   </div>
 
-  <div class="app-body">
+  <div class="app-body" *ngIf="!s3.dualPaneMode()">
     <aside class="sidebar" [style.width.px]="sidebarWidth()">
       <app-bucket-tree></app-bucket-tree>
     </aside>
@@ -32,6 +32,10 @@
         (moveRequested)="copyMoveMode.set('move')"
       ></app-object-list>
     </main>
+  </div>
+
+  <div class="app-body app-body--dual" *ngIf="s3.dualPaneMode()">
+    <app-dual-pane></app-dual-pane>
   </div>
 
   <div class="resizer resizer-horizontal" (mousedown)="startQueueResize($event)"></div>

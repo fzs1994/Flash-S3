@@ -28,6 +28,11 @@ button.danger:hover:not(:disabled) {
   border-color: var(--s3b-red);
   color: var(--s3b-red);
 }
+button.active {
+  background: color-mix(in srgb, var(--s3b-blue) 15%, transparent);
+  border-color: var(--s3b-blue);
+  color: var(--s3b-blue);
+}
 .divider {
   width: 1px;
   align-self: stretch;

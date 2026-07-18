@@ -92,6 +92,7 @@ function registerIpcHandlers(ipcMain, getWindow) {
   // --- Transfers ---
   ipcMain.handle('transfers:enqueueUpload', (_e, args) => transferQueue.enqueueUpload(args));
   ipcMain.handle('transfers:enqueueDownload', (_e, args) => transferQueue.enqueueDownload(args));
+  ipcMain.handle('transfers:enqueueCopyMove', (_e, args) => transferQueue.enqueueCopyMove(args));
   ipcMain.handle('transfers:pause', (_e, taskId) => transferQueue.pause(taskId));
   ipcMain.handle('transfers:resume', (_e, taskId) => transferQueue.resume(taskId));
   ipcMain.handle('transfers:cancel', (_e, taskId) => transferQueue.cancel(taskId));

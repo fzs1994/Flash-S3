@@ -6,6 +6,7 @@ import { BucketTreeComponent } from './features/bucket-tree/bucket-tree.componen
 import { ConnectionManagerComponent } from './features/connection-manager/connection-manager.component';
 import { CopyMoveDialogComponent } from './features/dialogs/copy-move-dialog.component';
 import { PromptDialogComponent } from './features/dialogs/prompt-dialog.component';
+import { DualPaneComponent } from './features/dual-pane/dual-pane.component';
 import { ObjectListComponent } from './features/object-list/object-list.component';
 import { StatusBarComponent } from './features/status-bar/status-bar.component';
 import { ToolbarComponent } from './features/toolbar/toolbar.component';
@@ -46,7 +47,8 @@ function persistPanelSize(key: string, value: number): void {
     StatusBarComponent,
     ConnectionManagerComponent,
     PromptDialogComponent,
-    CopyMoveDialogComponent
+    CopyMoveDialogComponent,
+    DualPaneComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'

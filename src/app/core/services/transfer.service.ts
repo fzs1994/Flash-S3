@@ -1,7 +1,8 @@
 import { computed, Injectable, NgZone, OnDestroy, signal } from '@angular/core';
-import { TransferTask } from '../models/models';
+import { S3ListItem, TransferTask } from '../models/models';
 import { S3BrowserService } from './s3-browser.service';
 import { ElectronService } from './electron.service';
+import { PaneService } from './pane.service';
 
 @Injectable({ providedIn: 'root' })
 export class TransferService implements OnDestroy {
@@ -20,6 +21,7 @@ export class TransferService implements OnDestroy {
   constructor(
     private electron: ElectronService,
     private s3: S3BrowserService,
+    private panes: PaneService,
     private ngZone: NgZone
   ) {
     if (this.electron.isElectron) {
@@ -57,16 +59,27 @@ export class TransferService implements OnDestroy {
     this.unsubscribe?.();
   }
 
-  /** Auto-refreshes any open tab's listing when an upload targeting its current folder just completed. */
+  /**
+   * Auto-refreshes any open tab or dual-pane view showing a folder affected by
+   * a transfer that just completed - an upload's own destination folder, or
+   * (for copy/move tasks) both the source and destination folders, since a
+   * dual-pane move can change what both panes are looking at simultaneously.
+   */
   private refreshFoldersForNewlyCompleted(snapshot: TransferTask[]): void {
     const foldersToRefresh: { connectionId: string; bucket: string; prefix: string }[] = [];
 
     for (const task of snapshot) {
       const prevStatus = this.lastStatuses.get(task.id);
-      if (task.type === 'upload' && task.status === 'completed' && prevStatus !== 'completed') {
+      const justCompleted = task.status === 'completed' && prevStatus !== 'completed';
+      if (justCompleted && task.type === 'upload') {
         const slashIdx = task.key.lastIndexOf('/');
         const prefix = slashIdx >= 0 ? task.key.slice(0, slashIdx + 1) : '';
         foldersToRefresh.push({ connectionId: task.connectionId, bucket: task.bucket, prefix });
+      } else if (justCompleted && task.type === 'copy') {
+        foldersToRefresh.push({ connectionId: task.connectionId, bucket: task.bucket, prefix: task.srcPrefix ?? '' });
+        if (task.destConnectionId && task.destBucket) {
+          foldersToRefresh.push({ connectionId: task.destConnectionId, bucket: task.destBucket, prefix: task.destPrefix ?? '' });
+        }
       }
       this.lastStatuses.set(task.id, task.status);
     }
@@ -77,9 +90,7 @@ export class TransferService implements OnDestroy {
       if (!liveIds.has(id)) this.lastStatuses.delete(id);
     }
 
-    const refreshedConnectionIds = new Set<string>();
     for (const folder of foldersToRefresh) {
-      if (refreshedConnectionIds.has(folder.connectionId)) continue;
       const matchingTab = this.s3
         .tabs()
         .find(
@@ -88,33 +99,63 @@ export class TransferService implements OnDestroy {
             t.currentBucket === folder.bucket &&
             t.currentPrefix === folder.prefix
         );
-      if (matchingTab) {
-        refreshedConnectionIds.add(folder.connectionId);
-        this.s3.refreshListingFor(folder.connectionId);
+      if (matchingTab) this.s3.refreshListingFor(folder.connectionId);
+
+      for (const paneId of ['left', 'right'] as const) {
+        const pane = this.panes.pane(paneId);
+        if (pane.connectionId === folder.connectionId && pane.bucket === folder.bucket && pane.prefix === folder.prefix) {
+          this.panes.refresh(paneId);
+        }
       }
     }
   }
 
-  async uploadFilesDialog(bucket: string, prefix: string): Promise<void> {
-    const connId = this.s3.activeConnectionId();
+  /** `connectionId` defaults to the globally active tab; dual-pane view passes a specific pane's connection instead. */
+  async uploadFilesDialog(bucket: string, prefix: string, connectionId?: string): Promise<void> {
+    const connId = connectionId ?? this.s3.activeConnectionId();
     if (!connId) return;
     const files = await this.electron.api.dialogs.chooseFilesToUpload();
     if (files?.length) await this.electron.api.transfers.enqueueUpload(connId, bucket, prefix, files);
   }
 
-  async uploadFolderDialog(bucket: string, prefix: string): Promise<void> {
-    const connId = this.s3.activeConnectionId();
+  async uploadFolderDialog(bucket: string, prefix: string, connectionId?: string): Promise<void> {
+    const connId = connectionId ?? this.s3.activeConnectionId();
     if (!connId) return;
     const folders = await this.electron.api.dialogs.chooseFolderToUpload();
     if (folders?.length) await this.electron.api.transfers.enqueueUpload(connId, bucket, prefix, folders);
   }
 
-  async downloadItemsDialog(bucket: string, items: { key: string; name: string; size?: number }[]): Promise<void> {
-    const connId = this.s3.activeConnectionId();
+  async downloadItemsDialog(
+    bucket: string,
+    items: { key: string; name: string; size?: number }[],
+    connectionId?: string
+  ): Promise<void> {
+    const connId = connectionId ?? this.s3.activeConnectionId();
     if (!connId || !items.length) return;
     const destDir = await this.electron.api.dialogs.chooseDownloadDestination();
     if (!destDir) return;
     await this.electron.api.transfers.enqueueDownload(connId, bucket, items, destDir);
+  }
+
+  /**
+   * Queues a copy/move of `items` as a single trackable task in the Transfer
+   * Queue, instead of running it synchronously and blocking on the result -
+   * used by the dual-pane view so cross-pane transfers show progress/errors
+   * like any other transfer. Completion auto-refreshes both the source and
+   * destination folder in whichever tab(s)/pane(s) happen to be showing them.
+   */
+  async enqueueCopyMove(args: {
+    items: S3ListItem[];
+    srcConnectionId: string;
+    srcBucket: string;
+    srcPrefix: string;
+    destConnectionId: string;
+    destBucket: string;
+    destPrefix: string;
+    move: boolean;
+  }): Promise<void> {
+    if (!args.items.length) return;
+    await this.electron.api.transfers.enqueueCopyMove(args);
   }
 
   pause(taskId: string): void {

@@ -1,0 +1,113 @@
+<div class="pane">
+  <div class="pane__pickers">
+    <select [ngModel]="state.connectionId" (ngModelChange)="onConnectionChange($event)">
+      <option [value]="null" disabled>Choose a connection…</option>
+      <option *ngFor="let c of connectionService.connections()" [value]="c.id">{{ c.name }}</option>
+    </select>
+    <select
+      [ngModel]="state.bucket"
+      (ngModelChange)="onBucketChange($event)"
+      [disabled]="state.loadingBuckets || !state.connectionId"
+    >
+      <option [value]="null" disabled>{{ state.loadingBuckets ? 'Loading buckets…' : 'Choose a bucket…' }}</option>
+      <option *ngFor="let b of state.buckets" [value]="b.name">{{ b.name }}</option>
+    </select>
+  </div>
+
+  <div class="pane__toolbar" *ngIf="state.bucket">
+    <button (click)="refresh()" title="Refresh"><i class="fi fi-rr-refresh ic-blue" [class.fi-spin]="state.loading"></i></button>
+    <button (click)="startAddFolder()" title="New folder"><i class="fi fi-rr-folder ic-amber"></i></button>
+    <button (click)="uploadFiles()" title="Upload files"><i class="fi fi-rr-upload ic-blue"></i></button>
+    <div class="pane__spacer"></div>
+    <button *ngIf="state.selectedKeys.size" (click)="download()" title="Download selected">
+      <i class="fi fi-rr-download ic-green"></i>
+    </button>
+    <button
+      *ngIf="state.selectedKeys.size && otherPaneReady()"
+      (click)="copyToOtherPane(false)"
+      title="Copy selected to the other pane"
+    >
+      <i class="fi fi-rr-copy ic-teal"></i>
+    </button>
+    <button
+      *ngIf="state.selectedKeys.size && otherPaneReady()"
+      (click)="copyToOtherPane(true)"
+      title="Move selected to the other pane"
+    >
+      <i class="fi" [class]="moveArrowIcon" [class.ic-purple]="true"></i>
+    </button>
+    <button *ngIf="state.selectedKeys.size" (click)="deleteSelected()" title="Delete selected" class="danger">
+      <i class="fi fi-rr-trash ic-red"></i>
+    </button>
+  </div>
+
+  <div class="pane__breadcrumbs" *ngIf="state.bucket">
+    <span *ngFor="let crumb of panes.breadcrumbs(paneId); let last = last">
+      <a (click)="onBreadcrumbClick(crumb.prefix)" [class.last]="last">{{ crumb.label }}</a>
+      <span class="sep" *ngIf="!last">/</span>
+    </span>
+  </div>
+
+  <div class="pane__empty" *ngIf="!state.connectionId">Choose a connection to get started.</div>
+  <div class="pane__empty" *ngIf="state.connectionId && !state.bucket">Choose a bucket to browse.</div>
+
+  <table class="pane__grid" *ngIf="state.bucket">
+    <thead>
+      <tr>
+        <th class="col-name">Name</th>
+        <th class="col-size">Size</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="pane__new-folder-row" *ngIf="addingFolder()">
+        <td colspan="2">
+          <i class="fi fi-rr-folder ic-amber"></i>
+          <input
+            type="text"
+            [(ngModel)]="newFolderName"
+            placeholder="Folder name"
+            (keyup.enter)="confirmAddFolder()"
+            (keyup.escape)="cancelAddFolder()"
+          />
+          <button (click)="confirmAddFolder()" title="Create"><i class="fi fi-rr-check ic-green"></i></button>
+          <button (click)="cancelAddFolder()" title="Cancel"><i class="fi fi-rr-cross ic-muted"></i></button>
+        </td>
+      </tr>
+      <tr
+        *ngFor="let item of state.items"
+        (click)="onRowClick(item, $event)"
+        (dblclick)="onRowDoubleClick(item)"
+        (contextmenu)="onRowContextMenu(item, $event)"
+        [class.selected]="isSelected(item.key)"
+      >
+        <td class="col-name">
+          <i
+            class="fi"
+            [class.fi-rr-folder]="item.type === 'folder'"
+            [class.ic-amber]="item.type === 'folder'"
+            [class.fi-rr-file]="item.type === 'file'"
+            [class.ic-blue]="item.type === 'file'"
+          ></i>
+          {{ item.name }}
+        </td>
+        <td class="col-size">{{ item.type === 'file' ? formatBytes(item.size) : '' }}</td>
+      </tr>
+      <tr *ngIf="!state.items.length && !addingFolder()">
+        <td colspan="2" class="pane__empty-row">This folder is empty.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="pane__error" *ngIf="state.errorMessage">{{ state.errorMessage }}</p>
+
+  <div class="s3b-loading-overlay" *ngIf="state.loading && state.bucket"><span class="s3b-spinner"></span> Loading…</div>
+
+  <app-context-menu
+    *ngIf="contextMenu() as menu"
+    [x]="menu.x"
+    [y]="menu.y"
+    [items]="contextMenuItems()"
+    (itemSelected)="onContextMenuAction($event)"
+    (closed)="contextMenu.set(null)"
+  ></app-context-menu>
+</div>

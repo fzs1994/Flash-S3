@@ -17,6 +17,13 @@ export class S3BrowserService {
   readonly tabs = signal<ConnectionTabState[]>([]);
   readonly activeConnectionId = signal<string | null>(null);
 
+  /** Whether the main content area is showing the dual-pane view instead of the single sidebar+list view. */
+  readonly dualPaneMode = signal(false);
+
+  toggleDualPaneMode(): void {
+    this.dualPaneMode.update((v) => !v);
+  }
+
   readonly activeTab = computed<ConnectionTabState | null>(
     () => this.tabs().find((t) => t.connectionId === this.activeConnectionId()) ?? null
   );

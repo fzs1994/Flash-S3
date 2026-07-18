@@ -1,0 +1,11 @@
+<div class="dual-pane">
+  <app-pane-view
+    paneId="left"
+    class="dual-pane__side"
+    [style.flexGrow]="0"
+    [style.flexShrink]="0"
+    [style.flexBasis.%]="leftWidthPct()"
+  ></app-pane-view>
+  <div class="dual-pane__divider" (mousedown)="startResize($event)" title="Drag to resize"></div>
+  <app-pane-view paneId="right" class="dual-pane__side"></app-pane-view>
+</div>

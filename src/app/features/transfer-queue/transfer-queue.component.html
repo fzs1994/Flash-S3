@@ -24,10 +24,19 @@
 
     <div class="task-row" *ngFor="let task of transfers.tasks(); trackBy: trackByTaskId">
       <span class="task-icon" [class]="'status-' + task.status"><i class="fi" [class]="statusIcon(task.status)"></i></span>
-      <span class="task-type"
-        ><i class="fi" [class.fi-rr-upload]="task.type === 'upload'" [class.fi-rr-download]="task.type === 'download'"></i
+      <span class="task-type" [title]="task.type === 'copy' ? (task.move ? 'Move' : 'Copy') : ''"
+        ><i
+          class="fi"
+          [class.fi-rr-upload]="task.type === 'upload'"
+          [class.fi-rr-download]="task.type === 'download'"
+          [class.fi-rr-copy]="task.type === 'copy' && !task.move"
+          [class.fi-rr-arrow-right]="task.type === 'copy' && task.move"
+        ></i
       ></span>
-      <span class="task-name" [title]="task.key">{{ task.key }}</span>
+      <span class="task-name" [title]="task.key">
+        {{ task.key }}
+        <ng-container *ngIf="task.type === 'copy'">→ {{ task.destBucket }}{{ task.destPrefix ? '/' + task.destPrefix : '' }}</ng-container>
+      </span>
 
       <div class="task-progress">
         <div class="task-progress__bar" [style.width.%]="task.progressPct"></div>

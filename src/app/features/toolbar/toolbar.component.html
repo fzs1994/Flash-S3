@@ -1,25 +1,31 @@
 <div class="toolbar">
   <button (click)="manageConnectionsRequested.emit()" title="Manage connections"><i class="fi fi-rr-user ic-blue"></i> Connections</button>
   <app-bookmarks></app-bookmarks>
-  <div class="divider"></div>
-  <button (click)="refresh()" title="Refresh"><i class="fi fi-rr-refresh ic-blue" [class.fi-spin]="s3.loading()"></i> Refresh</button>
-  <button *ngIf="hasBucket" (click)="newFolderRequested.emit()" title="New folder">
-    <i class="fi fi-rr-folder ic-amber"></i> New Folder
+  <button (click)="s3.toggleDualPaneMode()" [class.active]="s3.dualPaneMode()" title="Toggle dual-pane view">
+    <i class="fi fi-rr-table-columns ic-purple"></i> Dual Pane
   </button>
-  <div class="divider" *ngIf="hasBucket"></div>
-  <ng-container *ngIf="hasBucket">
-    <button (click)="uploadFiles()" title="Upload files"><i class="fi fi-rr-upload ic-blue"></i> Upload Files</button>
-    <button (click)="uploadFolder()" title="Upload folder">
-      <i class="fi fi-rr-upload ic-blue"></i> Upload Folder
+  <div class="divider"></div>
+
+  <ng-container *ngIf="!s3.dualPaneMode()">
+    <button (click)="refresh()" title="Refresh"><i class="fi fi-rr-refresh ic-blue" [class.fi-spin]="s3.loading()"></i> Refresh</button>
+    <button *ngIf="hasBucket" (click)="newFolderRequested.emit()" title="New folder">
+      <i class="fi fi-rr-folder ic-amber"></i> New Folder
     </button>
-    <div class="divider"></div>
-    <div class="export-item">
-      <button (click)="exportCsv()" [disabled]="exporting()" title="Export this folder's listing to a CSV file">
-        <i class="fi fi-rr-file-export ic-teal" [class.fi-spin]="exporting()"></i>
-        {{ exporting() ? 'Exporting…' : 'Export CSV' }}
+    <div class="divider" *ngIf="hasBucket"></div>
+    <ng-container *ngIf="hasBucket">
+      <button (click)="uploadFiles()" title="Upload files"><i class="fi fi-rr-upload ic-blue"></i> Upload Files</button>
+      <button (click)="uploadFolder()" title="Upload folder">
+        <i class="fi fi-rr-upload ic-blue"></i> Upload Folder
       </button>
-      <div class="export-error" *ngIf="exportError()">{{ exportError() }}</div>
-    </div>
+      <div class="divider"></div>
+      <div class="export-item">
+        <button (click)="exportCsv()" [disabled]="exporting()" title="Export this folder's listing to a CSV file">
+          <i class="fi fi-rr-file-export ic-teal" [class.fi-spin]="exporting()"></i>
+          {{ exporting() ? 'Exporting…' : 'Export CSV' }}
+        </button>
+        <div class="export-error" *ngIf="exportError()">{{ exportError() }}</div>
+      </div>
+    </ng-container>
   </ng-container>
 
   <div class="spacer"></div>

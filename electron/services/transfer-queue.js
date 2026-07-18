@@ -113,6 +113,36 @@ class TransferQueueManager extends EventEmitter {
     return created.map((t) => t.id);
   }
 
+  /**
+   * Queues a copy/move of one or more items (files and/or folders) as a
+   * single tracked task, so dual-pane (and eventually single-pane) transfers
+   * show up in the same queue as uploads/downloads instead of happening
+   * silently. `srcPrefix` is only used to know which open folder to refresh
+   * afterwards - it isn't needed for the copy itself since each item already
+   * carries its own full key.
+   */
+  enqueueCopyMove({ items, srcConnectionId, srcBucket, srcPrefix, destConnectionId, destBucket, destPrefix, move }) {
+    const totalSize = items.reduce((sum, i) => sum + (i.type === 'file' ? i.size || 0 : 0), 0);
+    const label = items.length === 1 ? items[0].name : `${items.length} items`;
+    const task = this._createTask({
+      type: 'copy',
+      connectionId: srcConnectionId,
+      bucket: srcBucket,
+      key: label,
+      localPath: null,
+      size: totalSize
+    });
+    task.move = !!move;
+    task.srcPrefix = srcPrefix || '';
+    task.destConnectionId = destConnectionId;
+    task.destBucket = destBucket;
+    task.destPrefix = destPrefix || '';
+    task.items = items;
+    this._pump();
+    this._emitUpdate();
+    return task.id;
+  }
+
   // ---- Task control --------------------------------------------------------
 
   pause(taskId) {
@@ -261,6 +291,7 @@ class TransferQueueManager extends EventEmitter {
 
     try {
       if (task.type === 'upload') await this._runUpload(task);
+      else if (task.type === 'copy') await this._runCopy(task);
       else await this._runDownload(task);
 
       if (task.cancelRequested) {
@@ -373,6 +404,73 @@ class TransferQueueManager extends EventEmitter {
     });
   }
 
+  /**
+   * Runs a queued copy/move: same-account items go via a single server-side
+   * CopyObjectCommand per object, cross-account items stream through the app
+   * (GetObject -> Upload) - identical logic to the old synchronous
+   * s3Manager.copyItems(), just broken into per-item steps here so progress
+   * can be ticked and the operation shows up in the queue like any transfer.
+   *
+   * Known limitation (same spirit as pause/resume on uploads): pausing or
+   * cancelling only takes effect *between* items, not mid-item, and a
+   * paused/retried task re-copies from the first item rather than resuming
+   * partway - acceptable since S3-side copies are typically near-instant.
+   */
+  async _runCopy(task) {
+    const srcClient = await this.s3Manager.getClientForBucket(task.connectionId, task.bucket);
+    const destClient = await this.s3Manager.getClientForBucket(task.destConnectionId, task.destBucket);
+    const sameAccount = this.s3Manager._sameCredentials(task.connectionId, task.destConnectionId);
+    const normalizedDestPrefix = task.destPrefix ? (task.destPrefix.endsWith('/') ? task.destPrefix : `${task.destPrefix}/`) : '';
+    const sameLocationRoot = task.connectionId === task.destConnectionId && task.bucket === task.destBucket;
+    const deletableKeys = [];
+    let bytesDone = 0;
+    let completedFully = true;
+
+    for (const item of task.items) {
+      if (task.cancelRequested || task.pauseRequested) {
+        completedFully = false;
+        break;
+      }
+      if (item.type === 'folder') {
+        const folderDestPrefix = `${normalizedDestPrefix}${item.name}/`;
+        if (sameLocationRoot && folderDestPrefix.startsWith(item.key)) {
+          throw new Error(`Cannot ${task.move ? 'move' : 'copy'} folder "${item.name}" into itself.`);
+        }
+        const copiedKeys = await this.s3Manager._copyFolder({
+          srcClient,
+          destClient,
+          srcBucket: task.bucket,
+          destBucket: task.destBucket,
+          srcPrefix: item.key,
+          destPrefix: folderDestPrefix,
+          sameAccount
+        });
+        deletableKeys.push(...copiedKeys, item.key);
+      } else {
+        const destKey = `${normalizedDestPrefix}${item.name}`;
+        if (sameAccount && task.bucket === task.destBucket && item.key === destKey) {
+          throw new Error(`"${item.name}" is already in that location.`);
+        }
+        await this.s3Manager._copyOneObject({
+          srcClient,
+          destClient,
+          srcBucket: task.bucket,
+          destBucket: task.destBucket,
+          srcKey: item.key,
+          destKey,
+          sameAccount
+        });
+        deletableKeys.push(item.key);
+        bytesDone += item.size || 0;
+      }
+      this._tickProgress(task, bytesDone);
+    }
+
+    if (task.move && completedFully && deletableKeys.length) {
+      await this.s3Manager.deleteObjects(task.connectionId, task.bucket, deletableKeys);
+    }
+  }
+
   _toPublic(task) {
     return {
       id: task.id,
@@ -387,7 +485,10 @@ class TransferQueueManager extends EventEmitter {
       speedBps: task.speedBps,
       etaSeconds: task.etaSeconds,
       error: task.error,
-      progressPct: task.size > 0 ? Math.min(100, Math.round((task.transferred / task.size) * 100)) : task.status === 'completed' ? 100 : 0
+      progressPct: task.size > 0 ? Math.min(100, Math.round((task.transferred / task.size) * 100)) : task.status === 'completed' ? 100 : 0,
+      ...(task.type === 'copy'
+        ? { move: task.move, srcPrefix: task.srcPrefix, destConnectionId: task.destConnectionId, destBucket: task.destBucket, destPrefix: task.destPrefix }
+        : {})
     };
   }
 

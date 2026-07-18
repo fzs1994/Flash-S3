@@ -47,6 +47,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('transfers:enqueueUpload', { connectionId, bucket, prefix, localPaths }),
     enqueueDownload: (connectionId, bucket, items, destDir) =>
       ipcRenderer.invoke('transfers:enqueueDownload', { connectionId, bucket, items, destDir }),
+    enqueueCopyMove: (args) => ipcRenderer.invoke('transfers:enqueueCopyMove', args),
     pause: (taskId) => ipcRenderer.invoke('transfers:pause', taskId),
     resume: (taskId) => ipcRenderer.invoke('transfers:resume', taskId),
     cancel: (taskId) => ipcRenderer.invoke('transfers:cancel', taskId),

@@ -48,6 +48,27 @@ export interface ConnectionTabState {
   nextContinuationToken: string | null;
 }
 
+export type PaneId = 'left' | 'right';
+
+/**
+ * One side of the dual-pane view - deliberately independent of
+ * ConnectionTabState/tabs, since two panes need to browse different
+ * buckets/folders of the *same* connection simultaneously, which a single
+ * per-connection tab can't represent (it only tracks one current bucket/prefix).
+ */
+export interface PaneState {
+  connectionId: string | null;
+  connectionName: string | null;
+  buckets: BucketInfo[];
+  loadingBuckets: boolean;
+  bucket: string | null;
+  prefix: string;
+  items: S3ListItem[];
+  selectedKeys: Set<string>;
+  loading: boolean;
+  errorMessage: string | null;
+}
+
 /** A named shortcut to a specific connection + bucket + prefix, for jumping straight back to a deep folder. */
 export interface Bookmark {
   id: string;
@@ -59,7 +80,7 @@ export interface Bookmark {
   createdAt: number;
 }
 
-export type TransferType = 'upload' | 'download';
+export type TransferType = 'upload' | 'download' | 'copy';
 export type TransferStatus = 'queued' | 'active' | 'paused' | 'completed' | 'error' | 'canceled';
 
 export interface TransferTask {
@@ -76,4 +97,12 @@ export interface TransferTask {
   etaSeconds: number | null;
   error: string | null;
   progressPct: number;
+  /** Only present for type: 'copy' - whether this deletes the originals (move) vs leaves them (copy). */
+  move?: boolean;
+  /** Only present for type: 'copy' - the folder the items were copied/moved from, used to auto-refresh it on completion. */
+  srcPrefix?: string;
+  /** Only present for type: 'copy' - the destination side of the operation. */
+  destConnectionId?: string;
+  destBucket?: string;
+  destPrefix?: string;
 }
