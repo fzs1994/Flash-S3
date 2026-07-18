@@ -1,6 +1,6 @@
 {
   "name": "flash-s3-browser",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Flash S3 Browser - an Electron + Angular S3 file manager with fast multi-threaded transfer queues",
   "author": "Faizan Saiyed",
   "main": "electron/main.js",
