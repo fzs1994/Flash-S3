@@ -4,6 +4,16 @@ const { registerIpcHandlers } = require('./ipc/register');
 
 let mainWindow = null;
 
+// App icon for the window/taskbar at runtime (dev mode included). Windows
+// prefers the multi-size .ico; Linux uses the .png. macOS ignores this
+// option (the dock icon comes from the .icns in the app bundle, set below).
+const windowIconPath = path.join(
+  __dirname,
+  '..',
+  'build-resources',
+  process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+);
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -12,6 +22,7 @@ function createWindow() {
     minHeight: 640,
     backgroundColor: '#f0f2f5',
     title: 'Flash S3 Browser',
+    icon: windowIconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -46,6 +57,10 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // macOS dev-mode dock icon (packaged builds get it from the bundle's .icns).
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(path.join(__dirname, '..', 'build-resources', 'icon.png'));
+  }
   const win = createWindow();
   registerIpcHandlers(ipcMain, () => mainWindow || win);
 

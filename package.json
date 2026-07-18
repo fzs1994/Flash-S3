@@ -54,6 +54,8 @@
     "files": [
       "dist/s3-browser-clone/**/*",
       "electron/**/*",
+      "build-resources/icon.ico",
+      "build-resources/icon.png",
       "package.json"
     ],
     "directories": {
