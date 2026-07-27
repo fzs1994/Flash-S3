@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, computed, signal } from '@angular/core';
+import { Component, HostListener, Input, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PaneId, S3ListItem } from '../../core/models/models';
 import { ConnectionService } from '../../core/services/connection.service';
@@ -94,6 +94,7 @@ export class PaneViewComponent {
   }
 
   onRowClick(item: S3ListItem, ev: MouseEvent): void {
+    this.panes.setActivePane(this.paneId);
     this.panes.toggleSelect(this.paneId, item.key, !(ev.ctrlKey || ev.metaKey));
   }
 
@@ -103,10 +104,39 @@ export class PaneViewComponent {
 
   onRowContextMenu(item: S3ListItem, ev: MouseEvent): void {
     ev.preventDefault();
+    this.panes.setActivePane(this.paneId);
     if (!this.state.selectedKeys.has(item.key)) {
       this.panes.toggleSelect(this.paneId, item.key, true);
     }
     this.contextMenu.set({ x: ev.clientX, y: ev.clientY });
+  }
+
+  /**
+   * Delete removes whichever pane's selection the user last interacted with -
+   * both panes' components are mounted at once in dual-pane mode, so without
+   * checking `activePaneId` a single Delete press would fire in both. Also
+   * ignored while typing or while a modal overlay is open, same reasoning as
+   * the single-pane object list.
+   */
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(ev: KeyboardEvent): void {
+    if (this.panes.activePaneId() !== this.paneId) return;
+    if (this.isTypingTarget(ev.target) || this.isModalOpen()) return;
+    if (ev.key !== 'Delete') return;
+    if (!this.state.selectedKeys.size) return;
+    ev.preventDefault();
+    this.deleteSelected();
+  }
+
+  private isTypingTarget(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    if (!el) return false;
+    const tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+  }
+
+  private isModalOpen(): boolean {
+    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .overlay');
   }
 
   onContextMenuAction(actionId: string): void {

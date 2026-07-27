@@ -89,7 +89,19 @@ class S3Manager {
         accessKeyId: profile.accessKeyId,
         secretAccessKey: profile.secretAccessKey
       },
-      maxAttempts: 3
+      maxAttempts: 3,
+      // Without this, the SDK defaults to "WHEN_SUPPORTED" and silently wraps
+      // every streaming request body (PutObject/UploadPart) in an aws-chunked
+      // + trailing-checksum stream (@smithy/core's getAwsChunkedEncodingStream).
+      // That wrapper attaches its own `.on('data', ...)` listener to our body
+      // stream to compute the checksum, which forces the stream into flowing
+      // mode and drains it into its own internal buffer as fast as Node can
+      // read - completely ignoring whether the real HTTP write has actually
+      // gone out over the socket yet. That's what made our per-part progress
+      // counters (attached to that same body stream) race straight to 100%
+      // regardless of real upload speed. We don't request checksums on our
+      // upload commands, so this just stops the SDK from adding one uninvited.
+      requestChecksumCalculation: 'WHEN_REQUIRED'
     });
   }
 

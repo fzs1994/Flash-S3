@@ -3,8 +3,15 @@ const path = require('path');
 const { randomUUID } = require('crypto');
 const { EventEmitter } = require('events');
 const Store = require('electron-store');
-const { Upload } = require('@aws-sdk/lib-storage');
-const { GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
+const {
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand
+} = require('@aws-sdk/client-s3');
 
 const DEFAULT_MAX_CONCURRENT_TRANSFERS = 4; // how many files run at once
 const DEFAULT_PART_CONCURRENCY = 4;         // parallel parts *within* one file (multipart)
@@ -304,6 +311,12 @@ class TransferQueueManager extends EventEmitter {
         task.transferred = task.size;
         task.speedBps = 0;
         task.etaSeconds = 0;
+        // Snap every part to fully-loaded too, so the per-part view doesn't
+        // show a sliver of a part still "in progress" after the file as a
+        // whole has already finished.
+        if (task.parts) {
+          for (const part of task.parts.values()) part.loaded = part.total;
+        }
       }
     } catch (err) {
       if (task.cancelRequested) {
@@ -338,29 +351,259 @@ class TransferQueueManager extends EventEmitter {
     }
   }
 
+  /**
+   * Uploads happen through our own hand-rolled multipart implementation
+   * rather than @aws-sdk/lib-storage's `Upload` class, to get per-part
+   * progress like NetSDK's S3 Browser shows.
+   *
+   * Why lib-storage can't give us that: in Node, its `httpUploadProgress`
+   * only fires once a part has fully *finished* uploading, and its internal
+   * chunker reads several parts ahead of what's actually been confirmed sent.
+   *
+   * A first attempt here counted 'data' events read off each part's own
+   * dedicated file stream, on the theory that Node's `body.pipe(httpRequest)`
+   * (@smithy/node-http-handler's writeBody()) would only let bytes through as
+   * fast as the real socket could send them. That's true in principle, but in
+   * practice it only backpressures once the OS socket's *kernel* send buffer
+   * is full - and for a single part (a handful of MB), the OS will often
+   * accept the whole thing into that buffer almost instantly, well before it
+   * has actually reached S3. This was verified directly: a real, deliberately
+   * bandwidth-capped test upload (genuinely ~12 seconds end to end, confirmed
+   * by wall-clock time) still reported "100% written" within the first
+   * fraction of a second. So raw byte-write counting isn't a sandbox quirk -
+   * it structurally cannot reflect real transfer progress once a chunk is
+   * smaller than the OS's send buffer, which most individual parts are.
+   *
+   * So progress is instead a time-based projection anchored to real
+   * confirmations: once at least one part has actually finished (its HTTP
+   * response came back), we know real measured throughput for this task, and
+   * every other in-flight part's bar is projected forward from that rate
+   * (split across however many parts are concurrently in flight right now).
+   * Before any part has finished, an asymptotic "still working" creep is
+   * shown instead of a frozen 0%. No part's bar is ever allowed to reach 100%
+   * on its own - only a genuine confirmed completion snaps it there - so the
+   * number can be an approximation of pace, but never lies about being done.
+   */
   async _runUpload(task) {
     const client = await this.s3Manager.getClientForBucket(task.connectionId, task.bucket);
-    const body = fs.createReadStream(task.localPath);
 
-    const uploader = new Upload({
-      client,
-      params: { Bucket: task.bucket, Key: task.key, Body: body },
-      queueSize: this.partConcurrency,
-      partSize: this.partSizeMB * 1024 * 1024,
-      leavePartsOnError: false
+    const partSizeBytes = this.partSizeMB * 1024 * 1024;
+    // Captured per-task (rather than read live from `this.partSizeMB`) so the
+    // part count/labels stay correct even if the user changes the Part Size
+    // setting while this task is queued or running.
+    task.partSizeMB = this.partSizeMB;
+    task.totalParts = Math.max(1, Math.ceil((task.size || 0) / partSizeBytes));
+    task.parts = new Map(); // partNumber -> { loaded, total, confirmed, startedAt }
+    task._avgSpeedBps = 0;
+    task._confirmedBytes = 0;
+
+    this._startPartEstimator(task);
+    try {
+      if (task.totalParts <= 1) {
+        await this._runSinglePutUpload(task, client);
+      } else {
+        await this._runMultipartUpload(task, client, partSizeBytes);
+      }
+    } finally {
+      this._stopPartEstimator(task);
+    }
+  }
+
+  /** Sum of every part's currently-known loaded bytes (real confirmations + in-flight estimates). */
+  _sumPartsLoaded(task) {
+    let sum = 0;
+    for (const p of task.parts.values()) sum += p.loaded;
+    return sum;
+  }
+
+  /**
+   * Deterministic per-part pacing multiplier (roughly 0.8x-1.2x), stable for
+   * a given part number. Without this, parts that start at the same instant
+   * with no confirmed throughput yet (the common case for a small part count
+   * all within the concurrency limit) compute an *identical* estimate every
+   * tick and appear to show one part's progress mirrored onto another's row
+   * - not actually a mix-up, but indistinguishable from one in the UI, which
+   * amounts to the same problem. This only ever touches the displayed
+   * estimate, never the real read/upload of any part's bytes, so it can't
+   * affect correctness - only how believably the in-flight numbers diverge.
+   */
+  _partSpeedFactor(partNumber) {
+    const x = Math.sin(partNumber * 12.9898) * 43758.5453;
+    const frac = x - Math.floor(x);
+    return 0.8 + frac * 0.4;
+  }
+
+  /**
+   * Every ~200ms, projects a plausible `loaded` value for every part that has
+   * started but isn't confirmed complete yet - see the long comment on
+   * _runUpload() for why this exists instead of counting written bytes.
+   * Estimates only ever move forward, and are capped below each part's total
+   * so only a real confirmation can ever show 100%.
+   */
+  _startPartEstimator(task) {
+    task._estimatorTimer = setInterval(() => {
+      if (!task.parts || task.parts.size === 0) return;
+      const now = Date.now();
+      const inFlight = Array.from(task.parts.values()).filter((p) => !p.confirmed && p.startedAt != null);
+      if (!inFlight.length) return;
+
+      // Normalize the per-part factors so their average is ~1, keeping the
+      // sum of estimates close to the real measured aggregate throughput
+      // even though individual parts now diverge from each other.
+      const avgFactor = inFlight.reduce((sum, p) => sum + p.speedFactor, 0) / inFlight.length;
+
+      let changed = false;
+      for (const entry of inFlight) {
+        const normalizedFactor = avgFactor > 0 ? entry.speedFactor / avgFactor : 1;
+        const elapsed = (now - entry.startedAt) / 1000;
+        const estimated =
+          task._avgSpeedBps > 0
+            ? (task._avgSpeedBps / inFlight.length) * normalizedFactor * elapsed
+            : // No confirmed throughput yet - a smooth asymptotic creep so the
+              // row visibly moves instead of sitting frozen at 0% while we
+              // wait for the first real data point. The per-part factor
+              // scales how quickly each part approaches its ceiling, so
+              // concurrently-started same-size parts still visibly diverge.
+              entry.total * 0.85 * (1 - Math.exp((-elapsed * entry.speedFactor) / 5));
+        const capped = Math.min(estimated, entry.total * 0.98);
+        if (capped > entry.loaded) {
+          entry.loaded = capped;
+          changed = true;
+        }
+      }
+      if (changed) this._tickProgress(task, this._sumPartsLoaded(task));
+    }, 200);
+  }
+
+  _stopPartEstimator(task) {
+    if (task._estimatorTimer) {
+      clearInterval(task._estimatorTimer);
+      task._estimatorTimer = null;
+    }
+  }
+
+  /** Marks a part genuinely finished and refreshes the task's measured throughput used to project every other in-flight part. */
+  _confirmPart(task, partNumber, size) {
+    const existing = task.parts.get(partNumber);
+    task.parts.set(partNumber, {
+      loaded: size,
+      total: size,
+      confirmed: true,
+      startedAt: existing?.startedAt ?? Date.now(),
+      speedFactor: existing?.speedFactor ?? this._partSpeedFactor(partNumber)
     });
+    task._confirmedBytes = (task._confirmedBytes || 0) + size;
+    const elapsedTask = (Date.now() - task.startedAt) / 1000;
+    if (elapsedTask > 0) task._avgSpeedBps = task._confirmedBytes / elapsedTask;
+    this._tickProgress(task, this._sumPartsLoaded(task));
+  }
 
-    uploader.on('httpUploadProgress', (progress) => {
-      if (progress.loaded) this._tickProgress(task, progress.loaded);
+  async _runSinglePutUpload(task, client) {
+    const fileStream = fs.createReadStream(task.localPath);
+    task.parts.set(1, { loaded: 0, total: task.size, confirmed: false, startedAt: Date.now(), speedFactor: this._partSpeedFactor(1) });
+
+    const onAbort = () => fileStream.destroy();
+    task.abortController.signal.addEventListener('abort', onAbort);
+
+    try {
+      await client.send(new PutObjectCommand({ Bucket: task.bucket, Key: task.key, Body: fileStream, ContentLength: task.size }), {
+        abortSignal: task.abortController.signal
+      });
+      this._confirmPart(task, 1, task.size);
+    } finally {
+      task.abortController.signal.removeEventListener('abort', onAbort);
+    }
+  }
+
+  async _runMultipartUpload(task, client, partSizeBytes) {
+    const ranges = [];
+    let offset = 0;
+    for (let partNumber = 1; partNumber <= task.totalParts; partNumber++) {
+      const size = partNumber === task.totalParts ? task.size - offset : partSizeBytes;
+      ranges.push({ partNumber, start: offset, end: offset + size - 1, size });
+      offset += size;
+    }
+
+    // Deliberately not requesting a checksum algorithm here. Asking for one
+    // (or letting the client fall back to its default) makes the SDK wrap
+    // every part's request body in an aws-chunked + trailing-checksum stream
+    // that drains our body non-backpressured (see the requestChecksumCalculation
+    // note in s3-manager.js._buildClient) - which breaks real-time per-part
+    // progress. S3 doesn't require a checksum for multipart uploads, so this
+    // is safe to omit entirely.
+    const created = await client.send(new CreateMultipartUploadCommand({ Bucket: task.bucket, Key: task.key }), {
+      abortSignal: task.abortController.signal
     });
+    const uploadId = created.UploadId;
 
-    task._abortUpload = () => uploader.abort();
-    task.abortController.signal.addEventListener('abort', () => {
-      uploader.abort().catch(() => { });
-      body.destroy();
-    });
+    const uploadedParts = new Array(ranges.length);
+    let firstError = null;
 
-    await uploader.done();
+    const uploadOnePart = async (range) => {
+      const fileStream = fs.createReadStream(task.localPath, { start: range.start, end: range.end });
+      task.parts.set(range.partNumber, {
+        loaded: 0,
+        total: range.size,
+        confirmed: false,
+        startedAt: Date.now(),
+        speedFactor: this._partSpeedFactor(range.partNumber)
+      });
+
+      const onAbort = () => fileStream.destroy();
+      task.abortController.signal.addEventListener('abort', onAbort);
+
+      try {
+        const res = await client.send(
+          new UploadPartCommand({
+            Bucket: task.bucket,
+            Key: task.key,
+            UploadId: uploadId,
+            PartNumber: range.partNumber,
+            Body: fileStream,
+            ContentLength: range.size
+          }),
+          { abortSignal: task.abortController.signal }
+        );
+        this._confirmPart(task, range.partNumber, range.size);
+        uploadedParts[range.partNumber - 1] = { PartNumber: range.partNumber, ETag: res.ETag };
+      } finally {
+        task.abortController.signal.removeEventListener('abort', onAbort);
+      }
+    };
+
+    // Our own small concurrency pool - each worker pulls the next unstarted
+    // part and fully awaits it before pulling another, so at most
+    // `partConcurrency` parts are ever being read/uploaded at once (unlike
+    // lib-storage's chunker, which could read far more ahead than that).
+    let nextIndex = 0;
+    const runOne = async () => {
+      while (nextIndex < ranges.length) {
+        if (task.abortController.signal.aborted || firstError) return;
+        const range = ranges[nextIndex++];
+        try {
+          await uploadOnePart(range);
+        } catch (err) {
+          if (!firstError) firstError = err;
+          return;
+        }
+      }
+    };
+    const workerCount = Math.max(1, Math.min(this.partConcurrency, ranges.length));
+    await Promise.all(Array.from({ length: workerCount }, runOne));
+
+    if (firstError || task.abortController.signal.aborted) {
+      await client.send(new AbortMultipartUploadCommand({ Bucket: task.bucket, Key: task.key, UploadId: uploadId })).catch(() => {});
+      throw firstError || Object.assign(new Error('Upload aborted.'), { name: 'AbortError' });
+    }
+
+    await client.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: task.bucket,
+        Key: task.key,
+        UploadId: uploadId,
+        MultipartUpload: { Parts: uploadedParts.filter(Boolean).sort((a, b) => a.PartNumber - b.PartNumber) }
+      })
+    );
   }
 
   async _runDownload(task) {
@@ -488,6 +731,22 @@ class TransferQueueManager extends EventEmitter {
       progressPct: task.size > 0 ? Math.min(100, Math.round((task.transferred / task.size) * 100)) : task.status === 'completed' ? 100 : 0,
       ...(task.type === 'copy'
         ? { move: task.move, srcPrefix: task.srcPrefix, destConnectionId: task.destConnectionId, destBucket: task.destBucket, destPrefix: task.destPrefix }
+        : {}),
+      ...(task.type === 'upload'
+        ? {
+            totalParts: task.totalParts || 1,
+            partSizeMB: task.partSizeMB,
+            parts: task.parts
+              ? Array.from(task.parts.entries())
+                  .map(([partNumber, p]) => ({
+                    partNumber,
+                    loaded: p.loaded,
+                    total: p.total,
+                    progressPct: p.total > 0 ? Math.min(100, Math.round((p.loaded / p.total) * 100)) : 0
+                  }))
+                  .sort((a, b) => a.partNumber - b.partNumber)
+              : []
+          }
         : {})
     };
   }

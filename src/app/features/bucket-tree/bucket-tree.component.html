@@ -1,5 +1,16 @@
 <div class="tree">
-  <div class="tree__header">Buckets</div>
+  <div class="tree__header">
+    <span>Buckets</span>
+    <button
+      *ngIf="s3.buckets().length"
+      class="tree__favorites-toggle"
+      [class.active]="favorites.showFavoritesOnly()"
+      [title]="favorites.showFavoritesOnly() ? 'Showing favorite buckets only' : 'Show favorite buckets only'"
+      (click)="favorites.toggleShowFavoritesOnly()"
+    >
+      <i class="fi fi-rr-star"></i>
+    </button>
+  </div>
 
   <div class="tree__search" *ngIf="s3.buckets().length">
     <i class="fi fi-rr-search"></i>
@@ -18,11 +29,22 @@
     >
       <span class="icon"><i class="fi fi-rr-box ic-amber"></i></span>
       <span class="name">{{ b.name }}</span>
+      <button
+        class="tree__favorite-btn"
+        [class.active]="isFavorite(b.name)"
+        [title]="isFavorite(b.name) ? 'Remove from favorites' : 'Add to favorites'"
+        (click)="toggleFavorite(b.name, $event)"
+      >
+        <i class="fi fi-rr-star"></i>
+      </button>
     </div>
     <div class="tree__empty" *ngIf="!s3.buckets().length && !s3.loading()">
       No buckets loaded. Connect to an account to see your buckets.
     </div>
-    <div class="tree__empty" *ngIf="s3.buckets().length && !filteredBuckets().length">
+    <div class="tree__empty" *ngIf="s3.buckets().length && favorites.showFavoritesOnly() && !filteredBuckets().length && !searchTerm()">
+      No favorite buckets yet. Click the star next to a bucket to add one.
+    </div>
+    <div class="tree__empty" *ngIf="s3.buckets().length && searchTerm() && !filteredBuckets().length">
       No buckets match "{{ searchTerm() }}".
     </div>
   </div>

@@ -6,6 +6,9 @@
   background: var(--s3b-sidebar-bg);
 }
 .tree__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px 10px;
   font-weight: 600;
   font-size: 12px;
@@ -13,6 +16,20 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 1px solid var(--s3b-border);
+}
+.tree__favorites-toggle {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--s3b-muted);
+}
+.tree__favorites-toggle:hover {
+  color: var(--s3b-amber);
+}
+.tree__favorites-toggle.active {
+  color: var(--s3b-amber);
 }
 .tree__search {
   display: flex;
@@ -70,9 +87,30 @@
   font-size: 13px;
 }
 .tree__item .name {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.tree__favorite-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--s3b-border);
+  opacity: 0;
+}
+.tree__item:hover .tree__favorite-btn,
+.tree__favorite-btn.active {
+  opacity: 1;
+}
+.tree__favorite-btn:hover {
+  color: var(--s3b-amber);
+}
+.tree__favorite-btn.active {
+  color: var(--s3b-amber);
 }
 .tree__empty {
   padding: 14px;

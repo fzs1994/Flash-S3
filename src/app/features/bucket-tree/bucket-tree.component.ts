@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { BucketFavoritesService } from '../../core/services/bucket-favorites.service';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
 
 @Component({
@@ -15,12 +16,22 @@ export class BucketTreeComponent {
 
   readonly filteredBuckets = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
-    const buckets = this.s3.buckets();
-    if (!term) return buckets;
-    return buckets.filter((b) => b.name.toLowerCase().includes(term));
+    const connectionId = this.s3.activeConnectionId();
+    let buckets = this.s3.buckets();
+
+    if (this.favorites.showFavoritesOnly()) {
+      buckets = buckets.filter((b) => this.favorites.isFavorite(connectionId, b.name));
+    }
+    if (term) {
+      buckets = buckets.filter((b) => b.name.toLowerCase().includes(term));
+    }
+    return buckets;
   });
 
-  constructor(public s3: S3BrowserService) {}
+  constructor(
+    public s3: S3BrowserService,
+    public favorites: BucketFavoritesService
+  ) {}
 
   select(bucketName: string): void {
     this.s3.openBucket(bucketName);
@@ -28,5 +39,14 @@ export class BucketTreeComponent {
 
   clearSearch(): void {
     this.searchTerm.set('');
+  }
+
+  isFavorite(bucketName: string): boolean {
+    return this.favorites.isFavorite(this.s3.activeConnectionId(), bucketName);
+  }
+
+  toggleFavorite(bucketName: string, ev: Event): void {
+    ev.stopPropagation();
+    this.favorites.toggleFavorite(this.s3.activeConnectionId(), bucketName);
   }
 }

@@ -105,4 +105,17 @@ export interface TransferTask {
   destConnectionId?: string;
   destBucket?: string;
   destPrefix?: string;
+  /** Only present for type: 'upload' - how many multipart parts this file was split into (1 if small enough to send as a single PutObject). */
+  totalParts?: number;
+  /** Only present for type: 'upload' - the part size (MB) in effect when this task started uploading. */
+  partSizeMB?: number;
+  /** Only present for type: 'upload' - per-part progress, in part-number order. Only meaningfully non-trivial when totalParts > 1. */
+  parts?: TransferPart[];
+}
+
+export interface TransferPart {
+  partNumber: number;
+  loaded: number;
+  total: number;
+  progressPct: number;
 }

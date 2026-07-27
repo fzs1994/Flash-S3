@@ -11,6 +11,17 @@
       <button (click)="transfers.pauseAll()">Pause All</button>
       <button (click)="transfers.resumeAll()">Resume All</button>
       <button (click)="transfers.clearCompleted()">Clear Completed</button>
+      <button
+        [class.active]="transfers.progressDisplayMode() === 'parts'"
+        [title]="
+          transfers.progressDisplayMode() === 'parts'
+            ? 'Showing per-part upload progress - click for whole-file progress'
+            : 'Showing whole-file progress - click for per-part upload progress'
+        "
+        (click)="transfers.toggleProgressDisplayMode()"
+      >
+        <i class="fi fi-rr-layers ic-teal"></i>
+      </button>
       <button title="Transfer settings" (click)="openSettings()">
         <i class="fi fi-rr-settings-sliders ic-blue"></i>
       </button>
@@ -19,51 +30,87 @@
     <i class="fi collapse-toggle" [class.fi-rr-angle-small-up]="!collapsed()" [class.fi-rr-angle-small-down]="collapsed()"></i>
   </div>
 
+  <div class="queue-tabs" *ngIf="!collapsed()" (click)="$event.stopPropagation()">
+    <button [class.active]="activeQueueTab() === 'all'" (click)="activeQueueTab.set('all')">
+      All <span class="queue-tabs__count">{{ tabCounts().all }}</span>
+    </button>
+    <button [class.active]="activeQueueTab() === 'running'" (click)="activeQueueTab.set('running')">
+      Running <span class="queue-tabs__count">{{ tabCounts().running }}</span>
+    </button>
+    <button [class.active]="activeQueueTab() === 'queued'" (click)="activeQueueTab.set('queued')">
+      Queued <span class="queue-tabs__count">{{ tabCounts().queued }}</span>
+    </button>
+    <button [class.active]="activeQueueTab() === 'error'" (click)="activeQueueTab.set('error')">
+      Error <span class="queue-tabs__count" [class.queue-tabs__count--error]="tabCounts().error">{{ tabCounts().error }}</span>
+    </button>
+    <button [class.active]="activeQueueTab() === 'completed'" (click)="activeQueueTab.set('completed')">
+      Completed <span class="queue-tabs__count">{{ tabCounts().completed }}</span>
+    </button>
+  </div>
+
   <div class="queue-body" *ngIf="!collapsed()">
     <div class="queue-empty" *ngIf="!transfers.tasks().length">No transfers yet.</div>
+    <div class="queue-empty" *ngIf="transfers.tasks().length && !visibleTasks().length">No transfers in this tab.</div>
 
-    <div class="task-row" *ngFor="let task of transfers.tasks(); trackBy: trackByTaskId">
-      <span class="task-icon" [class]="'status-' + task.status"><i class="fi" [class]="statusIcon(task.status)"></i></span>
-      <span class="task-type" [title]="task.type === 'copy' ? (task.move ? 'Move' : 'Copy') : ''"
-        ><i
-          class="fi"
-          [class.fi-rr-upload]="task.type === 'upload'"
-          [class.fi-rr-download]="task.type === 'download'"
-          [class.fi-rr-copy]="task.type === 'copy' && !task.move"
-          [class.fi-rr-arrow-right]="task.type === 'copy' && task.move"
-        ></i
-      ></span>
-      <span class="task-name" [title]="task.key">
-        {{ task.key }}
-        <ng-container *ngIf="task.type === 'copy'">→ {{ task.destBucket }}{{ task.destPrefix ? '/' + task.destPrefix : '' }}</ng-container>
-      </span>
+    <ng-container *ngFor="let task of visibleTasks(); trackBy: trackByTaskId">
+      <div class="task-row">
+        <span class="task-icon" [class]="'status-' + task.status"><i class="fi" [class]="statusIcon(task.status)"></i></span>
+        <span class="task-type" [title]="task.type === 'copy' ? (task.move ? 'Move' : 'Copy') : ''"
+          ><i
+            class="fi"
+            [class.fi-rr-upload]="task.type === 'upload'"
+            [class.fi-rr-download]="task.type === 'download'"
+            [class.fi-rr-copy]="task.type === 'copy' && !task.move"
+            [class.fi-rr-arrow-right]="task.type === 'copy' && task.move"
+          ></i
+        ></span>
+        <span class="task-name" [title]="task.key">
+          {{ task.key }}
+          <ng-container *ngIf="task.type === 'copy'">→ {{ task.destBucket }}{{ task.destPrefix ? '/' + task.destPrefix : '' }}</ng-container>
+          <span class="task-name__parts" *ngIf="isMultipart(task)">({{ task.totalParts }} parts)</span>
+        </span>
 
-      <div class="task-progress">
-        <div class="task-progress__bar" [style.width.%]="task.progressPct"></div>
+        <div class="task-progress">
+          <div class="task-progress__bar" [style.width.%]="task.progressPct"></div>
+        </div>
+
+        <span class="task-pct">{{ task.progressPct }}%</span>
+        <span class="task-size">{{ formatBytes(task.transferred) }} / {{ formatBytes(task.size) }}</span>
+        <span class="task-speed">{{ task.status === 'active' ? formatBytes(task.speedBps) + '/s' : '' }}</span>
+        <span class="task-eta">{{ task.status === 'active' ? formatEta(task.etaSeconds) : '' }}</span>
+
+        <span class="task-error" *ngIf="task.error" [title]="task.error">{{ task.error }}</span>
+
+        <div class="task-actions">
+          <button *ngIf="task.status === 'active'" (click)="transfers.pause(task.id)" title="Pause">
+            <i class="fi fi-rr-pause ic-amber"></i>
+          </button>
+          <button *ngIf="task.status === 'paused'" (click)="transfers.resume(task.id)" title="Resume">
+            <i class="fi fi-rr-play ic-green"></i>
+          </button>
+          <button *ngIf="task.status === 'error'" (click)="transfers.retry(task.id)" title="Retry">
+            <i class="fi fi-rr-refresh ic-blue"></i>
+          </button>
+          <button *ngIf="!['completed', 'canceled'].includes(task.status)" (click)="transfers.cancel(task.id)" title="Cancel">
+            <i class="fi fi-rr-cross ic-red"></i>
+          </button>
+        </div>
       </div>
 
-      <span class="task-pct">{{ task.progressPct }}%</span>
-      <span class="task-size">{{ formatBytes(task.transferred) }} / {{ formatBytes(task.size) }}</span>
-      <span class="task-speed">{{ task.status === 'active' ? formatBytes(task.speedBps) + '/s' : '' }}</span>
-      <span class="task-eta">{{ task.status === 'active' ? formatEta(task.etaSeconds) : '' }}</span>
-
-      <span class="task-error" *ngIf="task.error" [title]="task.error">{{ task.error }}</span>
-
-      <div class="task-actions">
-        <button *ngIf="task.status === 'active'" (click)="transfers.pause(task.id)" title="Pause">
-          <i class="fi fi-rr-pause ic-amber"></i>
-        </button>
-        <button *ngIf="task.status === 'paused'" (click)="transfers.resume(task.id)" title="Resume">
-          <i class="fi fi-rr-play ic-green"></i>
-        </button>
-        <button *ngIf="task.status === 'error'" (click)="transfers.retry(task.id)" title="Retry">
-          <i class="fi fi-rr-refresh ic-blue"></i>
-        </button>
-        <button *ngIf="!['completed', 'canceled'].includes(task.status)" (click)="transfers.cancel(task.id)" title="Cancel">
-          <i class="fi fi-rr-cross ic-red"></i>
-        </button>
+      <div class="part-row" *ngFor="let part of visiblePartRows(task); trackBy: trackByPartNumber">
+        <span class="part-row__label">Part {{ part.partNumber }} of {{ task.totalParts }}</span>
+        <div class="task-progress task-progress--part">
+          <div
+            class="task-progress__bar"
+            [class.part-completed]="partStatus(part, task) === 'completed'"
+            [style.width.%]="part.progressPct"
+          ></div>
+        </div>
+        <span class="task-pct">{{ part.progressPct }}%</span>
+        <span class="task-size">{{ formatBytes(part.loaded) }} / {{ formatBytes(part.total) }}</span>
+        <span class="part-row__status" [class]="'status-' + partStatus(part, task)">{{ partStatus(part, task) }}</span>
       </div>
-    </div>
+    </ng-container>
   </div>
 
   <div class="settings-overlay" *ngIf="showSettings()" (click)="closeSettings()">

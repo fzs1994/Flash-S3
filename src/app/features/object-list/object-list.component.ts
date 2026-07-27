@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output, computed, effect, signal } from '@angular/core';
+import { Component, EventEmitter, HostListener, Output, computed, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { S3ListItem } from '../../core/models/models';
 import { ElectronService } from '../../core/services/electron.service';
@@ -84,6 +84,40 @@ export class ObjectListComponent {
   }
 
   formatBytes = formatBytes;
+
+  /**
+   * Delete key removes the current selection; F2 renames it (only when
+   * exactly one item is selected, matching the context menu's own rule).
+   * Ignored while the user is typing anywhere (search box, rename dialog,
+   * bookmark panel, etc.) and while any modal overlay (Connections, Copy/Move,
+   * New Folder/Rename/Share URL, Transfer Settings) is open, so a background
+   * selection can't be deleted/renamed out from under an active dialog.
+   */
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(ev: KeyboardEvent): void {
+    if (this.isTypingTarget(ev.target) || this.isModalOpen()) return;
+    const count = this.s3.selectedKeys().size;
+    if (!count) return;
+
+    if (ev.key === 'Delete') {
+      ev.preventDefault();
+      this.deleteSelected();
+    } else if (ev.key === 'F2' && count === 1) {
+      ev.preventDefault();
+      this.renameRequested.emit();
+    }
+  }
+
+  private isTypingTarget(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    if (!el) return false;
+    const tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+  }
+
+  private isModalOpen(): boolean {
+    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .overlay');
+  }
 
   clearSearch(): void {
     this.searchTerm.set('');

@@ -35,7 +35,14 @@ export class PaneService {
     right: emptyPane()
   });
 
+  /** Which pane the user last interacted with - lets a document-level keyboard shortcut (e.g. Delete) know which pane's selection it applies to. */
+  readonly activePaneId = signal<PaneId>('left');
+
   constructor(private electron: ElectronService) {}
+
+  setActivePane(id: PaneId): void {
+    this.activePaneId.set(id);
+  }
 
   pane(id: PaneId): PaneState {
     return this.panes()[id];

@@ -4,11 +4,29 @@ import { S3BrowserService } from './s3-browser.service';
 import { ElectronService } from './electron.service';
 import { PaneService } from './pane.service';
 
+export type ProgressDisplayMode = 'file' | 'parts';
+
+const PROGRESS_DISPLAY_MODE_KEY = 's3b:transferProgressDisplayMode';
+
+function loadProgressDisplayMode(): ProgressDisplayMode {
+  if (typeof localStorage === 'undefined') return 'file';
+  return localStorage.getItem(PROGRESS_DISPLAY_MODE_KEY) === 'parts' ? 'parts' : 'file';
+}
+
 @Injectable({ providedIn: 'root' })
 export class TransferService implements OnDestroy {
   readonly tasks = signal<TransferTask[]>([]);
   readonly concurrency = signal<number>(4);
   readonly partSizeMB = signal<number>(8);
+
+  /**
+   * Whether the queue additionally shows a breakdown of individual multipart
+   * upload parts under each file (like NetSDK's S3 Browser), or just the
+   * aggregated whole-file progress. Purely a display preference - persisted
+   * in localStorage since it doesn't affect the actual transfer.
+   */
+  readonly progressDisplayMode = signal<ProgressDisplayMode>(loadProgressDisplayMode());
+
   private unsubscribe: (() => void) | null = null;
 
   readonly activeTasks = computed(() => this.tasks().filter(t => t.status === 'active'));
@@ -186,5 +204,12 @@ export class TransferService implements OnDestroy {
   async setPartSizeMB(mb: number): Promise<void> {
     const applied = await this.electron.api.transfers.setPartSizeMB(mb);
     this.partSizeMB.set(applied);
+  }
+
+  toggleProgressDisplayMode(): void {
+    this.progressDisplayMode.update((m) => (m === 'file' ? 'parts' : 'file'));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(PROGRESS_DISPLAY_MODE_KEY, this.progressDisplayMode());
+    }
   }
 }
