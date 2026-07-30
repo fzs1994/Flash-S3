@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 /**
  * Thin, explicit bridge between the Angular renderer and the Electron main process.
@@ -76,5 +76,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     confirm: (message, detail) => ipcRenderer.invoke('dialogs:confirm', { message, detail })
   },
 
-  platform: process.platform
+  platform: process.platform,
+
+  // Resolves a real filesystem path from a dropped File object. The old
+  // `File.path` extension Electron used to patch onto dropped files is
+  // deprecated and, on macOS in particular, has been unreliable for OS-level
+  // Finder drag-and-drop (it can come back empty even though the drop event
+  // itself fires fine) - `webUtils.getPathForFile` is Electron's supported
+  // replacement and works consistently across platforms.
+  getPathForFile: (file) => webUtils.getPathForFile(file)
 });

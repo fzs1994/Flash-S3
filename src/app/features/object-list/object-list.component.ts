@@ -206,9 +206,21 @@ export class ObjectListComponent {
   onDrop(ev: DragEvent): void {
     ev.preventDefault();
     this.isDragOver = false;
-    // Electron exposes real file paths on dropped File objects.
+    // `webUtils.getPathForFile` (bridged via preload) is Electron's supported
+    // way to resolve a dropped File's real filesystem path. The older
+    // `File.path` property this used to rely on is deprecated and, on macOS
+    // specifically, can come back empty even though the drop itself fires
+    // fine - falling back to it here only for older/unexpected preload builds.
     const files = Array.from(ev.dataTransfer?.files || []) as any[];
-    const paths = files.map((f) => f.path).filter(Boolean);
+    const paths = files
+      .map((f) => {
+        try {
+          return this.electron.api.getPathForFile ? this.electron.api.getPathForFile(f) : f.path;
+        } catch {
+          return f.path;
+        }
+      })
+      .filter(Boolean);
     const connId = this.s3.activeConnectionId();
     const bucket = this.s3.currentBucket();
     if (paths.length && connId && bucket) {
