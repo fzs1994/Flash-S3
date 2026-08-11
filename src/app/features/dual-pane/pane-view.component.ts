@@ -7,6 +7,7 @@ import { ElectronService } from '../../core/services/electron.service';
 import { PaneService } from '../../core/services/pane.service';
 import { TransferService } from '../../core/services/transfer.service';
 import { ContextMenuComponent, ContextMenuEntry } from '../context-menu/context-menu.component';
+import { PropertiesDialogComponent } from '../dialogs/properties-dialog.component';
 
 function formatBytes(bytes?: number): string {
   if (bytes === undefined || bytes === null) return '';
@@ -25,7 +26,7 @@ function formatBytes(bytes?: number): string {
 @Component({
   selector: 'app-pane-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContextMenuComponent],
+  imports: [CommonModule, FormsModule, ContextMenuComponent, PropertiesDialogComponent],
   templateUrl: './pane-view.component.html',
   styleUrl: './pane-view.component.scss'
 })
@@ -36,6 +37,8 @@ export class PaneViewComponent {
   newFolderName = '';
 
   readonly contextMenu = signal<{ x: number; y: number } | null>(null);
+  readonly folderContextMenu = signal<{ x: number; y: number } | null>(null);
+  readonly propertiesItem = signal<S3ListItem | null>(null);
 
   readonly otherPaneReady = computed(() => {
     const otherId = this.paneId === 'left' ? 'right' : 'left';
@@ -58,8 +61,26 @@ export class PaneViewComponent {
         { type: 'item', id: 'move', label: 'Move to other pane', icon: this.moveArrowIcon, colorClass: 'ic-purple' }
       );
     }
-    entries.push({ type: 'divider' }, { type: 'item', id: 'delete', label: 'Delete', icon: 'fi-rr-trash', colorClass: 'ic-red', danger: true });
+    entries.push(
+      { type: 'divider' },
+      { type: 'item', id: 'delete', label: 'Delete', icon: 'fi-rr-trash', colorClass: 'ic-red', danger: true }
+    );
+    if (count === 1) {
+      entries.push({ type: 'divider' }, { type: 'item', id: 'properties', label: 'Properties', icon: 'fi-rr-info', colorClass: 'ic-blue' });
+    }
     return entries;
+  });
+
+  /** Right-click on empty space (not a specific row) - folder-level actions, matching the pane's own mini toolbar. */
+  readonly folderContextMenuItems = computed<ContextMenuEntry[]>(() => {
+    if (!this.state.bucket) return [];
+    return [
+      { type: 'item', id: 'refresh', label: 'Refresh', icon: 'fi-rr-refresh', colorClass: 'ic-blue' },
+      { type: 'item', id: 'newFolder', label: 'New Folder', icon: 'fi-rr-folder', colorClass: 'ic-amber' },
+      { type: 'divider' },
+      { type: 'item', id: 'uploadFiles', label: 'Upload Files…', icon: 'fi-rr-upload', colorClass: 'ic-blue' },
+      { type: 'item', id: 'uploadFolder', label: 'Upload Folder…', icon: 'fi-rr-upload', colorClass: 'ic-blue' }
+    ];
   });
 
   constructor(
@@ -104,11 +125,22 @@ export class PaneViewComponent {
 
   onRowContextMenu(item: S3ListItem, ev: MouseEvent): void {
     ev.preventDefault();
+    // Stop it reaching the pane's own contextmenu handler, which would
+    // otherwise also fire and show the folder-level menu on top of this one.
+    ev.stopPropagation();
     this.panes.setActivePane(this.paneId);
     if (!this.state.selectedKeys.has(item.key)) {
       this.panes.toggleSelect(this.paneId, item.key, true);
     }
     this.contextMenu.set({ x: ev.clientX, y: ev.clientY });
+  }
+
+  /** Right-click anywhere in the pane that isn't a row (rows stop propagation before this fires). */
+  onContainerContextMenu(ev: MouseEvent): void {
+    if (!this.state.bucket) return;
+    ev.preventDefault();
+    this.panes.setActivePane(this.paneId);
+    this.folderContextMenu.set({ x: ev.clientX, y: ev.clientY });
   }
 
   /**
@@ -136,7 +168,7 @@ export class PaneViewComponent {
   }
 
   private isModalOpen(): boolean {
-    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .overlay');
+    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .props-overlay, .overlay');
   }
 
   onContextMenuAction(actionId: string): void {
@@ -153,7 +185,35 @@ export class PaneViewComponent {
       case 'delete':
         this.deleteSelected();
         break;
+      case 'properties':
+        this.openProperties();
+        break;
     }
+  }
+
+  onFolderContextMenuAction(actionId: string): void {
+    switch (actionId) {
+      case 'refresh':
+        this.refresh();
+        break;
+      case 'newFolder':
+        this.startAddFolder();
+        break;
+      case 'uploadFiles':
+        this.uploadFiles();
+        break;
+      case 'uploadFolder':
+        this.uploadFolder();
+        break;
+    }
+  }
+
+  private openProperties(): void {
+    const p = this.state;
+    if (p.selectedKeys.size !== 1) return;
+    const key = Array.from(p.selectedKeys)[0];
+    const item = p.items.find((i) => i.key === key);
+    if (item) this.propertiesItem.set(item);
   }
 
   isSelected(key: string): boolean {
@@ -167,6 +227,11 @@ export class PaneViewComponent {
   uploadFiles(): void {
     const p = this.state;
     if (p.connectionId && p.bucket) this.transfers.uploadFilesDialog(p.bucket, p.prefix, p.connectionId);
+  }
+
+  uploadFolder(): void {
+    const p = this.state;
+    if (p.connectionId && p.bucket) this.transfers.uploadFolderDialog(p.bucket, p.prefix, p.connectionId);
   }
 
   download(): void {

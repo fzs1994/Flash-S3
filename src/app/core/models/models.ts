@@ -29,6 +29,17 @@ export interface S3ListItem {
   storageClass?: string;
 }
 
+/** Live HeadObject-sourced details shown in the Properties popup - fresher/more complete than whatever a folder listing happened to cache. */
+export interface ObjectProperties {
+  key: string;
+  size: number;
+  lastModified?: string;
+  storageClass: string;
+  contentType?: string | null;
+  etag?: string | null;
+  versionId?: string | null;
+}
+
 /**
  * One open connection's browsing session - buckets, current bucket/prefix,
  * listing, selection, and loading/error state. A tab is created the first

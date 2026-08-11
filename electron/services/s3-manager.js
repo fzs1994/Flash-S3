@@ -10,6 +10,7 @@ const {
   CreateBucketCommand,
   DeleteBucketCommand,
   HeadBucketCommand,
+  HeadObjectCommand,
   GetObjectCommand
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
@@ -452,6 +453,42 @@ class S3Manager {
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     const url = await getSignedUrl(client, command, { expiresIn: expiresInSeconds });
     return { url };
+  }
+
+  /**
+   * The object's plain, unsigned S3 URL - the same address the object lives
+   * at regardless of anyone's credentials. Only actually reachable by anyone
+   * without a signature if the object/bucket policy allows public/anonymous
+   * reads; for a private bucket this is mostly useful as a stable
+   * reference/identifier (e.g. to paste into another AWS tool or a bucket
+   * policy) rather than a link that will load in a browser.
+   */
+  async getPublicUrl(connectionId, bucket, key) {
+    const region = await this._resolveBucketRegion(connectionId, bucket);
+    const encodedKey = key
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+    // Path-style for dotted bucket names avoids the TLS wildcard-certificate
+    // mismatch noted on fetchBucketRegionHeader() above; virtual-hosted-style
+    // otherwise since that's the more familiar/canonical form.
+    const host = bucket.includes('.') ? `s3.${region}.amazonaws.com/${encodeURIComponent(bucket)}` : `${bucket}.s3.${region}.amazonaws.com`;
+    return { url: `https://${host}/${encodedKey}` };
+  }
+
+  /** Real-time metadata for a single object (Properties popup) - a live HeadObject, not whatever the last folder listing happened to cache. */
+  async getObjectProperties(connectionId, bucket, key) {
+    const client = await this.getClientForBucket(connectionId, bucket);
+    const res = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+    return {
+      key,
+      size: res.ContentLength ?? 0,
+      lastModified: res.LastModified,
+      storageClass: res.StorageClass || 'STANDARD',
+      contentType: res.ContentType || null,
+      etag: res.ETag ? res.ETag.replace(/"/g, '') : null,
+      versionId: res.VersionId || null
+    };
   }
 }
 

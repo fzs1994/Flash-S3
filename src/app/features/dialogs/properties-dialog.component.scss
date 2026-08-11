@@ -1,0 +1,73 @@
+.props-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--s3b-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+.props-dialog {
+  background: var(--s3b-surface);
+  border-radius: 6px;
+  padding: 18px 20px;
+  width: 440px;
+  max-width: 90vw;
+  box-shadow: 0 8px 30px var(--s3b-shadow);
+}
+.props-dialog h3 {
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--s3b-text);
+}
+.prop-row {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--s3b-border);
+  font-size: 12.5px;
+}
+.prop-row:last-of-type {
+  border-bottom: none;
+}
+.prop-label {
+  flex: 0 0 120px;
+  color: var(--s3b-muted);
+}
+.prop-value {
+  flex: 1;
+  color: var(--s3b-text);
+  word-break: break-all;
+}
+.prop-value--mono {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 11.5px;
+}
+.prop-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  color: var(--s3b-muted);
+  font-size: 12.5px;
+}
+.prop-error {
+  color: var(--s3b-red);
+  font-size: 12px;
+  margin: 8px 0;
+}
+.props-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+.props-actions button.primary {
+  padding: 6px 16px;
+  border: 1px solid var(--s3b-blue);
+  border-radius: 3px;
+  background: var(--s3b-blue);
+  color: #fff;
+}

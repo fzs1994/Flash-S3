@@ -1,4 +1,11 @@
-<div class="object-list" (dragover)="onDragOver($event)" (dragleave)="onDragLeave()" (drop)="onDrop($event)" [class.drag-over]="isDragOver">
+<div
+  class="object-list"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave()"
+  (drop)="onDrop($event)"
+  (contextmenu)="onContainerContextMenu($event)"
+  [class.drag-over]="isDragOver"
+>
   <div class="breadcrumbs" *ngIf="s3.currentBucket()">
     <span *ngFor="let crumb of s3.breadcrumbs(); let last = last">
       <a (click)="onBreadcrumbClick(crumb.prefix)" [class.last]="last">{{ crumb.label }}</a>
@@ -69,5 +76,14 @@
     [items]="contextMenuItems()"
     (itemSelected)="onContextMenuAction($event)"
     (closed)="contextMenu.set(null)"
+  ></app-context-menu>
+
+  <app-context-menu
+    *ngIf="folderContextMenu() as menu"
+    [x]="menu.x"
+    [y]="menu.y"
+    [items]="folderContextMenuItems()"
+    (itemSelected)="onFolderContextMenuAction($event)"
+    (closed)="folderContextMenu.set(null)"
   ></app-context-menu>
 </div>

@@ -37,6 +37,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('s3:deleteBucket', { connectionId, bucket }),
     getPresignedUrl: (connectionId, bucket, key, expiresInSeconds) =>
       ipcRenderer.invoke('s3:getPresignedUrl', { connectionId, bucket, key, expiresInSeconds }),
+    getPublicUrl: (connectionId, bucket, key) => ipcRenderer.invoke('s3:getPublicUrl', { connectionId, bucket, key }),
+    getObjectProperties: (connectionId, bucket, key) =>
+      ipcRenderer.invoke('s3:getObjectProperties', { connectionId, bucket, key }),
     copyItems: (args) => ipcRenderer.invoke('s3:copyItems', args),
     exportListingCsv: (args) => ipcRenderer.invoke('s3:exportListingCsv', args)
   },

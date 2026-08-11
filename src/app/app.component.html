@@ -30,6 +30,8 @@
         (generateUrlRequested)="openShareUrlDialog()"
         (copyRequested)="copyMoveMode.set('copy')"
         (moveRequested)="copyMoveMode.set('move')"
+        (newFolderRequested)="openNewFolderDialog()"
+        (propertiesRequested)="openPropertiesDialog()"
       ></app-object-list>
     </main>
   </div>
@@ -77,8 +79,18 @@
   </app-prompt-dialog>
 
   <app-prompt-dialog
+    *ngIf="dialogMode() === 'shareUrlChoice'"
+    title="Share URL"
+    label="Choose a link type:"
+    [choices]="shareUrlChoices"
+    (choiceSelected)="onShareUrlChoice($event)"
+    (cancelled)="onDialogCancel()"
+  >
+  </app-prompt-dialog>
+
+  <app-prompt-dialog
     *ngIf="dialogMode() === 'shareUrl'"
-    title="Pre-signed URL (expires in 1 hour)"
+    [title]="shareUrlTitle"
     label="Share this link"
     [value]="dialogValue"
     [readonlyValue]="true"
@@ -88,4 +100,13 @@
   </app-prompt-dialog>
 
   <app-copy-move-dialog *ngIf="copyMoveMode()" [mode]="copyMoveMode()!" (closed)="copyMoveMode.set(null)"> </app-copy-move-dialog>
+
+  <app-properties-dialog
+    *ngIf="propertiesItem() as item"
+    [item]="item"
+    [connectionId]="s3.activeConnectionId()"
+    [bucket]="s3.currentBucket()"
+    (closed)="propertiesItem.set(null)"
+  >
+  </app-properties-dialog>
 </div>

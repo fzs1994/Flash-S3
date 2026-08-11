@@ -1,14 +1,30 @@
 <div class="overlay">
   <div class="dialog">
     <h3>{{ title }}</h3>
-    <label>{{ label }}</label>
-    <div class="value-row">
-      <input [(ngModel)]="value" [readOnly]="readonlyValue" (keyup.enter)="!readonlyValue && onConfirm()" />
-      <button *ngIf="readonlyValue" (click)="copyToClipboard()" title="Copy"><i class="fi fi-rr-copy ic-blue"></i></button>
-    </div>
-    <div class="actions">
-      <button (click)="onCancel()">{{ readonlyValue ? 'Close' : 'Cancel' }}</button>
-      <button *ngIf="!readonlyValue" class="primary" (click)="onConfirm()">{{ confirmLabel }}</button>
-    </div>
+
+    <ng-container *ngIf="!choices; else choicesTpl">
+      <label>{{ label }}</label>
+      <div class="value-row">
+        <input [(ngModel)]="value" [readOnly]="readonlyValue" (keyup.enter)="!readonlyValue && onConfirm()" />
+        <button *ngIf="readonlyValue" (click)="copyToClipboard()" title="Copy"><i class="fi fi-rr-copy ic-blue"></i></button>
+      </div>
+      <div class="actions">
+        <button (click)="onCancel()">{{ readonlyValue ? 'Close' : 'Cancel' }}</button>
+        <button *ngIf="!readonlyValue" class="primary" (click)="onConfirm()">{{ confirmLabel }}</button>
+      </div>
+    </ng-container>
+
+    <ng-template #choicesTpl>
+      <label *ngIf="label">{{ label }}</label>
+      <div class="choice-list">
+        <button *ngFor="let c of choices" class="choice-btn" (click)="selectChoice(c.id)">
+          <i class="fi" [class]="c.icon" *ngIf="c.icon"></i>
+          {{ c.label }}
+        </button>
+      </div>
+      <div class="actions">
+        <button (click)="onCancel()">Cancel</button>
+      </div>
+    </ng-template>
   </div>
 </div>

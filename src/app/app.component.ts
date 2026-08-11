@@ -1,18 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, signal } from '@angular/core';
+import { S3ListItem } from './core/models/models';
 import { ConnectionService } from './core/services/connection.service';
 import { S3BrowserService } from './core/services/s3-browser.service';
 import { BucketTreeComponent } from './features/bucket-tree/bucket-tree.component';
 import { ConnectionManagerComponent } from './features/connection-manager/connection-manager.component';
 import { CopyMoveDialogComponent } from './features/dialogs/copy-move-dialog.component';
-import { PromptDialogComponent } from './features/dialogs/prompt-dialog.component';
+import { PromptDialogChoice, PromptDialogComponent } from './features/dialogs/prompt-dialog.component';
+import { PropertiesDialogComponent } from './features/dialogs/properties-dialog.component';
 import { DualPaneComponent } from './features/dual-pane/dual-pane.component';
 import { ObjectListComponent } from './features/object-list/object-list.component';
 import { StatusBarComponent } from './features/status-bar/status-bar.component';
 import { ToolbarComponent } from './features/toolbar/toolbar.component';
 import { TransferQueueComponent } from './features/transfer-queue/transfer-queue.component';
 
-type DialogMode = 'newFolder' | 'rename' | 'shareUrl' | null;
+type DialogMode = 'newFolder' | 'rename' | 'shareUrlChoice' | 'shareUrl' | null;
 
 const SIDEBAR_MIN = 160;
 const SIDEBAR_MAX = 480;
@@ -47,6 +49,7 @@ function persistPanelSize(key: string, value: number): void {
     StatusBarComponent,
     ConnectionManagerComponent,
     PromptDialogComponent,
+    PropertiesDialogComponent,
     CopyMoveDialogComponent,
     DualPaneComponent
   ],
@@ -57,7 +60,14 @@ export class AppComponent {
   readonly showConnectionsPanel = signal(true);
   readonly dialogMode = signal<DialogMode>(null);
   readonly copyMoveMode = signal<'copy' | 'move' | null>(null);
+  readonly propertiesItem = signal<S3ListItem | null>(null);
   dialogValue = '';
+  shareUrlTitle = 'Share URL';
+
+  readonly shareUrlChoices: PromptDialogChoice[] = [
+    { id: 'signed', label: 'Signed URL (expires in 1 hour)', icon: 'fi-rr-lock ic-amber' },
+    { id: 'unsigned', label: 'Unsigned URL (plain S3 path)', icon: 'fi-rr-link ic-teal' }
+  ];
 
   readonly sidebarWidth = signal(loadPanelSize('s3b:sidebarWidth', 240));
   readonly queueHeight = signal(loadPanelSize('s3b:queueHeight', 240));
@@ -133,16 +143,34 @@ export class AppComponent {
     this.dialogMode.set('rename');
   }
 
-  async openShareUrlDialog(): Promise<void> {
+  openShareUrlDialog(): void {
     const keys = Array.from(this.s3.selectedKeys());
     if (keys.length !== 1) return;
+    this.dialogMode.set('shareUrlChoice');
+  }
+
+  async onShareUrlChoice(choiceId: string): Promise<void> {
+    const keys = Array.from(this.s3.selectedKeys());
+    if (keys.length !== 1) {
+      this.dialogMode.set(null);
+      return;
+    }
+    this.shareUrlTitle = choiceId === 'signed' ? 'Signed URL (expires in 1 hour)' : 'Unsigned URL';
     this.dialogValue = 'Generating…';
     this.dialogMode.set('shareUrl');
     try {
-      this.dialogValue = await this.s3.generatePresignedUrl(keys[0], 3600);
+      this.dialogValue =
+        choiceId === 'signed' ? await this.s3.generatePresignedUrl(keys[0], 3600) : await this.s3.generatePublicUrl(keys[0]);
     } catch (err: any) {
       this.dialogValue = `Error: ${err?.message || err}`;
     }
+  }
+
+  openPropertiesDialog(): void {
+    const keys = Array.from(this.s3.selectedKeys());
+    if (keys.length !== 1) return;
+    const item = this.s3.items().find((i) => i.key === keys[0]);
+    if (item) this.propertiesItem.set(item);
   }
 
   async onDialogConfirm(value: string): Promise<void> {

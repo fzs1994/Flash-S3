@@ -63,3 +63,25 @@
   color: #fff;
   border-color: var(--s3b-blue);
 }
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+.choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 4px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  font-size: 13px;
+  text-align: left;
+}
+.choice-btn:hover {
+  background: var(--s3b-row-hover);
+  border-color: var(--s3b-blue);
+}

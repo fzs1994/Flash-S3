@@ -1,0 +1,61 @@
+<div class="props-overlay" (click)="close()">
+  <div class="props-dialog" (click)="$event.stopPropagation()">
+    <h3>
+      <i
+        class="fi ic-blue"
+        [class.fi-rr-folder]="item.type === 'folder'"
+        [class.fi-rr-file]="item.type === 'file'"
+      ></i>
+      Properties
+    </h3>
+
+    <div class="prop-row">
+      <span class="prop-label">Name</span>
+      <span class="prop-value">{{ item.name }}</span>
+    </div>
+    <div class="prop-row">
+      <span class="prop-label">Full path</span>
+      <span class="prop-value prop-value--mono">{{ item.key }}</span>
+    </div>
+    <div class="prop-row">
+      <span class="prop-label">Type</span>
+      <span class="prop-value">{{ item.type === 'folder' ? 'Folder' : 'File' }}</span>
+    </div>
+
+    <ng-container *ngIf="item.type === 'file'">
+      <div class="prop-loading" *ngIf="loading()"><span class="s3b-spinner"></span> Loading details…</div>
+      <p class="prop-error" *ngIf="error()">{{ error() }}</p>
+
+      <ng-container *ngIf="properties() as p">
+        <div class="prop-row">
+          <span class="prop-label">Size</span>
+          <span class="prop-value">{{ formatBytes(p.size) }} ({{ p.size | number }} bytes)</span>
+        </div>
+        <div class="prop-row" *ngIf="p.lastModified">
+          <span class="prop-label">Last modified</span>
+          <span class="prop-value">{{ p.lastModified | date: 'medium' }}</span>
+        </div>
+        <div class="prop-row">
+          <span class="prop-label">Storage class</span>
+          <span class="prop-value">{{ p.storageClass }}</span>
+        </div>
+        <div class="prop-row" *ngIf="p.contentType">
+          <span class="prop-label">Content type</span>
+          <span class="prop-value">{{ p.contentType }}</span>
+        </div>
+        <div class="prop-row" *ngIf="p.etag">
+          <span class="prop-label">ETag</span>
+          <span class="prop-value prop-value--mono">{{ p.etag }}</span>
+        </div>
+        <div class="prop-row" *ngIf="p.versionId">
+          <span class="prop-label">Version ID</span>
+          <span class="prop-value prop-value--mono">{{ p.versionId }}</span>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <div class="props-actions">
+      <button class="primary" (click)="close()">Close</button>
+    </div>
+  </div>
+</div>

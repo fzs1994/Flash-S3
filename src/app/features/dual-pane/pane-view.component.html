@@ -1,4 +1,4 @@
-<div class="pane">
+<div class="pane" (contextmenu)="onContainerContextMenu($event)">
   <div class="pane__pickers">
     <select [ngModel]="state.connectionId" (ngModelChange)="onConnectionChange($event)">
       <option [value]="null" disabled>Choose a connection…</option>
@@ -110,4 +110,21 @@
     (itemSelected)="onContextMenuAction($event)"
     (closed)="contextMenu.set(null)"
   ></app-context-menu>
+
+  <app-context-menu
+    *ngIf="folderContextMenu() as menu"
+    [x]="menu.x"
+    [y]="menu.y"
+    [items]="folderContextMenuItems()"
+    (itemSelected)="onFolderContextMenuAction($event)"
+    (closed)="folderContextMenu.set(null)"
+  ></app-context-menu>
+
+  <app-properties-dialog
+    *ngIf="propertiesItem() as item"
+    [item]="item"
+    [connectionId]="state.connectionId"
+    [bucket]="state.bucket"
+    (closed)="propertiesItem.set(null)"
+  ></app-properties-dialog>
 </div>

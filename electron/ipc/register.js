@@ -81,6 +81,14 @@ function registerIpcHandlers(ipcMain, getWindow) {
     s3Manager.getPresignedUrl(connectionId, bucket, key, expiresInSeconds)
   );
 
+  ipcMain.handle('s3:getPublicUrl', async (_e, { connectionId, bucket, key }) =>
+    s3Manager.getPublicUrl(connectionId, bucket, key)
+  );
+
+  ipcMain.handle('s3:getObjectProperties', async (_e, { connectionId, bucket, key }) =>
+    s3Manager.getObjectProperties(connectionId, bucket, key)
+  );
+
   ipcMain.handle('s3:copyItems', async (_e, args) => s3Manager.copyItems(args));
 
   ipcMain.handle('s3:exportListingCsv', async (_e, { connectionId, bucket, prefix, destPath }) => {

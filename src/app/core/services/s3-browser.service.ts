@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { ConnectionTabState, S3ListItem } from '../models/models';
+import { ConnectionTabState, ObjectProperties, S3ListItem } from '../models/models';
 import { ElectronService } from './electron.service';
 
 /**
@@ -220,6 +220,22 @@ export class S3BrowserService {
     if (!connectionId || !tab?.currentBucket) throw new Error('No active bucket');
     const res = await this.electron.api.s3.getPresignedUrl(connectionId, tab.currentBucket, key, expiresInSeconds);
     return res.url;
+  }
+
+  /** The object's plain, unsigned S3 URL (no expiry, no credentials embedded) - see s3-manager.js.getPublicUrl() for what "unsigned" means for a private bucket. */
+  async generatePublicUrl(key: string): Promise<string> {
+    const connectionId = this.activeConnectionId();
+    const tab = this.activeTab();
+    if (!connectionId || !tab?.currentBucket) throw new Error('No active bucket');
+    const res = await this.electron.api.s3.getPublicUrl(connectionId, tab.currentBucket, key);
+    return res.url;
+  }
+
+  async getObjectProperties(key: string): Promise<ObjectProperties> {
+    const connectionId = this.activeConnectionId();
+    const tab = this.activeTab();
+    if (!connectionId || !tab?.currentBucket) throw new Error('No active bucket');
+    return this.electron.api.s3.getObjectProperties(connectionId, tab.currentBucket, key);
   }
 
   /**

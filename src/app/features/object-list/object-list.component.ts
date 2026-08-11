@@ -27,6 +27,8 @@ export class ObjectListComponent {
   @Output() generateUrlRequested = new EventEmitter<void>();
   @Output() copyRequested = new EventEmitter<void>();
   @Output() moveRequested = new EventEmitter<void>();
+  @Output() newFolderRequested = new EventEmitter<void>();
+  @Output() propertiesRequested = new EventEmitter<void>();
 
   isDragOver = false;
 
@@ -56,7 +58,10 @@ export class ObjectListComponent {
       { type: 'item', id: 'delete', label: 'Delete', icon: 'fi-rr-trash', colorClass: 'ic-red', danger: true }
     ];
     const shareGroup: ContextMenuEntry[] = single
-      ? [{ type: 'item', id: 'shareUrl', label: 'Share URL…', icon: 'fi-rr-link', colorClass: 'ic-teal' }]
+      ? [
+          { type: 'item', id: 'shareUrl', label: 'Share URL…', icon: 'fi-rr-link', colorClass: 'ic-teal' },
+          { type: 'item', id: 'properties', label: 'Properties', icon: 'fi-rr-info', colorClass: 'ic-blue' }
+        ]
       : [];
 
     const groups = [primaryGroup, editGroup, shareGroup].filter((g) => g.length);
@@ -65,6 +70,31 @@ export class ObjectListComponent {
       if (i > 0) entries.push({ type: 'divider' });
       entries.push(...group);
     });
+    return entries;
+  });
+
+  /**
+   * Right-clicking empty space (not a specific row) shows folder-level
+   * actions - the same set as the top toolbar - rather than nothing, so you
+   * don't have to reach for the toolbar just because you're deep in a list.
+   */
+  readonly folderContextMenu = signal<{ x: number; y: number } | null>(null);
+
+  readonly folderContextMenuItems = computed<ContextMenuEntry[]>(() => {
+    const hasBucket = !!this.s3.currentBucket();
+    const entries: ContextMenuEntry[] = [
+      { type: 'item', id: 'refresh', label: 'Refresh', icon: 'fi-rr-refresh', colorClass: 'ic-blue' }
+    ];
+    if (hasBucket) {
+      entries.push(
+        { type: 'item', id: 'newFolder', label: 'New Folder', icon: 'fi-rr-folder', colorClass: 'ic-amber' },
+        { type: 'divider' },
+        { type: 'item', id: 'uploadFiles', label: 'Upload Files…', icon: 'fi-rr-upload', colorClass: 'ic-blue' },
+        { type: 'item', id: 'uploadFolder', label: 'Upload Folder…', icon: 'fi-rr-upload', colorClass: 'ic-blue' },
+        { type: 'divider' },
+        { type: 'item', id: 'exportCsv', label: 'Export CSV…', icon: 'fi-rr-file-export', colorClass: 'ic-teal' }
+      );
+    }
     return entries;
   });
 
@@ -116,7 +146,7 @@ export class ObjectListComponent {
   }
 
   private isModalOpen(): boolean {
-    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .overlay');
+    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .props-overlay, .overlay');
   }
 
   clearSearch(): void {
@@ -137,6 +167,9 @@ export class ObjectListComponent {
 
   onRowContextMenu(item: S3ListItem, ev: MouseEvent): void {
     ev.preventDefault();
+    // Stop it reaching the container's own contextmenu handler, which would
+    // otherwise also fire and show the folder-level menu on top of this one.
+    ev.stopPropagation();
     // Right-clicking a row outside the current selection replaces it (typical
     // file-manager behavior); right-clicking within an existing multi-select
     // keeps it intact so bulk actions apply to the whole selection.
@@ -144,6 +177,12 @@ export class ObjectListComponent {
       this.s3.toggleSelect(item.key, true);
     }
     this.contextMenu.set({ x: ev.clientX, y: ev.clientY });
+  }
+
+  /** Right-click anywhere that isn't a row (rows stop propagation before this fires) - folder-level actions instead of an item menu. */
+  onContainerContextMenu(ev: MouseEvent): void {
+    ev.preventDefault();
+    this.folderContextMenu.set({ x: ev.clientX, y: ev.clientY });
   }
 
   onContextMenuAction(actionId: string): void {
@@ -165,6 +204,31 @@ export class ObjectListComponent {
         break;
       case 'shareUrl':
         this.generateUrlRequested.emit();
+        break;
+      case 'properties':
+        this.propertiesRequested.emit();
+        break;
+    }
+  }
+
+  onFolderContextMenuAction(actionId: string): void {
+    const bucket = this.s3.currentBucket();
+    switch (actionId) {
+      case 'refresh':
+        if (bucket) this.s3.refreshListing();
+        else this.s3.loadBuckets();
+        break;
+      case 'newFolder':
+        this.newFolderRequested.emit();
+        break;
+      case 'uploadFiles':
+        if (bucket) this.transfers.uploadFilesDialog(bucket, this.s3.currentPrefix());
+        break;
+      case 'uploadFolder':
+        if (bucket) this.transfers.uploadFolderDialog(bucket, this.s3.currentPrefix());
+        break;
+      case 'exportCsv':
+        this.s3.exportListingCsv();
         break;
     }
   }
