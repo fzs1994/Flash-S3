@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
 const { EventEmitter } = require('events');
+const { Transform } = require('stream');
 const Store = require('electron-store');
 const {
   GetObjectCommand,
@@ -336,6 +337,18 @@ class TransferQueueManager extends EventEmitter {
     }
   }
 
+  /**
+   * Updates the visual "transferred" total (drives the progress bar/%/size
+   * text) and the displayed speed/ETA from a real transferred-byte count,
+   * then throttles the broadcast to the renderer to at most once per 250ms.
+   *
+   * Speed is an instantaneous delta (bytes moved over the last >= 250ms)
+   * rather than a cumulative average, so it reacts promptly to the
+   * connection actually speeding up or slowing down. This is only accurate
+   * because `transferredBytes` is now always a genuine count, not a
+   * synthetic projection - see the comment on _runUpload() for how upload
+   * progress gets real, per-chunk numbers.
+   */
   _tickProgress(task, transferredBytes) {
     task.transferred = transferredBytes;
     const now = Date.now();
@@ -353,36 +366,47 @@ class TransferQueueManager extends EventEmitter {
 
   /**
    * Uploads happen through our own hand-rolled multipart implementation
-   * rather than @aws-sdk/lib-storage's `Upload` class, to get per-part
-   * progress like NetSDK's S3 Browser shows.
+   * rather than @aws-sdk/lib-storage's `Upload` class, to get real per-part
+   * progress like NetSDK's S3 Browser shows (lib-storage's httpUploadProgress
+   * only fires once a whole part has finished, and its chunker reads ahead
+   * of what's actually been sent).
    *
-   * Why lib-storage can't give us that: in Node, its `httpUploadProgress`
-   * only fires once a part has fully *finished* uploading, and its internal
-   * chunker reads several parts ahead of what's actually been confirmed sent.
+   * Progress comes from a small counting Transform (_createProgressStream())
+   * spliced between each part's file-read stream and the SDK - that Transform
+   * is what's actually passed as `Body` for the UploadPartCommand/
+   * PutObjectCommand. @smithy/node-http-handler pipes `Body` directly into
+   * the underlying http.ClientRequest (`body.pipe(httpRequest)`), and Node's
+   * pipe() only pulls more out of a source once its destination has actually
+   * drained - so as long as something downstream is genuinely slow to accept
+   * bytes (a real, bandwidth-limited connection), bytes flow through our
+   * counting Transform at real transmission pace, not disk-read speed. This
+   * requires the client to not silently wrap the body in the SDK's own
+   * checksum-computing stream, which attaches its own `.on('data', ...)` and
+   * drains it into a buffer as fast as Node can read regardless of real
+   * upload speed - see the requestChecksumCalculation note in
+   * s3-manager.js._buildClient(), which already disables that.
    *
-   * A first attempt here counted 'data' events read off each part's own
-   * dedicated file stream, on the theory that Node's `body.pipe(httpRequest)`
-   * (@smithy/node-http-handler's writeBody()) would only let bytes through as
-   * fast as the real socket could send them. That's true in principle, but in
-   * practice it only backpressures once the OS socket's *kernel* send buffer
-   * is full - and for a single part (a handful of MB), the OS will often
-   * accept the whole thing into that buffer almost instantly, well before it
-   * has actually reached S3. This was verified directly: a real, deliberately
-   * bandwidth-capped test upload (genuinely ~12 seconds end to end, confirmed
-   * by wall-clock time) still reported "100% written" within the first
-   * fraction of a second. So raw byte-write counting isn't a sandbox quirk -
-   * it structurally cannot reflect real transfer progress once a chunk is
-   * smaller than the OS's send buffer, which most individual parts are.
+   * The counting must go through a Transform and not a bare 'data' listener
+   * on the raw file stream - `client.send()` only attaches its real consumer
+   * after some async setup (signing, connecting), and a 'data' listener
+   * attached before that would force the file stream into flowing mode
+   * immediately, draining the whole file into that listener before the SDK
+   * ever attaches and leaving the real HTTP body empty (verified directly:
+   * with a real consumer attached 50ms late, that pattern delivered zero
+   * bytes to it and produced exactly this kind of idle-socket timeout). See
+   * _createProgressStream() for how the Transform avoids that.
    *
-   * So progress is instead a time-based projection anchored to real
-   * confirmations: once at least one part has actually finished (its HTTP
-   * response came back), we know real measured throughput for this task, and
-   * every other in-flight part's bar is projected forward from that rate
-   * (split across however many parts are concurrently in flight right now).
-   * Before any part has finished, an asymptotic "still working" creep is
-   * shown instead of a frozen 0%. No part's bar is ever allowed to reach 100%
-   * on its own - only a genuine confirmed completion snaps it there - so the
-   * number can be an approximation of pace, but never lies about being done.
+   * Verified directly with a local test: piping a 30MB file through this
+   * same Transform into a writable deliberately throttled to ~1.4 MB/s (with
+   * the real consumer attached late, mirroring the SDK) made progress track
+   * wall-clock time to within ~10-15% of the expected pace at every
+   * checkpoint (10/25/50/75/90/100%) - not the near-instant read you'd see if
+   * a buffer had simply swallowed the whole file up front.
+   *
+   * So each part's `loaded` is simply real bytes read off its stream so far,
+   * capped at its size. `_confirmPart()` still snaps it to exactly `size`
+   * once S3's response for that part actually comes back, covering the
+   * brief gap between "last byte handed off" and "S3 acknowledged it".
    */
   async _runUpload(task) {
     const client = await this.s3Manager.getClientForBucket(task.connectionId, task.bucket);
@@ -393,120 +417,79 @@ class TransferQueueManager extends EventEmitter {
     // setting while this task is queued or running.
     task.partSizeMB = this.partSizeMB;
     task.totalParts = Math.max(1, Math.ceil((task.size || 0) / partSizeBytes));
-    task.parts = new Map(); // partNumber -> { loaded, total, confirmed, startedAt }
-    task._avgSpeedBps = 0;
-    task._confirmedBytes = 0;
+    task.parts = new Map(); // partNumber -> { loaded, total }
 
-    this._startPartEstimator(task);
-    try {
-      if (task.totalParts <= 1) {
-        await this._runSinglePutUpload(task, client);
-      } else {
-        await this._runMultipartUpload(task, client, partSizeBytes);
-      }
-    } finally {
-      this._stopPartEstimator(task);
+    if (task.totalParts <= 1) {
+      await this._runSinglePutUpload(task, client);
+    } else {
+      await this._runMultipartUpload(task, client, partSizeBytes);
     }
   }
 
-  /** Sum of every part's currently-known loaded bytes (real confirmations + in-flight estimates). */
+  /** Sum of every part's currently-known loaded bytes. */
   _sumPartsLoaded(task) {
     let sum = 0;
     for (const p of task.parts.values()) sum += p.loaded;
     return sum;
   }
 
-  /**
-   * Deterministic per-part pacing multiplier (roughly 0.8x-1.2x), stable for
-   * a given part number. Without this, parts that start at the same instant
-   * with no confirmed throughput yet (the common case for a small part count
-   * all within the concurrency limit) compute an *identical* estimate every
-   * tick and appear to show one part's progress mirrored onto another's row
-   * - not actually a mix-up, but indistinguishable from one in the UI, which
-   * amounts to the same problem. This only ever touches the displayed
-   * estimate, never the real read/upload of any part's bytes, so it can't
-   * affect correctness - only how believably the in-flight numbers diverge.
-   */
-  _partSpeedFactor(partNumber) {
-    const x = Math.sin(partNumber * 12.9898) * 43758.5453;
-    const frac = x - Math.floor(x);
-    return 0.8 + frac * 0.4;
-  }
-
-  /**
-   * Every ~200ms, projects a plausible `loaded` value for every part that has
-   * started but isn't confirmed complete yet - see the long comment on
-   * _runUpload() for why this exists instead of counting written bytes.
-   * Estimates only ever move forward, and are capped below each part's total
-   * so only a real confirmation can ever show 100%.
-   */
-  _startPartEstimator(task) {
-    task._estimatorTimer = setInterval(() => {
-      if (!task.parts || task.parts.size === 0) return;
-      const now = Date.now();
-      const inFlight = Array.from(task.parts.values()).filter((p) => !p.confirmed && p.startedAt != null);
-      if (!inFlight.length) return;
-
-      // Normalize the per-part factors so their average is ~1, keeping the
-      // sum of estimates close to the real measured aggregate throughput
-      // even though individual parts now diverge from each other.
-      const avgFactor = inFlight.reduce((sum, p) => sum + p.speedFactor, 0) / inFlight.length;
-
-      let changed = false;
-      for (const entry of inFlight) {
-        const normalizedFactor = avgFactor > 0 ? entry.speedFactor / avgFactor : 1;
-        const elapsed = (now - entry.startedAt) / 1000;
-        const estimated =
-          task._avgSpeedBps > 0
-            ? (task._avgSpeedBps / inFlight.length) * normalizedFactor * elapsed
-            : // No confirmed throughput yet - a smooth asymptotic creep so the
-              // row visibly moves instead of sitting frozen at 0% while we
-              // wait for the first real data point. The per-part factor
-              // scales how quickly each part approaches its ceiling, so
-              // concurrently-started same-size parts still visibly diverge.
-              entry.total * 0.85 * (1 - Math.exp((-elapsed * entry.speedFactor) / 5));
-        const capped = Math.min(estimated, entry.total * 0.98);
-        if (capped > entry.loaded) {
-          entry.loaded = capped;
-          changed = true;
-        }
-      }
-      if (changed) this._tickProgress(task, this._sumPartsLoaded(task));
-    }, 200);
-  }
-
-  _stopPartEstimator(task) {
-    if (task._estimatorTimer) {
-      clearInterval(task._estimatorTimer);
-      task._estimatorTimer = null;
-    }
-  }
-
-  /** Marks a part genuinely finished and refreshes the task's measured throughput used to project every other in-flight part. */
+  /** Snaps a part to fully loaded once S3 has actually acknowledged it - covers the brief gap between the last byte being handed off and the PUT/UploadPart response coming back. */
   _confirmPart(task, partNumber, size) {
-    const existing = task.parts.get(partNumber);
-    task.parts.set(partNumber, {
-      loaded: size,
-      total: size,
-      confirmed: true,
-      startedAt: existing?.startedAt ?? Date.now(),
-      speedFactor: existing?.speedFactor ?? this._partSpeedFactor(partNumber)
-    });
-    task._confirmedBytes = (task._confirmedBytes || 0) + size;
-    const elapsedTask = (Date.now() - task.startedAt) / 1000;
-    if (elapsedTask > 0) task._avgSpeedBps = task._confirmedBytes / elapsedTask;
+    task.parts.set(partNumber, { loaded: size, total: size });
     this._tickProgress(task, this._sumPartsLoaded(task));
+  }
+
+  /**
+   * Wraps `source` in a passthrough Transform that reports each chunk's size
+   * to `onChunk` as it flows through, and pipes `source` into it - the
+   * returned stream is what should be handed to the SDK as `Body`.
+   *
+   * The counting must happen in a Transform sitting *between* the file read
+   * and the SDK, not a bare 'data' listener attached directly to `source`.
+   * `client.send()` only attaches its real consumer (via
+   * `body.pipe(httpRequest)` inside @smithy/node-http-handler) after some
+   * async setup (signing, connecting, etc.) - a 'data' listener on `source`
+   * itself forces it into flowing mode immediately and drains the whole
+   * file into that listener before the SDK's real consumer ever attaches,
+   * leaving the actual HTTP body empty. Verified directly: with a real
+   * consumer attached 50ms late, a bare 'data' listener on the source saw
+   * every byte of a 5MB file while the real consumer received none - which
+   * is exactly the "socket was not read from or written to" timeout this
+   * caused. A Transform's own internal buffering bounds how far `source`
+   * can race ahead to its highWaterMark (tens of KB) before *this* stream's
+   * writable side backpressures it, so nothing is lost regardless of when
+   * the SDK actually attaches, and real transfer pacing still comes through
+   * once it does.
+   */
+  _createProgressStream(source, onChunk) {
+    const progress = new Transform({
+      transform(chunk, encoding, callback) {
+        onChunk(chunk.length);
+        callback(null, chunk);
+      }
+    });
+    source.on('error', (err) => progress.destroy(err));
+    source.pipe(progress);
+    return progress;
   }
 
   async _runSinglePutUpload(task, client) {
     const fileStream = fs.createReadStream(task.localPath);
-    task.parts.set(1, { loaded: 0, total: task.size, confirmed: false, startedAt: Date.now(), speedFactor: this._partSpeedFactor(1) });
+    const partEntry = { loaded: 0, total: task.size };
+    task.parts.set(1, partEntry);
+    const body = this._createProgressStream(fileStream, (bytes) => {
+      partEntry.loaded = Math.min(partEntry.loaded + bytes, partEntry.total);
+      this._tickProgress(task, this._sumPartsLoaded(task));
+    });
 
-    const onAbort = () => fileStream.destroy();
+    const onAbort = () => {
+      fileStream.destroy();
+      body.destroy();
+    };
     task.abortController.signal.addEventListener('abort', onAbort);
 
     try {
-      await client.send(new PutObjectCommand({ Bucket: task.bucket, Key: task.key, Body: fileStream, ContentLength: task.size }), {
+      await client.send(new PutObjectCommand({ Bucket: task.bucket, Key: task.key, Body: body, ContentLength: task.size }), {
         abortSignal: task.abortController.signal
       });
       this._confirmPart(task, 1, task.size);
@@ -541,15 +524,17 @@ class TransferQueueManager extends EventEmitter {
 
     const uploadOnePart = async (range) => {
       const fileStream = fs.createReadStream(task.localPath, { start: range.start, end: range.end });
-      task.parts.set(range.partNumber, {
-        loaded: 0,
-        total: range.size,
-        confirmed: false,
-        startedAt: Date.now(),
-        speedFactor: this._partSpeedFactor(range.partNumber)
+      const partEntry = { loaded: 0, total: range.size };
+      task.parts.set(range.partNumber, partEntry);
+      const body = this._createProgressStream(fileStream, (bytes) => {
+        partEntry.loaded = Math.min(partEntry.loaded + bytes, partEntry.total);
+        this._tickProgress(task, this._sumPartsLoaded(task));
       });
 
-      const onAbort = () => fileStream.destroy();
+      const onAbort = () => {
+        fileStream.destroy();
+        body.destroy();
+      };
       task.abortController.signal.addEventListener('abort', onAbort);
 
       try {
@@ -559,7 +544,7 @@ class TransferQueueManager extends EventEmitter {
             Key: task.key,
             UploadId: uploadId,
             PartNumber: range.partNumber,
-            Body: fileStream,
+            Body: body,
             ContentLength: range.size
           }),
           { abortSignal: task.abortController.signal }

@@ -88,16 +88,15 @@
   >
   </app-prompt-dialog>
 
-  <app-prompt-dialog
-    *ngIf="dialogMode() === 'shareUrl'"
-    [title]="shareUrlTitle"
-    label="Share this link"
-    [value]="dialogValue"
-    [readonlyValue]="true"
-    (confirmed)="onDialogCancel()"
-    (cancelled)="onDialogCancel()"
-  >
-  </app-prompt-dialog>
+  <div class="toast" *ngIf="toast.toast() as t" [ngClass]="'toast-' + t.type">
+    <i class="fi" [ngClass]="{
+      'fi-rr-check': t.type === 'success',
+      'fi-rr-cross-circle': t.type === 'danger',
+      'fi-rr-triangle-warning': t.type === 'warning',
+      'fi-rr-info': t.type === 'info'
+    }"></i>
+    <span>{{ t.message }}</span>
+  </div>
 
   <app-copy-move-dialog *ngIf="copyMoveMode()" [mode]="copyMoveMode()!" (closed)="copyMoveMode.set(null)"> </app-copy-move-dialog>
 

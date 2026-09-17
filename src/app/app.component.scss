@@ -111,6 +111,54 @@
   height: 8px;
 }
 
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  border: 1px solid var(--s3b-border);
+  border-left: 3px solid var(--s3b-muted);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  box-shadow: 0 8px 30px var(--s3b-shadow);
+  z-index: 80;
+
+  i {
+    font-size: 14px;
+    color: var(--s3b-muted);
+  }
+}
+.toast-success {
+  border-left-color: var(--s3b-green);
+  i {
+    color: var(--s3b-green);
+  }
+}
+.toast-danger {
+  border-left-color: var(--s3b-red);
+  i {
+    color: var(--s3b-red);
+  }
+}
+.toast-warning {
+  border-left-color: var(--s3b-amber);
+  i {
+    color: var(--s3b-amber);
+  }
+}
+.toast-info {
+  border-left-color: var(--s3b-blue);
+  i {
+    color: var(--s3b-blue);
+  }
+}
+
 .connections-overlay {
   position: fixed;
   inset: 0;

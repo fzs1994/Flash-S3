@@ -3,6 +3,7 @@ import { Component, HostListener, signal } from '@angular/core';
 import { S3ListItem } from './core/models/models';
 import { ConnectionService } from './core/services/connection.service';
 import { S3BrowserService } from './core/services/s3-browser.service';
+import { ToastService } from './core/services/toast.service';
 import { BucketTreeComponent } from './features/bucket-tree/bucket-tree.component';
 import { ConnectionManagerComponent } from './features/connection-manager/connection-manager.component';
 import { CopyMoveDialogComponent } from './features/dialogs/copy-move-dialog.component';
@@ -14,7 +15,7 @@ import { StatusBarComponent } from './features/status-bar/status-bar.component';
 import { ToolbarComponent } from './features/toolbar/toolbar.component';
 import { TransferQueueComponent } from './features/transfer-queue/transfer-queue.component';
 
-type DialogMode = 'newFolder' | 'rename' | 'shareUrlChoice' | 'shareUrl' | null;
+type DialogMode = 'newFolder' | 'rename' | 'shareUrlChoice' | null;
 
 const SIDEBAR_MIN = 160;
 const SIDEBAR_MAX = 480;
@@ -62,7 +63,6 @@ export class AppComponent {
   readonly copyMoveMode = signal<'copy' | 'move' | null>(null);
   readonly propertiesItem = signal<S3ListItem | null>(null);
   dialogValue = '';
-  shareUrlTitle = 'Share URL';
 
   readonly shareUrlChoices: PromptDialogChoice[] = [
     { id: 'signed', label: 'Signed URL (expires in 1 hour)', icon: 'fi-rr-lock ic-amber' },
@@ -75,7 +75,8 @@ export class AppComponent {
 
   constructor(
     public s3: S3BrowserService,
-    public connectionService: ConnectionService
+    public connectionService: ConnectionService,
+    public toast: ToastService
   ) {}
 
   startSidebarResize(ev: MouseEvent): void {
@@ -151,18 +152,15 @@ export class AppComponent {
 
   async onShareUrlChoice(choiceId: string): Promise<void> {
     const keys = Array.from(this.s3.selectedKeys());
-    if (keys.length !== 1) {
-      this.dialogMode.set(null);
-      return;
-    }
-    this.shareUrlTitle = choiceId === 'signed' ? 'Signed URL (expires in 1 hour)' : 'Unsigned URL';
-    this.dialogValue = 'Generating…';
-    this.dialogMode.set('shareUrl');
+    this.dialogMode.set(null);
+    if (keys.length !== 1) return;
+    const label = choiceId === 'signed' ? 'Signed URL' : 'Unsigned URL';
     try {
-      this.dialogValue =
-        choiceId === 'signed' ? await this.s3.generatePresignedUrl(keys[0], 3600) : await this.s3.generatePublicUrl(keys[0]);
+      const url = choiceId === 'signed' ? await this.s3.generatePresignedUrl(keys[0], 3600) : await this.s3.generatePublicUrl(keys[0]);
+      await navigator.clipboard.writeText(url);
+      this.toast.show(`${label} copied to clipboard`, 'success');
     } catch (err: any) {
-      this.dialogValue = `Error: ${err?.message || err}`;
+      this.toast.show(`Failed to copy ${label}: ${err?.message || err}`, 'danger');
     }
   }
 
@@ -180,7 +178,14 @@ export class AppComponent {
       await this.s3.createFolder(value.trim());
     } else if (mode === 'rename' && value.trim()) {
       const keys = Array.from(this.s3.selectedKeys());
-      if (keys.length === 1) await this.s3.renameItem(keys[0], value.trim());
+      if (keys.length === 1) {
+        try {
+          await this.s3.renameItem(keys[0], value.trim());
+          this.toast.show('Renamed successfully', 'success');
+        } catch (err: any) {
+          this.toast.show(`Failed to rename: ${err?.message || err}`, 'danger');
+        }
+      }
     }
   }
 

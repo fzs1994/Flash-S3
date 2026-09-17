@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { S3ListItem } from '../../core/models/models';
 import { ElectronService } from '../../core/services/electron.service';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
+import { ToastService } from '../../core/services/toast.service';
 import { TransferService } from '../../core/services/transfer.service';
 import { ContextMenuComponent, ContextMenuEntry } from '../context-menu/context-menu.component';
 
@@ -101,7 +102,8 @@ export class ObjectListComponent {
   constructor(
     public s3: S3BrowserService,
     private electron: ElectronService,
-    private transfers: TransferService
+    private transfers: TransferService,
+    private toast: ToastService
   ) {
     // Clear any active search when navigating to a different folder/bucket -
     // otherwise a leftover filter term could make a freshly-opened folder
@@ -110,7 +112,7 @@ export class ObjectListComponent {
       this.s3.currentBucket();
       this.s3.currentPrefix();
       this.searchTerm.set('');
-    });
+    }, { allowSignalWrites: true });
   }
 
   formatBytes = formatBytes;
@@ -244,10 +246,22 @@ export class ObjectListComponent {
   }
 
   async deleteSelected(): Promise<void> {
-    const count = this.s3.selectedKeys().size;
+    const selectedKeys = this.s3.selectedKeys();
+    const count = selectedKeys.size;
     if (!count) return;
     const ok = await this.electron.api.dialogs.confirm(`Delete ${count} item(s)?`, 'This action cannot be undone.');
-    if (ok) await this.s3.deleteSelected();
+    if (!ok) return;
+
+    const label =
+      count === 1
+        ? `${this.s3.items().find((i) => selectedKeys.has(i.key))?.type === 'folder' ? 'Folder' : 'File'} deleted`
+        : `${count} items deleted`;
+    try {
+      await this.s3.deleteSelected();
+      this.toast.show(label, 'success');
+    } catch (err: any) {
+      this.toast.show(`Failed to delete: ${err?.message || err}`, 'danger');
+    }
   }
 
   onBreadcrumbClick(prefix: string): void {
