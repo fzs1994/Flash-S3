@@ -1,567 +1,1274 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<style>
-  html, body { margin:0; padding:0; background:#0d1117; }
-  body { -webkit-font-smoothing:antialiased; }
-  a { color:#58a6ff; text-decoration:none; }
-  a:hover { color:#79c0ff; text-decoration:underline; }
-  ::selection { background:#1f4d7d; color:#fff; }
-  @keyframes fs-pulse { 0%,100% { opacity:.35; } 50% { opacity:1; } }
-  @keyframes fs-sheen { 0% { background-position:0% 50%; } 100% { background-position:200% 50%; } }
-</style>
-</helmet>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          html,
+          body {
+            margin: 0;
+            padding: 0;
+            background: #0d1117;
+            scroll-behavior: smooth;
+          }
+          body {
+            -webkit-font-smoothing: antialiased;
+          }
+          a {
+            color: #58a6ff;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #79c0ff;
+            text-decoration: underline;
+          }
+          ::selection {
+            background: #1f4d7d;
+            color: #fff;
+          }
+          @keyframes fs-pulse {
+            0%,
+            100% {
+              opacity: 0.35;
+            }
+            50% {
+              opacity: 1;
+            }
+          }
+          @keyframes fs-sheen {
+            0% {
+              background-position: 0% 50%;
+            }
+            100% {
+              background-position: 200% 50%;
+            }
+          }
+        </style>
+      </helmet>
 
-<div style="background:#0d1117; color:#e6edf3; font-family:'Space Grotesk',system-ui,sans-serif; min-height:100vh; padding:0 0 96px;">
+      <div
+        style="
+          background: #0d1117;
+          color: #e6edf3;
+          font-family: 'Space Grotesk', system-ui, sans-serif;
+          min-height: 100vh;
+          padding: 0 0 96px;
+        "
+      >
+        <div style="position: relative; overflow: hidden; border-bottom: 1px solid #21262d">
+          <div
+            style="
+              position: absolute;
+              inset: 0;
+              background: radial-gradient(900px 380px at 50% -10%, rgba(47, 111, 176, 0.28), transparent 70%);
+            "
+          ></div>
+          <div style="position: relative; max-width: 820px; margin: 0 auto; padding: 76px 24px 56px; text-align: center">
+            <img
+              src="assets/logo.png"
+              alt="Flash S3"
+              style="
+                width: 84px;
+                height: 84px;
+                display: block;
+                margin: 0 auto 22px;
+                border-radius: 18px;
+                box-shadow: 0 12px 40px rgba(47, 111, 176, 0.35);
+              "
+            />
+            <h1 style="margin: 0 0 14px; font-size: 56px; line-height: 1.02; letter-spacing: -0.03em; font-weight: 700">Flash S3</h1>
+            <p style="margin: 0 auto 26px; max-width: 600px; font-size: 20px; line-height: 1.5; color: #c9d1d9; text-wrap: pretty">
+              A desktop S3 client for people who are done with the AWS console. Multi-account tabs, dual-pane transfers, and a multipart
+              queue that actually shows you what it is doing.
+            </p>
 
-  <div style="position:relative; overflow:hidden; border-bottom:1px solid #21262d;">
-    <div style="position:absolute; inset:0; background:radial-gradient(900px 380px at 50% -10%, rgba(47,111,176,.28), transparent 70%);"></div>
-    <div style="position:relative; max-width:820px; margin:0 auto; padding:76px 24px 56px; text-align:center;">
-      <img src="assets/logo.png" alt="Flash S3" style="width:84px; height:84px; display:block; margin:0 auto 22px; border-radius:18px; box-shadow:0 12px 40px rgba(47,111,176,.35);" />
-      <h1 style="margin:0 0 14px; font-size:56px; line-height:1.02; letter-spacing:-.03em; font-weight:700;">Flash S3</h1>
-      <p style="margin:0 auto 26px; max-width:600px; font-size:20px; line-height:1.5; color:#c9d1d9; text-wrap:pretty;">A desktop S3 client for people who are done with the AWS console. Multi-account tabs, dual-pane transfers, and a multipart queue that actually shows you what it is doing.</p>
-
-      <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:28px;">
-        <span style="display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px; font-size:12.5px; font-weight:500; background:#161b22; border:1px solid #30363d; color:#c9d1d9;"><span style="width:6px; height:6px; border-radius:99px; background:#3fb950;"></span>v1.0.0</span>
-        <span style="display:inline-flex; align-items:center; padding:5px 11px; border-radius:999px; font-size:12.5px; font-weight:500; background:#161b22; border:1px solid #30363d; color:#c9d1d9;">MIT License</span>
-        <span style="display:inline-flex; align-items:center; padding:5px 11px; border-radius:999px; font-size:12.5px; font-weight:500; background:#161b22; border:1px solid #30363d; color:#c9d1d9;">Windows · macOS · Linux</span>
-        <span style="display:inline-flex; align-items:center; padding:5px 11px; border-radius:999px; font-size:12.5px; font-weight:500; background:#161b22; border:1px solid #30363d; color:#c9d1d9;">Electron + Angular</span>
-      </div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center;">
-        <a href="https://github.com/fzs1994/Flash-S3/releases" style="display:inline-flex; align-items:center; gap:9px; padding:12px 22px; border-radius:8px; background:#238636; border:1px solid #2ea043; color:#fff; font-size:15px; font-weight:600; text-decoration:none;" style-hover="background:#2ea043; text-decoration:none;">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7.25 1.75a.75.75 0 0 1 1.5 0v7.19l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 1 1 1.06-1.06l2.22 2.22V1.75Z"></path><path d="M2.5 12.25a.75.75 0 0 1 1.5 0v1.25h8v-1.25a.75.75 0 0 1 1.5 0V14a.75.75 0 0 1-.75.75H3.25A.75.75 0 0 1 2.5 14v-1.75Z"></path></svg>
-          Download for {{ platformLabel }}
-        </a>
-        <a href="https://github.com/fzs1994/Flash-S3" style="display:inline-flex; align-items:center; gap:9px; padding:12px 22px; border-radius:8px; background:#21262d; border:1px solid #30363d; color:#e6edf3; font-size:15px; font-weight:600; text-decoration:none;" style-hover="background:#30363d; text-decoration:none;">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path></svg>
-          View on GitHub
-        </a>
-      </div>
-      <p style="margin:18px 0 0; font-size:13px; color:#6e7681;">Installers for all three platforms live on the Releases page.</p>
-    </div>
-  </div>
-
-  <div style="max-width:1180px; margin:0 auto; padding:0 24px; display:grid; grid-template-columns:minmax(0,1fr); gap:48px;" data-fs-shell="1">
-    <div style="display:grid; grid-template-columns:216px minmax(0,1fr); gap:56px; align-items:start;" data-fs-cols="1">
-
-      <nav style="position:sticky; top:32px; padding-top:56px;">
-        <div style="font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#6e7681; margin-bottom:14px; padding-left:12px;">Contents</div>
-        <sc-for list="{{ toc }}" as="item" hint-placeholder-count="10">
-          <a href="{{ item.href }}" style="display:block; padding:7px 12px; border-left:2px solid #21262d; font-size:14px; color:#8b949e; text-decoration:none; line-height:1.3;" style-hover="color:#e6edf3; border-left-color:#58a6ff; text-decoration:none;">{{ item.label }}</a>
-        </sc-for>
-      </nav>
-
-      <main style="padding-top:56px; min-width:0;">
-
-        <section id="features" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Features</h2>
-          <h3 style="margin:0 0 16px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">Everything the console makes you click twice for</h3>
-          <p style="margin:0 0 28px; font-size:17px; line-height:1.6; color:#8b949e; max-width:640px; text-wrap:pretty;">Pick a surface to see what it does.</p>
-
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:0; border-bottom:1px solid #21262d; padding-bottom:0;">
-            <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
-              <button onClick="{{ tab.select }}" style="padding:11px 16px; background:none; border:none; border-bottom:2px solid {{ tab.underline }}; color:{{ tab.color }}; font-family:inherit; font-size:14.5px; font-weight:{{ tab.weight }}; cursor:pointer; margin-bottom:-1px;" style-hover="color:#e6edf3;">{{ tab.label }}</button>
-            </sc-for>
-          </div>
-
-          <div style="border:1px solid #30363d; border-top:none; border-radius:0 0 12px 12px; background:#0f1319; padding:28px;">
-            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:22px;">
-              <sc-for list="{{ activeFeatures }}" as="f" hint-placeholder-count="4">
-                <div style="min-width:0;">
-                  <div style="display:flex; align-items:center; gap:9px; margin-bottom:7px;">
-                    <span style="width:22px; height:22px; border-radius:6px; background:rgba(47,111,176,.18); border:1px solid rgba(88,166,255,.3); display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:#58a6ff; flex-shrink:0;">{{ f.mark }}</span>
-                    <div style="font-size:15.5px; font-weight:600; color:#e6edf3;">{{ f.title }}</div>
-                  </div>
-                  <p style="margin:0; font-size:14.5px; line-height:1.55; color:#8b949e; text-wrap:pretty;">{{ f.body }}</p>
-                </div>
-              </sc-for>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 28px">
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  padding: 5px 11px;
+                  border-radius: 999px;
+                  font-size: 12.5px;
+                  font-weight: 500;
+                  background: #161b22;
+                  border: 1px solid #30363d;
+                  color: #c9d1d9;
+                "
+                ><span style="width: 6px; height: 6px; border-radius: 99px; background: #3fb950"></span>v0.0.2</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  padding: 5px 11px;
+                  border-radius: 999px;
+                  font-size: 12.5px;
+                  font-weight: 500;
+                  background: #161b22;
+                  border: 1px solid #30363d;
+                  color: #c9d1d9;
+                "
+                >MIT License</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  padding: 5px 11px;
+                  border-radius: 999px;
+                  font-size: 12.5px;
+                  font-weight: 500;
+                  background: #161b22;
+                  border: 1px solid #30363d;
+                  color: #c9d1d9;
+                "
+                >Windows · macOS · Linux</span
+              >
+              <span
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  padding: 5px 11px;
+                  border-radius: 999px;
+                  font-size: 12.5px;
+                  font-weight: 500;
+                  background: #161b22;
+                  border: 1px solid #30363d;
+                  color: #c9d1d9;
+                "
+                >Electron + Angular</span
+              >
             </div>
-          </div>
-        </section>
 
-        <section id="queue" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">The transfer queue</h2>
-          <h3 style="margin:0 0 16px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">One file, seven parts, all at once</h3>
-          <p style="margin:0 0 26px; font-size:17px; line-height:1.6; color:#8b949e; max-width:640px; text-wrap:pretty;">Large objects are split into parts and pushed in parallel, and every part reports its own progress. A 150&nbsp;MB upload moving at 8.7&nbsp;MB/s across 7 parts looks like this — press play.</p>
-
-          <div style="border:1px solid #30363d; border-radius:12px; overflow:hidden; background:#0f1319;">
-            <div style="display:flex; align-items:center; gap:14px; padding:12px 16px; background:#161b22; border-bottom:1px solid #21262d; flex-wrap:wrap;">
-              <div style="font-size:14px; font-weight:600; color:#e6edf3;">Transfer Queue</div>
-              <div style="font-size:13px; color:#8b949e; font-family:'JetBrains Mono',monospace;">{{ queueSummary }}</div>
-              <div style="margin-left:auto; display:flex; gap:8px; flex-shrink:0;">
-                <button onClick="{{ toggleRun }}" style="padding:6px 14px; border-radius:6px; background:#21262d; border:1px solid #30363d; color:#e6edf3; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;" style-hover="background:#30363d;">{{ runLabel }}</button>
-                <button onClick="{{ resetDemo }}" style="padding:6px 14px; border-radius:6px; background:transparent; border:1px solid #30363d; color:#8b949e; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer;" style-hover="color:#e6edf3; background:#21262d;">Reset</button>
-              </div>
-            </div>
-
-            <div style="padding:14px 16px; border-bottom:1px solid #21262d; display:grid; grid-template-columns:minmax(0,1fr) 190px; gap:16px; align-items:center;">
-              <div style="min-width:0;">
-                <div style="font-size:14px; color:#e6edf3; font-family:'JetBrains Mono',monospace; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">setup/release/flash-s3-win32.zip <span style="color:#6e7681;">(7 parts)</span></div>
-                <div style="height:7px; border-radius:99px; background:#21262d; overflow:hidden;">
-                  <div style="height:100%; border-radius:99px; background:#58a6ff; width: {{ overallWidth }}; transition:width .18s linear;"></div>
-                </div>
-              </div>
-              <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#8b949e; display:flex; flex-direction:column; gap:3px; text-align:right;">
-                <div style="color:#e6edf3; font-size:15px;">{{ overallPct }}</div>
-                <div>{{ transferred }} / 150.0 MB</div>
-                <div>{{ speedText }} · {{ etaText }}</div>
-              </div>
-            </div>
-
-            <div style="padding:6px 0;">
-              <sc-for list="{{ parts }}" as="p" hint-placeholder-count="7">
-                <div style="display:grid; grid-template-columns:104px minmax(0,1fr) 46px 128px 74px; gap:12px; align-items:center; padding:7px 16px;">
-                  <div style="font-size:13px; color:#8b949e; font-family:'JetBrains Mono',monospace; white-space:nowrap;">{{ p.label }}</div>
-                  <div style="height:6px; border-radius:99px; background:#1a2029; overflow:hidden;">
-                    <div style="height:100%; border-radius:99px; background:{{ p.bar }}; width: {{ p.width }}; transition:width .18s linear;"></div>
-                  </div>
-                  <div style="font-size:12.5px; color:#8b949e; font-family:'JetBrains Mono',monospace; text-align:right;">{{ p.pctText }}</div>
-                  <div style="font-size:12.5px; color:#6e7681; font-family:'JetBrains Mono',monospace; text-align:right;">{{ p.bytes }}</div>
-                  <div style="font-size:12.5px; color:{{ p.stateColor }}; font-family:'JetBrains Mono',monospace; text-align:right;">{{ p.state }}</div>
-                </div>
-              </sc-for>
-            </div>
-          </div>
-          <p style="margin:14px 0 0; font-size:13.5px; color:#6e7681;">Pause, resume, and clear-completed act on the whole queue or a single item. Failed parts retry without restarting the file.</p>
-        </section>
-
-        <section id="screenshots" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Screenshots</h2>
-          <h3 style="margin:0 0 26px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">The real thing</h3>
-
-          <div style="border:1px solid #30363d; border-radius:12px; overflow:hidden; background:#0f1319;">
-            <div style="display:flex; flex-wrap:wrap; gap:2px; padding:8px; background:#161b22; border-bottom:1px solid #21262d;">
-              <sc-for list="{{ shots }}" as="s" hint-placeholder-count="5">
-                <button onClick="{{ s.select }}" style="padding:7px 13px; border-radius:6px; background:{{ s.bg }}; border:1px solid {{ s.border }}; color:{{ s.color }}; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer;" style-hover="color:#e6edf3;">{{ s.label }}</button>
-              </sc-for>
-            </div>
-            <img src="shots/01-queue.png" alt="Transfer queue" style="display:{{ show1 }}; width:100%; height:auto;" />
-            <img src="shots/02-browse.png" alt="Browsing buckets" style="display:{{ show2 }}; width:100%; height:auto;" />
-            <img src="shots/03-dualpane.png" alt="Dual pane" style="display:{{ show3 }}; width:100%; height:auto;" />
-            <img src="shots/04-context.png" alt="Object actions" style="display:{{ show4 }}; width:100%; height:auto;" />
-            <img src="shots/05-connections.png" alt="Connection manager" style="display:{{ show5 }}; width:100%; height:auto;" />
-            <div style="padding:14px 18px; font-size:14px; color:#8b949e; border-top:1px solid #21262d; text-wrap:pretty;">{{ activeShotCaption }}</div>
-          </div>
-          <p style="margin:12px 0 0; font-size:12.5px; color:#6e7681;">Account names, bucket names and access-key IDs are pixelated in these captures.</p>
-        </section>
-
-        <section id="install" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Install</h2>
-          <h3 style="margin:0 0 26px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">Grab a build</h3>
-
-          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:32px;">
-            <sc-for list="{{ platforms }}" as="pf" hint-placeholder-count="3">
-              <a href="https://github.com/fzs1994/Flash-S3/releases" style="display:block; padding:18px; border-radius:10px; background:{{ pf.bg }}; border:1px solid {{ pf.border }}; text-decoration:none; color:#e6edf3;" style-hover="border-color:#58a6ff; text-decoration:none;">
-                <div style="font-size:15.5px; font-weight:600; margin-bottom:4px; display:flex; align-items:center; gap:8px;">{{ pf.name }} <span style="font-size:11px; font-weight:600; color:#3fb950;">{{ pf.badge }}</span></div>
-                <div style="font-size:13px; color:#8b949e; font-family:'JetBrains Mono',monospace;">{{ pf.file }}</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center">
+              <a
+                href="https://github.com/fzs1994/Flash-S3/releases"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 9px;
+                  padding: 12px 22px;
+                  border-radius: 8px;
+                  background: #238636;
+                  border: 1px solid #2ea043;
+                  color: #fff;
+                  font-size: 15px;
+                  font-weight: 600;
+                  text-decoration: none;
+                "
+                style-hover="background:#2ea043; text-decoration:none;"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path
+                    d="M7.25 1.75a.75.75 0 0 1 1.5 0v7.19l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 1 1 1.06-1.06l2.22 2.22V1.75Z"
+                  ></path>
+                  <path
+                    d="M2.5 12.25a.75.75 0 0 1 1.5 0v1.25h8v-1.25a.75.75 0 0 1 1.5 0V14a.75.75 0 0 1-.75.75H3.25A.75.75 0 0 1 2.5 14v-1.75Z"
+                  ></path>
+                </svg>
+                Download for {{ platformLabel }}
               </a>
-            </sc-for>
-          </div>
-
-          <h4 style="margin:0 0 14px; font-size:16px; font-weight:600; color:#e6edf3;">Or build it yourself</h4>
-          <sc-for list="{{ commands }}" as="c" hint-placeholder-count="3">
-            <div style="margin-bottom:12px;">
-              <div style="font-size:13px; color:#8b949e; margin-bottom:6px;">{{ c.note }}</div>
-              <div style="display:flex; align-items:stretch; border:1px solid #30363d; border-radius:8px; overflow:hidden; background:#161b22;">
-                <code style="flex:1; min-width:0; padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:13.5px; color:#e6edf3; white-space:pre; overflow-x:auto;">{{ c.cmd }}</code>
-                <button onClick="{{ c.copy }}" style="flex-shrink:0; padding:0 16px; background:#21262d; border:none; border-left:1px solid #30363d; color:{{ c.copyColor }}; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;" style-hover="background:#30363d;">{{ c.copyLabel }}</button>
-              </div>
+              <a
+                href="https://github.com/fzs1994/Flash-S3"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 9px;
+                  padding: 12px 22px;
+                  border-radius: 8px;
+                  background: #21262d;
+                  border: 1px solid #30363d;
+                  color: #e6edf3;
+                  font-size: 15px;
+                  font-weight: 600;
+                  text-decoration: none;
+                "
+                style-hover="background:#30363d; text-decoration:none;"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.995 7.995 0 0 0 16 8c0-4.42-3.58-8-8-8Z"
+                  ></path>
+                </svg>
+                View on GitHub
+              </a>
             </div>
-          </sc-for>
-        </section>
+            <p style="margin: 18px 0 0; font-size: 13px; color: #6e7681">Installers for all three platforms live on the Releases page.</p>
+          </div>
+        </div>
 
-        <section id="dev" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Getting started</h2>
-          <h3 style="margin:0 0 24px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">Working on it locally</h3>
-          <ol style="margin:0; padding-left:22px; color:#c9d1d9; font-size:16px; line-height:1.75;">
-            <li style="margin-bottom:10px;">Install Node 18 or newer and clone the repo.</li>
-            <li style="margin-bottom:10px;"><code style="font-family:'JetBrains Mono',monospace; font-size:14px; background:#161b22; border:1px solid #30363d; border-radius:5px; padding:2px 6px;">npm install</code> pulls the Angular renderer and Electron shell together.</li>
-            <li style="margin-bottom:10px;"><code style="font-family:'JetBrains Mono',monospace; font-size:14px; background:#161b22; border:1px solid #30363d; border-radius:5px; padding:2px 6px;">npm start</code> runs the Angular dev server and opens the Electron window against it, with live reload.</li>
-            <li style="margin-bottom:10px;">Add an account under <strong style="color:#e6edf3;">Connections → New</strong>. Credentials go to the OS keychain, not the repo.</li>
-            <li style="margin-bottom:0;"><code style="font-family:'JetBrains Mono',monospace; font-size:14px; background:#161b22; border:1px solid #30363d; border-radius:5px; padding:2px 6px;">npm run dist</code> produces signed-installer output in <code style="font-family:'JetBrains Mono',monospace; font-size:14px; background:#161b22; border:1px solid #30363d; border-radius:5px; padding:2px 6px;">release/</code>.</li>
-          </ol>
-        </section>
-
-        <section id="architecture" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Architecture</h2>
-          <h3 style="margin:0 0 26px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">How it is put together</h3>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px;">
-            <sc-for list="{{ layers }}" as="l" hint-placeholder-count="4">
-              <div style="padding:20px; border-radius:10px; background:#0f1319; border:1px solid #30363d;">
-                <div style="font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:#6e7681; margin-bottom:9px;">{{ l.tag }}</div>
-                <div style="font-size:16px; font-weight:600; margin-bottom:8px; color:#e6edf3;">{{ l.title }}</div>
-                <p style="margin:0; font-size:14px; line-height:1.55; color:#8b949e; text-wrap:pretty;">{{ l.body }}</p>
+        <div
+          style="max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px"
+          data-fs-shell="1"
+        >
+          <div style="display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: 56px; align-items: start" data-fs-cols="1">
+            <nav style="position: sticky; top: 32px; padding-top: 56px">
+              <div
+                style="
+                  font-size: 11px;
+                  font-weight: 600;
+                  letter-spacing: 0.12em;
+                  text-transform: uppercase;
+                  color: #6e7681;
+                  margin-bottom: 14px;
+                  padding-left: 12px;
+                "
+              >
+                Contents
               </div>
-            </sc-for>
+              <sc-for list="{{ toc }}" as="item" hint-placeholder-count="10">
+                <a
+                  href="{{ item.href }}"
+                  style="display:block; padding:7px 12px; border-left:2px solid {{ item.borderColor }}; font-size:14px; font-weight:{{ item.weight }}; color:{{ item.color }}; text-decoration:none; line-height:1.3;"
+                  style-hover="color:#e6edf3; border-left-color:#58a6ff; text-decoration:none;"
+                  >{{ item.label }}</a
+                >
+              </sc-for>
+            </nav>
+
+            <main style="padding-top: 56px; min-width: 0">
+              <section id="features" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Features
+                </h2>
+                <h3 style="margin: 0 0 16px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  Everything the console makes you click twice for
+                </h3>
+                <p style="margin: 0 0 28px; font-size: 17px; line-height: 1.6; color: #8b949e; max-width: 640px; text-wrap: pretty">
+                  Pick a surface to see what it does.
+                </p>
+
+                <div
+                  style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 0; border-bottom: 1px solid #21262d; padding-bottom: 0"
+                >
+                  <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
+                    <button
+                      onClick="{{ tab.select }}"
+                      style="padding:11px 16px; background:none; border:none; border-bottom:2px solid {{ tab.underline }}; color:{{ tab.color }}; font-family:inherit; font-size:14.5px; font-weight:{{ tab.weight }}; cursor:pointer; margin-bottom:-1px;"
+                      style-hover="color:#e6edf3;"
+                    >
+                      {{ tab.label }}
+                    </button>
+                  </sc-for>
+                </div>
+
+                <div style="border: 1px solid #30363d; border-top: none; border-radius: 0 0 12px 12px; background: #0f1319; padding: 28px">
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px">
+                    <sc-for list="{{ activeFeatures }}" as="f" hint-placeholder-count="4">
+                      <div style="min-width: 0">
+                        <div style="display: flex; align-items: center; gap: 9px; margin-bottom: 7px">
+                          <span
+                            style="
+                              width: 22px;
+                              height: 22px;
+                              border-radius: 6px;
+                              background: rgba(47, 111, 176, 0.18);
+                              border: 1px solid rgba(88, 166, 255, 0.3);
+                              display: inline-flex;
+                              align-items: center;
+                              justify-content: center;
+                              font-size: 12px;
+                              color: #58a6ff;
+                              flex-shrink: 0;
+                            "
+                            >{{ f.mark }}</span
+                          >
+                          <div style="font-size: 15.5px; font-weight: 600; color: #e6edf3">{{ f.title }}</div>
+                        </div>
+                        <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #8b949e; text-wrap: pretty">{{ f.body }}</p>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </section>
+
+              <section id="queue" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  The transfer queue
+                </h2>
+                <h3 style="margin: 0 0 16px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  One file, seven parts, all at once
+                </h3>
+                <p style="margin: 0 0 26px; font-size: 17px; line-height: 1.6; color: #8b949e; max-width: 640px; text-wrap: pretty">
+                  Large objects are split into parts and pushed in parallel, and every part reports its own progress. A 150&nbsp;MB upload
+                  moving at 8.7&nbsp;MB/s across 7 parts looks like this — press play.
+                </p>
+
+                <div style="border: 1px solid #30363d; border-radius: 12px; overflow: hidden; background: #0f1319">
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 14px;
+                      padding: 12px 16px;
+                      background: #161b22;
+                      border-bottom: 1px solid #21262d;
+                      flex-wrap: wrap;
+                    "
+                  >
+                    <div style="font-size: 14px; font-weight: 600; color: #e6edf3">Transfer Queue</div>
+                    <div style="font-size: 13px; color: #8b949e; font-family: 'JetBrains Mono', monospace">{{ queueSummary }}</div>
+                    <div style="margin-left: auto; display: flex; gap: 8px; flex-shrink: 0">
+                      <button
+                        onClick="{{ toggleRun }}"
+                        style="
+                          padding: 6px 14px;
+                          border-radius: 6px;
+                          background: #21262d;
+                          border: 1px solid #30363d;
+                          color: #e6edf3;
+                          font-family: inherit;
+                          font-size: 13px;
+                          font-weight: 600;
+                          cursor: pointer;
+                        "
+                        style-hover="background:#30363d;"
+                      >
+                        {{ runLabel }}
+                      </button>
+                      <button
+                        onClick="{{ resetDemo }}"
+                        style="
+                          padding: 6px 14px;
+                          border-radius: 6px;
+                          background: transparent;
+                          border: 1px solid #30363d;
+                          color: #8b949e;
+                          font-family: inherit;
+                          font-size: 13px;
+                          font-weight: 500;
+                          cursor: pointer;
+                        "
+                        style-hover="color:#e6edf3; background:#21262d;"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style="
+                      padding: 14px 16px;
+                      border-bottom: 1px solid #21262d;
+                      display: grid;
+                      grid-template-columns: minmax(0, 1fr) 190px;
+                      gap: 16px;
+                      align-items: center;
+                    "
+                  >
+                    <div style="min-width: 0">
+                      <div
+                        style="
+                          font-size: 14px;
+                          color: #e6edf3;
+                          font-family: 'JetBrains Mono', monospace;
+                          margin-bottom: 8px;
+                          overflow: hidden;
+                          text-overflow: ellipsis;
+                          white-space: nowrap;
+                        "
+                      >
+                        setup/release/flash-s3-win32.zip <span style="color: #6e7681">(7 parts)</span>
+                      </div>
+                      <div style="height: 7px; border-radius: 99px; background: #21262d; overflow: hidden">
+                        <div
+                          style="height:100%; border-radius:99px; background:#58a6ff; width: {{ overallWidth }}; transition:width .18s linear;"
+                        ></div>
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 13px;
+                        color: #8b949e;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 3px;
+                        text-align: right;
+                      "
+                    >
+                      <div style="color: #e6edf3; font-size: 15px">{{ overallPct }}</div>
+                      <div>{{ transferred }} / 150.0 MB</div>
+                      <div>{{ speedText }} · {{ etaText }}</div>
+                    </div>
+                  </div>
+
+                  <div style="padding: 6px 0">
+                    <sc-for list="{{ parts }}" as="p" hint-placeholder-count="7">
+                      <div
+                        style="
+                          display: grid;
+                          grid-template-columns: 104px minmax(0, 1fr) 46px 128px 74px;
+                          gap: 12px;
+                          align-items: center;
+                          padding: 7px 16px;
+                        "
+                      >
+                        <div style="font-size: 13px; color: #8b949e; font-family: 'JetBrains Mono', monospace; white-space: nowrap">
+                          {{ p.label }}
+                        </div>
+                        <div style="height: 6px; border-radius: 99px; background: #1a2029; overflow: hidden">
+                          <div
+                            style="height:100%; border-radius:99px; background:{{ p.bar }}; width: {{ p.width }}; transition:width .18s linear;"
+                          ></div>
+                        </div>
+                        <div style="font-size: 12.5px; color: #8b949e; font-family: 'JetBrains Mono', monospace; text-align: right">
+                          {{ p.pctText }}
+                        </div>
+                        <div style="font-size: 12.5px; color: #6e7681; font-family: 'JetBrains Mono', monospace; text-align: right">
+                          {{ p.bytes }}
+                        </div>
+                        <div style="font-size:12.5px; color:{{ p.stateColor }}; font-family:'JetBrains Mono',monospace; text-align:right;">
+                          {{ p.state }}
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <p style="margin: 14px 0 0; font-size: 13.5px; color: #6e7681">
+                  Pause, resume, and clear-completed act on the whole queue or a single item. Failed parts retry without restarting the
+                  file.
+                </p>
+              </section>
+
+              <section id="screenshots" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Screenshots
+                </h2>
+                <h3 style="margin: 0 0 26px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  The real thing
+                </h3>
+
+                <div style="border: 1px solid #30363d; border-radius: 12px; overflow: hidden; background: #0f1319">
+                  <div
+                    style="display: flex; flex-wrap: wrap; gap: 2px; padding: 8px; background: #161b22; border-bottom: 1px solid #21262d"
+                  >
+                    <sc-for list="{{ shots }}" as="s" hint-placeholder-count="5">
+                      <button
+                        onClick="{{ s.select }}"
+                        style="padding:7px 13px; border-radius:6px; background:{{ s.bg }}; border:1px solid {{ s.border }}; color:{{ s.color }}; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer;"
+                        style-hover="color:#e6edf3;"
+                      >
+                        {{ s.label }}
+                      </button>
+                    </sc-for>
+                  </div>
+                  <img src="shots/01-queue.png" alt="Transfer queue" style="display:{{ show1 }}; width:100%; height:auto;" />
+                  <img src="shots/02-browse.png" alt="Browsing buckets" style="display:{{ show2 }}; width:100%; height:auto;" />
+                  <img src="shots/03-dualpane.png" alt="Dual pane" style="display:{{ show3 }}; width:100%; height:auto;" />
+                  <img src="shots/04-context.png" alt="Object actions" style="display:{{ show4 }}; width:100%; height:auto;" />
+                  <img src="shots/05-connections.png" alt="Connection manager" style="display:{{ show5 }}; width:100%; height:auto;" />
+                  <div style="padding: 14px 18px; font-size: 14px; color: #8b949e; border-top: 1px solid #21262d; text-wrap: pretty">
+                    {{ activeShotCaption }}
+                  </div>
+                </div>
+                <p style="margin: 12px 0 0; font-size: 12.5px; color: #6e7681">
+                  Account names, bucket names and access-key IDs are pixelated in these captures.
+                </p>
+              </section>
+
+              <section id="install" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Install
+                </h2>
+                <h3 style="margin: 0 0 26px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  Grab a build
+                </h3>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 32px">
+                  <sc-for list="{{ platforms }}" as="pf" hint-placeholder-count="3">
+                    <a
+                      href="https://github.com/fzs1994/Flash-S3/releases"
+                      style="display:block; padding:18px; border-radius:10px; background:{{ pf.bg }}; border:1px solid {{ pf.border }}; text-decoration:none; color:#e6edf3;"
+                      style-hover="border-color:#58a6ff; text-decoration:none;"
+                    >
+                      <div style="font-size: 15.5px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 8px">
+                        {{ pf.name }} <span style="font-size: 11px; font-weight: 600; color: #3fb950">{{ pf.badge }}</span>
+                      </div>
+                      <div style="font-size: 13px; color: #8b949e; font-family: 'JetBrains Mono', monospace">{{ pf.file }}</div>
+                    </a>
+                  </sc-for>
+                </div>
+
+                <h4 style="margin: 0 0 14px; font-size: 16px; font-weight: 600; color: #e6edf3">Or build it yourself</h4>
+                <sc-for list="{{ commands }}" as="c" hint-placeholder-count="3">
+                  <div style="margin-bottom: 12px">
+                    <div style="font-size: 13px; color: #8b949e; margin-bottom: 6px">{{ c.note }}</div>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: stretch;
+                        border: 1px solid #30363d;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        background: #161b22;
+                      "
+                    >
+                      <code
+                        style="
+                          flex: 1;
+                          min-width: 0;
+                          padding: 12px 14px;
+                          font-family: 'JetBrains Mono', monospace;
+                          font-size: 13.5px;
+                          color: #e6edf3;
+                          white-space: pre;
+                          overflow-x: auto;
+                        "
+                        >{{ c.cmd }}</code
+                      >
+                      <button
+                        onClick="{{ c.copy }}"
+                        style="flex-shrink:0; padding:0 16px; background:#21262d; border:none; border-left:1px solid #30363d; color:{{ c.copyColor }}; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer;"
+                        style-hover="background:#30363d;"
+                      >
+                        {{ c.copyLabel }}
+                      </button>
+                    </div>
+                  </div>
+                </sc-for>
+              </section>
+
+              <section id="dev" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Getting started
+                </h2>
+                <h3 style="margin: 0 0 24px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  Working on it locally
+                </h3>
+                <ol style="margin: 0; padding-left: 22px; color: #c9d1d9; font-size: 16px; line-height: 1.75">
+                  <li style="margin-bottom: 10px">Install Node 18 or newer and clone the repo.</li>
+                  <li style="margin-bottom: 10px">
+                    <code
+                      style="
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 14px;
+                        background: #161b22;
+                        border: 1px solid #30363d;
+                        border-radius: 5px;
+                        padding: 2px 6px;
+                      "
+                      >npm install</code
+                    >
+                    pulls the Angular renderer and Electron shell together.
+                  </li>
+                  <li style="margin-bottom: 10px">
+                    <code
+                      style="
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 14px;
+                        background: #161b22;
+                        border: 1px solid #30363d;
+                        border-radius: 5px;
+                        padding: 2px 6px;
+                      "
+                      >npm start</code
+                    >
+                    runs the Angular dev server and opens the Electron window against it, with live reload.
+                  </li>
+                  <li style="margin-bottom: 10px">
+                    Add an account under <strong style="color: #e6edf3">Connections → New</strong>. Credentials go to the OS keychain, not
+                    the repo.
+                  </li>
+                  <li style="margin-bottom: 0">
+                    <code
+                      style="
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 14px;
+                        background: #161b22;
+                        border: 1px solid #30363d;
+                        border-radius: 5px;
+                        padding: 2px 6px;
+                      "
+                      >npm run dist</code
+                    >
+                    produces signed-installer output in
+                    <code
+                      style="
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 14px;
+                        background: #161b22;
+                        border: 1px solid #30363d;
+                        border-radius: 5px;
+                        padding: 2px 6px;
+                      "
+                      >release/</code
+                    >.
+                  </li>
+                </ol>
+              </section>
+
+              <section id="architecture" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Architecture
+                </h2>
+                <h3 style="margin: 0 0 26px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  How it is put together
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px">
+                  <sc-for list="{{ layers }}" as="l" hint-placeholder-count="4">
+                    <div style="padding: 20px; border-radius: 10px; background: #0f1319; border: 1px solid #30363d">
+                      <div
+                        style="
+                          font-size: 11px;
+                          font-weight: 600;
+                          letter-spacing: 0.1em;
+                          text-transform: uppercase;
+                          color: #6e7681;
+                          margin-bottom: 9px;
+                        "
+                      >
+                        {{ l.tag }}
+                      </div>
+                      <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #e6edf3">{{ l.title }}</div>
+                      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #8b949e; text-wrap: pretty">{{ l.body }}</p>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section id="comparison" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Comparison
+                </h2>
+                <h3 style="margin: 0 0 12px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  Flash S3 vs. S3 Browser
+                </h3>
+                <p style="margin: 0 0 26px; font-size: 15px; line-height: 1.6; color: #8b949e; max-width: 640px; text-wrap: pretty">
+                  <a href="https://s3browser.com/" style="color: #58a6ff">S3 Browser</a> (Netsdk Software) is a long-running, mature Windows
+                  client this project is styled after and owes its UI inspiration to — this is an honest side-by-side, not a claim of
+                  outright superiority.
+                </p>
+
+                <div style="border: 1px solid #30363d; border-radius: 12px; overflow: hidden">
+                  <div
+                    style="
+                      display: grid;
+                      grid-template-columns: minmax(0, 1fr) 108px 108px;
+                      gap: 0;
+                      background: #161b22;
+                      border-bottom: 1px solid #30363d;
+                      font-size: 12px;
+                      font-weight: 600;
+                      letter-spacing: 0.08em;
+                      text-transform: uppercase;
+                      color: #8b949e;
+                    "
+                  >
+                    <div style="padding: 12px 18px">Capability</div>
+                    <div style="padding: 12px 10px; text-align: center; color: #58a6ff">Flash S3</div>
+                    <div style="padding: 12px 10px; text-align: center">S3 Browser</div>
+                  </div>
+                  <sc-for list="{{ visibleRows }}" as="r" hint-placeholder-count="6">
+                    <div
+                      style="
+                        display: grid;
+                        grid-template-columns: minmax(0, 1fr) 108px 108px;
+                        gap: 0;
+                        border-bottom: 1px solid #21262d;
+                        background: #0f1319;
+                      "
+                    >
+                      <div style="padding: 13px 18px; font-size: 14.5px; color: #c9d1d9; min-width: 0; text-wrap: pretty">
+                        {{ r.label }}
+                      </div>
+                      <div style="padding:13px 10px; text-align:center; font-size:14px; color:{{ r.aColor }}; font-weight:600;">
+                        {{ r.a }}
+                      </div>
+                      <div style="padding:13px 10px; text-align:center; font-size:14px; color:{{ r.bColor }};">{{ r.b }}</div>
+                    </div>
+                  </sc-for>
+                  <button
+                    onClick="{{ toggleRows }}"
+                    style="
+                      width: 100%;
+                      padding: 13px;
+                      background: #161b22;
+                      border: none;
+                      color: #58a6ff;
+                      font-family: inherit;
+                      font-size: 14px;
+                      font-weight: 600;
+                      cursor: pointer;
+                    "
+                    style-hover="background:#21262d;"
+                  >
+                    {{ rowsLabel }}
+                  </button>
+                </div>
+              </section>
+
+              <section id="roadmap" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Roadmap
+                </h2>
+                <h3 style="margin: 0 0 12px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  What is next
+                </h3>
+                <p style="margin: 0 0 24px; font-size: 15px; color: #8b949e">{{ roadmapProgress }}</p>
+                <div style="display: grid; gap: 8px">
+                  <sc-for list="{{ roadmap }}" as="r" hint-placeholder-count="6">
+                    <!-- onClick="{{ r.toggle }}" -->
+                    <button
+                      style="display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:9px; background:#0f1319; border:1px solid {{ r.border }}; cursor:pointer; text-align:left; font-family:inherit; width:100%;"
+                      style-hover="border-color:#484f58;"
+                    >
+                      <span
+                        style="flex-shrink:0; width:18px; height:18px; border-radius:5px; border:1.5px solid {{ r.boxBorder }}; background:{{ r.boxBg }}; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#fff; margin-top:2px;"
+                        >{{ r.check }}</span
+                      >
+                      <span style="min-width: 0">
+                        <span
+                          style="display:block; font-size:15.5px; font-weight:600; color:{{ r.titleColor }}; text-decoration:{{ r.strike }}; margin-bottom:3px;"
+                          >{{ r.title }}</span
+                        >
+                        <span style="display: block; font-size: 14px; line-height: 1.5; color: #8b949e; text-wrap: pretty"
+                          >{{ r.body }}</span
+                        >
+                      </span>
+                    </button>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section id="limitations" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Known limitations
+                </h2>
+                <h3 style="margin: 0 0 24px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  Where v0.0.2 stops
+                </h3>
+                <div style="display: grid; gap: 10px">
+                  <sc-for list="{{ limits }}" as="l" hint-placeholder-count="4">
+                    <div
+                      style="
+                        display: flex;
+                        gap: 12px;
+                        padding: 15px 18px;
+                        border-radius: 9px;
+                        background: rgba(187, 128, 9, 0.06);
+                        border: 1px solid rgba(187, 128, 9, 0.32);
+                      "
+                    >
+                      <span style="flex-shrink: 0; color: #d29922; font-size: 15px; line-height: 1.5">!</span>
+                      <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #c9d1d9; text-wrap: pretty">{{ l }}</p>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section id="security" style="margin-bottom: 72px; scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Security
+                </h2>
+                <h3 style="margin: 0 0 24px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">
+                  Your keys stay yours
+                </h3>
+                <div style="display: grid; gap: 10px">
+                  <sc-for list="{{ security }}" as="s" hint-placeholder-count="4">
+                    <div
+                      style="
+                        display: flex;
+                        gap: 12px;
+                        padding: 15px 18px;
+                        border-radius: 9px;
+                        background: rgba(63, 185, 80, 0.05);
+                        border: 1px solid rgba(63, 185, 80, 0.26);
+                      "
+                    >
+                      <span style="flex-shrink: 0; color: #3fb950; font-size: 14px; line-height: 1.6">✓</span>
+                      <p style="margin: 0; font-size: 14.5px; line-height: 1.55; color: #c9d1d9; text-wrap: pretty">{{ s }}</p>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section id="license" style="scroll-margin-top: 24px">
+                <h2
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #58a6ff;
+                  "
+                >
+                  Contributing &amp; license
+                </h2>
+                <h3 style="margin: 0 0 20px; font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 600">Come help</h3>
+                <p style="margin: 0 0 14px; font-size: 16px; line-height: 1.7; color: #c9d1d9; max-width: 640px; text-wrap: pretty">
+                  Issues and pull requests are welcome — bug reports with the failing bucket layout and a rough object count are the most
+                  useful thing you can send. Please open an issue before starting anything large so we can agree on the shape first.
+                </p>
+                <p style="margin: 0 0 32px; font-size: 16px; line-height: 1.7; color: #c9d1d9; max-width: 640px">
+                  Released under the <strong style="color: #e6edf3">MIT License</strong>. Flash S3 is an independent project and is not
+                  affiliated with or endorsed by Amazon Web Services.
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px">
+                  <a
+                    href="https://github.com/fzs1994/Flash-S3/issues"
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      padding: 10px 18px;
+                      border-radius: 8px;
+                      background: #21262d;
+                      border: 1px solid #30363d;
+                      color: #e6edf3;
+                      font-size: 14.5px;
+                      font-weight: 600;
+                      text-decoration: none;
+                    "
+                    style-hover="background:#30363d; text-decoration:none;"
+                    >Open an issue</a
+                  >
+                  <a
+                    href="https://github.com/fzs1994/Flash-S3/releases"
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      padding: 10px 18px;
+                      border-radius: 8px;
+                      background: #21262d;
+                      border: 1px solid #30363d;
+                      color: #e6edf3;
+                      font-size: 14.5px;
+                      font-weight: 600;
+                      text-decoration: none;
+                    "
+                    style-hover="background:#30363d; text-decoration:none;"
+                    >Release notes</a
+                  >
+                </div>
+              </section>
+            </main>
           </div>
-        </section>
+        </div>
+      </div>
+    </x-dc>
+    <script
+      type="text/x-dc"
+      data-dc-script
+      data-props='{"accentColor":{"editor":"color","default":"#58a6ff","tsType":"string","options":["#58a6ff","#2fb3a0","#d2a8ff","#f0883e"],"section":"Theme"},"demoSpeed":{"editor":"range","default":1,"min":0.3,"max":3,"step":0.1,"tsType":"number","section":"Transfer demo"}}'
+    >
+      const TOTAL_MB = 150;
+      const PART_MB = 25;
 
-        <section id="comparison" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Comparison</h2>
-          <h3 style="margin:0 0 26px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">Flash S3 vs. the AWS console</h3>
+      const FEATURE_TABS = [
+        { id: 'browse', label: 'Browsing', items: [
+          { mark: '1', title: 'Multi-account tabs', body: 'Every connection opens its own tab. Dev, stage and prod side by side in one window — no signing out, no role dance.' },
+          { mark: '2', title: 'Instant bucket filter', body: 'Type to narrow a list of hundreds of buckets. The object list has its own filter for the current prefix.' },
+          { mark: '3', title: 'Real columns', body: 'Name, size, last modified and storage class, sortable, with folder-aware navigation and a clickable breadcrumb.' },
+          { mark: '4', title: 'Bookmarks', body: 'Star the four prefixes you actually live in and jump straight back to them next launch.' },
+        ]},
+        { id: 'dual', label: 'Dual pane', items: [
+          { mark: '1', title: 'Two panes, two accounts', body: 'Each pane picks its own connection and bucket, so a cross-account copy is one action instead of a download and a re-upload.' },
+          { mark: '2', title: 'Copy or move across', body: 'Copy to other pane and move to other pane work on multi-selections, queued like any other transfer.' },
+          { mark: '3', title: 'Right-click everything', body: 'Download, copy, move, rename, delete, share URL and properties — all on the context menu where you expect them.' },
+          { mark: '4', title: 'Keyboard-first', body: 'Tab between panes, arrow through objects, Enter to descend. No mouse required for the common path.' },
+        ]},
+        { id: 'transfer', label: 'Transfers', items: [
+          { mark: '1', title: 'Parallel multipart', body: 'Big objects split into parts that upload concurrently. Seven parts of a 150 MB archive sustain 8.7 MB/s in the capture above.' },
+          { mark: '2', title: 'Per-part visibility', body: 'Expand any transfer to watch each part on its own progress row with its own byte count and state.' },
+          { mark: '3', title: 'Pause and resume', body: 'Pause one item or the whole queue. Resume picks up from completed parts rather than starting the file again.' },
+          { mark: '4', title: 'Queue tabs', body: 'All, running, queued, error and completed are separate views with live counts, so failures do not hide in a long list.' },
+        ]},
+        { id: 'accounts', label: 'Accounts', items: [
+          { mark: '1', title: 'Named connections', body: 'Store as many profiles as you need with an access key, secret and default region under a label you will recognise.' },
+          { mark: '2', title: 'Edit in place', body: 'Rotate a key or change a region from the connection manager without touching a config file.' },
+          { mark: '3', title: 'Custom endpoints', body: 'Anything that speaks the S3 API — MinIO, Wasabi, R2 — works by pointing a connection at its endpoint.' },
+          { mark: '4', title: 'Keychain storage', body: 'Secrets go into the operating system credential store, never into plaintext next to the app.' },
+        ]},
+        { id: 'ops', label: 'Housekeeping', items: [
+          { mark: '1', title: 'Upload files or folders', body: 'Whole directory trees upload with their structure intact and land in the queue as individual objects.' },
+          { mark: '2', title: 'Export CSV', body: 'Dump the current listing — names, sizes, timestamps, storage class — for an audit or a spreadsheet.' },
+          { mark: '3', title: 'Presigned share URLs', body: 'Generate a time-limited link for one object straight from the context menu.' },
+          { mark: '4', title: 'New folder & rename', body: 'Create prefixes and rename objects without thinking about the copy-then-delete underneath.' },
+        ]},
+      ];
 
-          <div style="border:1px solid #30363d; border-radius:12px; overflow:hidden;">
-            <div style="display:grid; grid-template-columns:minmax(0,1fr) 108px 108px; gap:0; background:#161b22; border-bottom:1px solid #30363d; font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:#8b949e;">
-              <div style="padding:12px 18px;">Capability</div>
-              <div style="padding:12px 10px; text-align:center; color:#58a6ff;">Flash S3</div>
-              <div style="padding:12px 10px; text-align:center;">Console</div>
-            </div>
-            <sc-for list="{{ visibleRows }}" as="r" hint-placeholder-count="6">
-              <div style="display:grid; grid-template-columns:minmax(0,1fr) 108px 108px; gap:0; border-bottom:1px solid #21262d; background:#0f1319;">
-                <div style="padding:13px 18px; font-size:14.5px; color:#c9d1d9; min-width:0; text-wrap:pretty;">{{ r.label }}</div>
-                <div style="padding:13px 10px; text-align:center; font-size:14px; color:{{ r.aColor }}; font-weight:600;">{{ r.a }}</div>
-                <div style="padding:13px 10px; text-align:center; font-size:14px; color:{{ r.bColor }};">{{ r.b }}</div>
-              </div>
-            </sc-for>
-            <button onClick="{{ toggleRows }}" style="width:100%; padding:13px; background:#161b22; border:none; color:#58a6ff; font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;" style-hover="background:#21262d;">{{ rowsLabel }}</button>
-          </div>
-        </section>
+      const SHOTS = [
+        { id: 'queue', label: 'Transfer queue', src: 'shots/01-queue.png', caption: 'A 150 MB archive uploading as 7 parts — four active, three queued, 8.7 MB/s aggregate with 13 seconds left.' },
+        { id: 'browse', label: 'Browsing', src: 'shots/02-browse.png', caption: 'Bucket list on the left with its own filter, object listing on the right with a clickable breadcrumb and sortable columns.' },
+        { id: 'dual', label: 'Dual pane', src: 'shots/03-dualpane.png', caption: 'Two independent panes, each bound to its own connection and bucket, with copy and move between them on the context menu.' },
+        { id: 'context', label: 'Object actions', src: 'shots/04-context.png', caption: 'Per-object actions: download, copy to, move to, rename, delete, presigned share URL and properties.' },
+        { id: 'connections', label: 'Connections', src: 'shots/05-connections.png', caption: 'The connection manager. Each profile carries its own credentials and default region, and each opens as a tab.' },
+      ];
 
-        <section id="roadmap" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Roadmap</h2>
-          <h3 style="margin:0 0 12px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">What is next</h3>
-          <p style="margin:0 0 20px; font-size:15px; color:#8b949e;">{{ roadmapProgress }}</p>
-          <div style="height:6px; border-radius:99px; background:#21262d; overflow:hidden; margin-bottom:24px;">
-            <div style="height:100%; border-radius:99px; background:#3fb950; width: {{ roadmapWidth }}; transition:width .25s ease;"></div>
-          </div>
-          <div style="display:grid; gap:8px;">
-            <sc-for list="{{ roadmap }}" as="r" hint-placeholder-count="6">
-              <button onClick="{{ r.toggle }}" style="display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:9px; background:#0f1319; border:1px solid {{ r.border }}; cursor:pointer; text-align:left; font-family:inherit; width:100%;" style-hover="border-color:#484f58;">
-                <span style="flex-shrink:0; width:18px; height:18px; border-radius:5px; border:1.5px solid {{ r.boxBorder }}; background:{{ r.boxBg }}; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:#fff; margin-top:2px;">{{ r.check }}</span>
-                <span style="min-width:0;">
-                  <span style="display:block; font-size:15.5px; font-weight:600; color:{{ r.titleColor }}; text-decoration:{{ r.strike }}; margin-bottom:3px;">{{ r.title }}</span>
-                  <span style="display:block; font-size:14px; line-height:1.5; color:#8b949e; text-wrap:pretty;">{{ r.body }}</span>
-                </span>
-              </button>
-            </sc-for>
-          </div>
-        </section>
+      const ROWS = [
+        { label: 'Platform', a: 'Win/Mac/Linux', b: 'Windows only' },
+        { label: 'Dual-pane / side-by-side browsing', a: 'Yes', b: 'No' },
+        { label: 'Multi-account, multi-tab browsing', a: 'Yes', b: 'One at a time' },
+        { label: 'Copy/move across accounts', a: 'Yes', b: 'Yes' },
+        { label: 'Transfer queue visibility for copy/move', a: 'Yes', b: 'Separate' },
+        { label: 'Bookmarks', a: 'Yes', b: 'No' },
+        { label: 'CSV export of a folder listing', a: 'Yes', b: 'No' },
+        { label: 'Local in-folder search/filter', a: 'Yes', b: 'Advanced' },
+        { label: 'Cost', a: 'Free', b: 'Free + Pro' },
+        { label: 'Folder/bucket sync tool', a: 'No', b: 'Yes' },
+        { label: 'Bucket policy / ACL / CORS / lifecycle editors', a: 'No', b: 'Yes' },
+        { label: 'Versioning UI, storage-class management', a: 'No', b: 'Yes' },
+        { label: 'CloudFront management', a: 'No', b: 'Yes' },
+        { label: 'Client-side encryption, transfer acceleration, throttling', a: 'No', b: 'Yes' },
+        { label: 'AWS SSO / IAM tooling, CLI automation', a: 'No', b: 'Yes' },
+      ];
 
-        <section id="limitations" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Known limitations</h2>
-          <h3 style="margin:0 0 24px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">Where v1.0.0 stops</h3>
-          <div style="display:grid; gap:10px;">
-            <sc-for list="{{ limits }}" as="l" hint-placeholder-count="4">
-              <div style="display:flex; gap:12px; padding:15px 18px; border-radius:9px; background:rgba(187,128,9,.06); border:1px solid rgba(187,128,9,.32);">
-                <span style="flex-shrink:0; color:#d29922; font-size:15px; line-height:1.5;">!</span>
-                <p style="margin:0; font-size:14.5px; line-height:1.55; color:#c9d1d9; text-wrap:pretty;">{{ l }}</p>
-              </div>
-            </sc-for>
-          </div>
-        </section>
+      const ROADMAP = [
+        { title: 'Object management — Version history', body: 'View, download, or restore previous versions of an object if bucket versioning is on.' },
+        { title: 'Object management — Tags editor', body: 'View, add and remove S3 object tags.' },
+        { title: 'Object management — Storage-class control', body: 'Pick Standard/IA/Glacier on upload, or transition existing objects.' },
+        { title: 'Bucket administration — Policy & CORS editor', body: 'Raw JSON editor with validation.' },
+        { title: 'Bucket administration — ACL viewer/editor', body: 'Per object or per bucket.' },
+        { title: 'Bucket administration — Static hosting & lifecycle', body: 'Website hosting configuration and lifecycle rule management.' },
+        { title: 'Sync & automation — Folder ⇄ prefix sync', body: 'One-way or two-way sync between a local folder and an S3 prefix, with a dry-run diff — the single biggest gap vs. S3 Browser.' },
+        { title: 'Sync & automation — Scheduled backups', body: 'e.g. "sync this folder nightly."' },
+        { title: 'Viewing & navigation — Inline preview', body: 'Images, text and PDF without downloading.' },
+        { title: 'Viewing & navigation — Sortable/filterable columns', body: 'By size, date and extension.' },
+        { title: 'Viewing & navigation — Bucket-wide search', body: 'Recursive search across every bucket in a connection, not just the current folder.' },
+        { title: 'Viewing & navigation — Recent folders history', body: 'Separate from bookmarks.' },
+        { title: 'Transfers & reliability — True resumable pause', body: 'Byte-offset resume instead of restarting a paused file from 0.' },
+        { title: 'Transfers & reliability — Bandwidth throttling', body: 'Cap transfer speed per task or globally.' },
+        { title: 'Transfers & reliability — Persistent transfer log', body: 'An exportable report of past transfers.' },
+        { title: 'Security & accounts — SSO & assumed roles', body: 'IAM Identity Center, MFA and role chaining alongside static keys.' },
+        { title: 'Security & accounts — IAM access diagnostics', body: 'A "why don’t I have access" helper.' },
+        { title: 'Security & accounts — Presigned URL log', body: 'Track links you’ve generated, with revoke-by-rotation.' },
+        { title: 'Security & accounts — CloudFront management', body: 'Distribution management and invalidations.' },
+      ];
 
-        <section id="security" style="margin-bottom:72px; scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Security</h2>
-          <h3 style="margin:0 0 24px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">Your keys stay yours</h3>
-          <div style="display:grid; gap:10px;">
-            <sc-for list="{{ security }}" as="s" hint-placeholder-count="4">
-              <div style="display:flex; gap:12px; padding:15px 18px; border-radius:9px; background:rgba(63,185,80,.05); border:1px solid rgba(63,185,80,.26);">
-                <span style="flex-shrink:0; color:#3fb950; font-size:14px; line-height:1.6;">✓</span>
-                <p style="margin:0; font-size:14.5px; line-height:1.55; color:#c9d1d9; text-wrap:pretty;">{{ s }}</p>
-              </div>
-            </sc-for>
-          </div>
-        </section>
+      const LIMITS = [
+        'Pausing an in-flight upload/download aborts the current HTTP request; resuming restarts that file from byte 0 rather than a true byte-offset resume.',
+        'Pausing or cancelling a copy/move only takes effect between items, not mid-item, and a paused/retried copy job re-copies from the first item. Acceptable in practice since same-account copies are typically near-instant per object.',
+        'Object versioning is not exposed yet — the listing shows current versions only, so a delete on a versioned bucket leaves a marker you cannot see from Flash S3.',
+        'Authentication is static access keys. IAM Identity Center, MFA prompts and assumed roles are on the roadmap, not in v0.0.2.',
+        'Search filters the prefix you are looking at, not the whole bucket. Very wide prefixes still page in as you scroll.',
+        'Glacier and Deep Archive objects list correctly but cannot be restored from the app; restores still need the console or the CLI.',
+        'Server-side copy is used where the API allows it; cross-region moves of very large objects fall back to a download and re-upload.',
+      ];
 
-        <section id="license" style="scroll-margin-top:24px;">
-          <h2 style="margin:0 0 10px; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:#58a6ff;">Contributing &amp; license</h2>
-          <h3 style="margin:0 0 20px; font-size:34px; line-height:1.15; letter-spacing:-.02em; font-weight:600;">Come help</h3>
-          <p style="margin:0 0 14px; font-size:16px; line-height:1.7; color:#c9d1d9; max-width:640px; text-wrap:pretty;">Issues and pull requests are welcome — bug reports with the failing bucket layout and a rough object count are the most useful thing you can send. Please open an issue before starting anything large so we can agree on the shape first.</p>
-          <p style="margin:0 0 32px; font-size:16px; line-height:1.7; color:#c9d1d9; max-width:640px;">Released under the <strong style="color:#e6edf3;">MIT License</strong>. Flash S3 is an independent project and is not affiliated with or endorsed by Amazon Web Services.</p>
-          <div style="display:flex; flex-wrap:wrap; gap:12px;">
-            <a href="https://github.com/fzs1994/Flash-S3/issues" style="display:inline-flex; align-items:center; padding:10px 18px; border-radius:8px; background:#21262d; border:1px solid #30363d; color:#e6edf3; font-size:14.5px; font-weight:600; text-decoration:none;" style-hover="background:#30363d; text-decoration:none;">Open an issue</a>
-            <a href="https://github.com/fzs1994/Flash-S3/releases" style="display:inline-flex; align-items:center; padding:10px 18px; border-radius:8px; background:#21262d; border:1px solid #30363d; color:#e6edf3; font-size:14.5px; font-weight:600; text-decoration:none;" style-hover="background:#30363d; text-decoration:none;">Release notes</a>
-          </div>
-        </section>
+      const SECURITY = [
+        'Credentials are encrypted at rest via Electron’s safeStorage — Keychain on macOS, Credential Manager on Windows, libsecret on Linux. If the OS has no available encryption backend, storage falls back to base64, which is not secure — flagged for follow-up.',
+        'contextIsolation is enabled and nodeIntegration is disabled in the Electron main process; the renderer only ever sees the explicit API surface exposed over the preload bridge, never Node or the filesystem directly.',
+        'Nothing is sent anywhere except AWS, or your chosen S3-compatible endpoint. There is no telemetry, no account, no update server call-home beyond the GitHub release check.',
+        'Presigned share URLs are generated locally and expire. Flash S3 never holds a copy of a link it made for you.',
+        'The app only ever has the permissions of the key you give it — scope a read-only IAM user if that is all you need.',
+      ];
 
-      </main>
-    </div>
-  </div>
-</div>
+      const LAYERS = [
+        { tag: 'Renderer', title: 'Angular', body: 'The whole interface — panes, tabs, queue, dialogs — is an Angular app with no direct filesystem or network access of its own.' },
+        { tag: 'Main', title: 'Electron', body: 'The Node side owns the AWS SDK v3 clients, the OS credential store and the filesystem. Everything the UI wants goes through typed IPC.' },
+        { tag: 'Workers', title: 'Transfer engine', body: 'Uploads and downloads run off the main thread as parts, with a concurrency limit, retry-per-part and progress events streamed back to the queue.' },
+        { tag: 'Packaging', title: 'electron-builder', body: 'One command produces an NSIS installer, a signed DMG and an AppImage from the same source tree.' },
+      ];
 
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#58a6ff&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#58a6ff&quot;,&quot;#2fb3a0&quot;,&quot;#d2a8ff&quot;,&quot;#f0883e&quot;],&quot;section&quot;:&quot;Theme&quot;},&quot;demoSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.3,&quot;max&quot;:3,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Transfer demo&quot;}}">
-const TOTAL_MB = 150;
-const PART_MB = 25;
+      class Component extends DCLogic {
+        state = {
+          tab: 'transfer',
+          shot: 'queue',
+          running: true,
+          parts: [47, 37, 43, 41, 0, 0, 0],
+          expanded: false,
+          copied: null,
+          roadmap: ROADMAP.map(r => r.done),
+          platform: 'your platform',
+          activeSection: 'features',
+        };
 
-const FEATURE_TABS = [
-  { id: 'browse', label: 'Browsing', items: [
-    { mark: '1', title: 'Multi-account tabs', body: 'Every connection opens its own tab. Dev, stage and prod side by side in one window — no signing out, no role dance.' },
-    { mark: '2', title: 'Instant bucket filter', body: 'Type to narrow a list of hundreds of buckets. The object list has its own filter for the current prefix.' },
-    { mark: '3', title: 'Real columns', body: 'Name, size, last modified and storage class, sortable, with folder-aware navigation and a clickable breadcrumb.' },
-    { mark: '4', title: 'Bookmarks', body: 'Star the four prefixes you actually live in and jump straight back to them next launch.' },
-  ]},
-  { id: 'dual', label: 'Dual pane', items: [
-    { mark: '1', title: 'Two panes, two accounts', body: 'Each pane picks its own connection and bucket, so a cross-account copy is one action instead of a download and a re-upload.' },
-    { mark: '2', title: 'Copy or move across', body: 'Copy to other pane and move to other pane work on multi-selections, queued like any other transfer.' },
-    { mark: '3', title: 'Right-click everything', body: 'Download, copy, move, rename, delete, share URL and properties — all on the context menu where you expect them.' },
-    { mark: '4', title: 'Keyboard-first', body: 'Tab between panes, arrow through objects, Enter to descend. No mouse required for the common path.' },
-  ]},
-  { id: 'transfer', label: 'Transfers', items: [
-    { mark: '1', title: 'Parallel multipart', body: 'Big objects split into parts that upload concurrently. Seven parts of a 150 MB archive sustain 8.7 MB/s in the capture above.' },
-    { mark: '2', title: 'Per-part visibility', body: 'Expand any transfer to watch each part on its own progress row with its own byte count and state.' },
-    { mark: '3', title: 'Pause and resume', body: 'Pause one item or the whole queue. Resume picks up from completed parts rather than starting the file again.' },
-    { mark: '4', title: 'Queue tabs', body: 'All, running, queued, error and completed are separate views with live counts, so failures do not hide in a long list.' },
-  ]},
-  { id: 'accounts', label: 'Accounts', items: [
-    { mark: '1', title: 'Named connections', body: 'Store as many profiles as you need with an access key, secret and default region under a label you will recognise.' },
-    { mark: '2', title: 'Edit in place', body: 'Rotate a key or change a region from the connection manager without touching a config file.' },
-    { mark: '3', title: 'Custom endpoints', body: 'Anything that speaks the S3 API — MinIO, Wasabi, R2 — works by pointing a connection at its endpoint.' },
-    { mark: '4', title: 'Keychain storage', body: 'Secrets go into the operating system credential store, never into plaintext next to the app.' },
-  ]},
-  { id: 'ops', label: 'Housekeeping', items: [
-    { mark: '1', title: 'Upload files or folders', body: 'Whole directory trees upload with their structure intact and land in the queue as individual objects.' },
-    { mark: '2', title: 'Export CSV', body: 'Dump the current listing — names, sizes, timestamps, storage class — for an audit or a spreadsheet.' },
-    { mark: '3', title: 'Presigned share URLs', body: 'Generate a time-limited link for one object straight from the context menu.' },
-    { mark: '4', title: 'New folder & rename', body: 'Create prefixes and rename objects without thinking about the copy-then-delete underneath.' },
-  ]},
-];
+        componentDidMount() {
+          const ua = (navigator.userAgent || '').toLowerCase();
+          let p = 'your platform';
+          if (ua.includes('win')) p = 'Windows';
+          else if (ua.includes('mac')) p = 'macOS';
+          else if (ua.includes('linux') || ua.includes('x11')) p = 'Linux';
+          this.setState({ platform: p });
+          this.timer = setInterval(() => this.tick(), 160);
 
-const SHOTS = [
-  { id: 'queue', label: 'Transfer queue', src: 'shots/01-queue.png', caption: 'A 150 MB archive uploading as 7 parts — four active, three queued, 8.7 MB/s aggregate with 13 seconds left.' },
-  { id: 'browse', label: 'Browsing', src: 'shots/02-browse.png', caption: 'Bucket list on the left with its own filter, object listing on the right with a clickable breadcrumb and sortable columns.' },
-  { id: 'dual', label: 'Dual pane', src: 'shots/03-dualpane.png', caption: 'Two independent panes, each bound to its own connection and bucket, with copy and move between them on the context menu.' },
-  { id: 'context', label: 'Object actions', src: 'shots/04-context.png', caption: 'Per-object actions: download, copy to, move to, rename, delete, presigned share URL and properties.' },
-  { id: 'connections', label: 'Connections', src: 'shots/05-connections.png', caption: 'The connection manager. Each profile carries its own credentials and default region, and each opens as a tab.' },
-];
+          const ids = ['features', 'queue', 'screenshots', 'install', 'dev', 'architecture', 'comparison', 'roadmap', 'limitations', 'security', 'license'];
+          if ('IntersectionObserver' in window) {
+            this.sectionObserver = new IntersectionObserver(
+              (entries) => {
+                entries.forEach((entry) => {
+                  if (entry.isIntersecting) this.setState({ activeSection: entry.target.id });
+                });
+              },
+              { rootMargin: '-15% 0px -70% 0px', threshold: 0 }
+            );
+            ids.forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) this.sectionObserver.observe(el);
+            });
+          }
+        }
 
-const ROWS = [
-  { label: 'Two accounts open at the same time', a: 'Yes', b: 'No' },
-  { label: 'Dual-pane copy between buckets', a: 'Yes', b: 'No' },
-  { label: 'Parallel multipart with per-part progress', a: 'Yes', b: 'Hidden' },
-  { label: 'Pause and resume a transfer', a: 'Yes', b: 'No' },
-  { label: 'Upload a folder tree in one action', a: 'Yes', b: 'Limited' },
-  { label: 'Queue that survives navigating away', a: 'Yes', b: 'No' },
-  { label: 'Bookmark a deep prefix', a: 'Yes', b: 'No' },
-  { label: 'Export the current listing as CSV', a: 'Yes', b: 'No' },
-  { label: 'Keyboard navigation through objects', a: 'Yes', b: 'Partial' },
-  { label: 'Works against non-AWS S3 endpoints', a: 'Yes', b: 'No' },
-  { label: 'Runs offline against local credentials', a: 'Yes', b: 'No' },
-  { label: 'Dark interface', a: 'Yes', b: 'Yes' },
-];
+        componentWillUnmount() {
+          clearInterval(this.timer);
+          clearTimeout(this.copyTimer);
+          if (this.sectionObserver) this.sectionObserver.disconnect();
+        }
 
-const ROADMAP = [
-  { title: 'Sync a local folder to a prefix', body: 'One-way mirror with a dry-run diff before anything is written.', done: false },
-  { title: 'Object versioning browser', body: 'List, restore and permanently delete previous versions of an object.', done: false },
-  { title: 'SSO and assumed-role support', body: 'IAM Identity Center profiles and role chaining alongside static keys.', done: false },
-  { title: 'Search across a whole bucket', body: 'Recursive prefix search with a result list you can act on in bulk.', done: false },
-  { title: 'Storage-class transitions', body: 'Move selected objects to Glacier tiers and back from the context menu.', done: false },
-  { title: 'Transfer queue and per-part progress', body: 'Shipped in v1.0.0.', done: true },
-  { title: 'Dual-pane cross-account transfers', body: 'Shipped in v1.0.0.', done: true },
-];
+        tick() {
+          if (!this.state.running) return;
+          const speed = this.props.demoSpeed ?? 1;
+          this.setState(s => {
+            const parts = s.parts.slice();
+            let active = parts.filter(p => p > 0 && p < 100).length;
+            for (let i = 0; i < parts.length; i++) {
+              if (parts[i] >= 100) continue;
+              if (parts[i] === 0 && active >= 4) continue;
+              if (parts[i] === 0) active++;
+              parts[i] = Math.min(100, parts[i] + (1.4 + Math.random() * 2.2) * speed);
+            }
+            return { parts };
+          });
+        }
 
-const LIMITS = [
-  'Object versioning is not exposed yet — the listing shows current versions only, so a delete on a versioned bucket leaves a marker you cannot see from Flash S3.',
-  'Authentication is static access keys. IAM Identity Center, MFA prompts and assumed roles are on the roadmap, not in v1.0.0.',
-  'Search filters the prefix you are looking at, not the whole bucket. Very wide prefixes still page in as you scroll.',
-  'Glacier and Deep Archive objects list correctly but cannot be restored from the app; restores still need the console or the CLI.',
-  'Server-side copy is used where the API allows it; cross-region moves of very large objects fall back to a download and re-upload.',
-];
+        copy(text, key) {
+          try { navigator.clipboard.writeText(text); } catch (e) {}
+          this.setState({ copied: key });
+          clearTimeout(this.copyTimer);
+          this.copyTimer = setTimeout(() => this.setState({ copied: null }), 1600);
+        }
 
-const SECURITY = [
-  'Credentials are stored in the operating system credential store — Keychain on macOS, Credential Manager on Windows, libsecret on Linux — never in a plaintext file beside the app.',
-  'Nothing is sent anywhere except AWS. There is no telemetry, no account, no update server call-home beyond the GitHub release check.',
-  'All traffic goes over HTTPS through the AWS SDK, so requests are signed with SigV4 and never proxied through third-party infrastructure.',
-  'Presigned share URLs are generated locally and expire. Flash S3 never holds a copy of a link it made for you.',
-  'The app only ever has the permissions of the key you give it — scope a read-only IAM user if that is all you need.',
-];
+        renderVals() {
+          const s = this.state;
+          const accent = this.props.accentColor ?? '#58a6ff';
 
-const LAYERS = [
-  { tag: 'Renderer', title: 'Angular', body: 'The whole interface — panes, tabs, queue, dialogs — is an Angular app with no direct filesystem or network access of its own.' },
-  { tag: 'Main', title: 'Electron', body: 'The Node side owns the AWS SDK v3 clients, the OS credential store and the filesystem. Everything the UI wants goes through typed IPC.' },
-  { tag: 'Workers', title: 'Transfer engine', body: 'Uploads and downloads run off the main thread as parts, with a concurrency limit, retry-per-part and progress events streamed back to the queue.' },
-  { tag: 'Packaging', title: 'electron-builder', body: 'One command produces an NSIS installer, a signed DMG and an AppImage from the same source tree.' },
-];
+          const toc = [
+            ['Features', '#features'], ['Transfer queue', '#queue'], ['Screenshots', '#screenshots'],
+            ['Install', '#install'], ['Getting started', '#dev'], ['Architecture', '#architecture'],
+            ['Comparison', '#comparison'], ['Roadmap', '#roadmap'], ['Known limitations', '#limitations'],
+            ['Security', '#security'], ['Contributing', '#license'],
+          ].map(([label, href]) => {
+            const active = (s.activeSection || 'features') === href.slice(1);
+            return {
+              label,
+              href,
+              color: active ? '#e6edf3' : '#8b949e',
+              borderColor: active ? accent : '#21262d',
+              weight: active ? '600' : '400',
+            };
+          });
 
-class Component extends DCLogic {
-  state = {
-    tab: 'transfer',
-    shot: 'queue',
-    running: true,
-    parts: [47, 37, 43, 41, 0, 0, 0],
-    expanded: false,
-    copied: null,
-    roadmap: ROADMAP.map(r => r.done),
-    platform: 'your platform',
-  };
+          const tabs = FEATURE_TABS.map(t => ({
+            label: t.label,
+            underline: s.tab === t.id ? accent : 'transparent',
+            color: s.tab === t.id ? '#e6edf3' : '#8b949e',
+            weight: s.tab === t.id ? '600' : '500',
+            select: () => this.setState({ tab: t.id }),
+          }));
+          const activeFeatures = (FEATURE_TABS.find(t => t.id === s.tab) || FEATURE_TABS[0]).items;
 
-  componentDidMount() {
-    const ua = (navigator.userAgent || '').toLowerCase();
-    let p = 'your platform';
-    if (ua.includes('win')) p = 'Windows';
-    else if (ua.includes('mac')) p = 'macOS';
-    else if (ua.includes('linux') || ua.includes('x11')) p = 'Linux';
-    this.setState({ platform: p });
-    this.timer = setInterval(() => this.tick(), 160);
-  }
+          const shots = SHOTS.map(sh => ({
+            label: sh.label,
+            bg: s.shot === sh.id ? '#21262d' : 'transparent',
+            border: s.shot === sh.id ? '#30363d' : 'transparent',
+            color: s.shot === sh.id ? '#e6edf3' : '#8b949e',
+            select: () => this.setState({ shot: sh.id }),
+          }));
+          const shot = SHOTS.find(x => x.id === s.shot) || SHOTS[0];
 
-  componentWillUnmount() { clearInterval(this.timer); clearTimeout(this.copyTimer); }
+          const parts = s.parts.map((pct, i) => {
+            const done = pct >= 100;
+            const active = pct > 0 && !done;
+            return {
+              label: 'Part ' + (i + 1) + ' of 7',
+              width: pct.toFixed(0) + '%',
+              pctText: Math.round(pct) + '%',
+              bytes: (PART_MB * pct / 100).toFixed(1) + ' MB / ' + PART_MB.toFixed(1) + ' MB',
+              state: done ? 'Done' : active ? 'Active' : 'Queued',
+              stateColor: done ? '#3fb950' : active ? accent : '#6e7681',
+              bar: done ? '#3fb950' : '#2fb3a0',
+            };
+          });
 
-  tick() {
-    if (!this.state.running) return;
-    const speed = this.props.demoSpeed ?? 1;
-    this.setState(s => {
-      const parts = s.parts.slice();
-      let active = parts.filter(p => p > 0 && p < 100).length;
-      for (let i = 0; i < parts.length; i++) {
-        if (parts[i] >= 100) continue;
-        if (parts[i] === 0 && active >= 4) continue;
-        if (parts[i] === 0) active++;
-        parts[i] = Math.min(100, parts[i] + (1.4 + Math.random() * 2.2) * speed);
+          const overall = s.parts.reduce((a, b) => a + b, 0) / (s.parts.length * 100);
+          const allDone = overall >= 1;
+          const activeCount = s.parts.filter(p => p > 0 && p < 100).length;
+          const queuedCount = s.parts.filter(p => p === 0).length;
+          const remainMb = TOTAL_MB * (1 - overall);
+
+          const commands = [
+            { note: 'Clone and install', cmd: 'git clone https://github.com/fzs1994/Flash-S3.git\ncd Flash-S3\nnpm install' },
+            { note: 'Run in development', cmd: 'npm start' },
+            { note: 'Build installers for your platform', cmd: 'npm run dist' },
+          ].map((c, i) => ({
+            note: c.note,
+            cmd: c.cmd,
+            copy: () => this.copy(c.cmd, i),
+            copyLabel: s.copied === i ? 'Copied' : 'Copy',
+            copyColor: s.copied === i ? '#3fb950' : '#8b949e',
+          }));
+
+          const platforms = [
+            { name: 'Windows', file: 'Flash-S3-Setup-0.0.2.exe' },
+            { name: 'macOS', file: 'Flash-S3-0.0.2.dmg' },
+            { name: 'Linux', file: 'Flash-S3-0.0.2.AppImage' },
+          ].map(p => ({
+            ...p,
+            badge: p.name === s.platform ? 'detected' : '',
+            bg: p.name === s.platform ? 'rgba(47,111,176,.12)' : '#0f1319',
+            border: p.name === s.platform ? 'rgba(88,166,255,.45)' : '#30363d',
+          }));
+
+          const visibleRows = (s.expanded ? ROWS : ROWS.slice(0, 6)).map(r => ({
+            label: r.label,
+            a: r.a,
+            b: r.b,
+            aColor: r.a === 'Yes' ? '#3fb950' : '#8b949e',
+            bColor: r.b === 'Yes' ? '#3fb950' : r.b === 'No' ? '#6e7681' : '#d29922',
+          }));
+
+          const roadmap = ROADMAP.map((r, i) => {
+            const done = s.roadmap[i];
+            return {
+              title: r.title,
+              body: r.body,
+              check: done ? '✓' : '',
+              border: done ? 'rgba(63,185,80,.3)' : '#30363d',
+              boxBorder: done ? '#3fb950' : '#484f58',
+              boxBg: done ? '#238636' : 'transparent',
+              titleColor: done ? '#8b949e' : '#e6edf3',
+              strike: done ? 'line-through' : 'none',
+              toggle: () => this.setState(st => {
+                const next = st.roadmap.slice();
+                next[i] = !next[i];
+                return { roadmap: next };
+              }),
+            };
+          });
+
+          return {
+            toc, tabs, activeFeatures, shots, parts, commands, platforms, visibleRows, roadmap,
+            limits: LIMITS, security: SECURITY, layers: LAYERS,
+            platformLabel: s.platform,
+            show1: s.shot === 'queue' ? 'block' : 'none',
+            show2: s.shot === 'browse' ? 'block' : 'none',
+            show3: s.shot === 'dual' ? 'block' : 'none',
+            show4: s.shot === 'context' ? 'block' : 'none',
+            show5: s.shot === 'connections' ? 'block' : 'none',
+            activeShotLabel: shot.label,
+            activeShotCaption: shot.caption,
+            overallWidth: (overall * 100).toFixed(1) + '%',
+            overallPct: Math.round(overall * 100) + '%',
+            transferred: (TOTAL_MB * overall).toFixed(1) + ' MB',
+            speedText: allDone || !s.running ? '0 B/s' : '8.7 MB/s',
+            etaText: allDone ? 'complete' : !s.running ? 'paused' : Math.max(1, Math.round(remainMb / 8.7)) + 's',
+            queueSummary: activeCount + ' active · ' + queuedCount + ' queued · total speed ' + (allDone || !s.running ? '0 B/s' : '8.7 MB/s'),
+            runLabel: allDone ? 'Replay' : s.running ? 'Pause' : 'Resume',
+            toggleRun: () => {
+              if (allDone) this.setState({ parts: [0, 0, 0, 0, 0, 0, 0], running: true });
+              else this.setState(st => ({ running: !st.running }));
+            },
+            resetDemo: () => this.setState({ parts: [47, 37, 43, 41, 0, 0, 0], running: false }),
+            toggleRows: () => this.setState(st => ({ expanded: !st.expanded })),
+            rowsLabel: s.expanded ? 'Show fewer' : 'Show all ' + ROWS.length + ' rows',
+            roadmapProgress: ROADMAP.length + ' planned improvements across 6 areas — open an issue if one of these is blocking you',
+          };
+        }
       }
-      return { parts };
-    });
-  }
-
-  copy(text, key) {
-    try { navigator.clipboard.writeText(text); } catch (e) {}
-    this.setState({ copied: key });
-    clearTimeout(this.copyTimer);
-    this.copyTimer = setTimeout(() => this.setState({ copied: null }), 1600);
-  }
-
-  renderVals() {
-    const s = this.state;
-    const accent = this.props.accentColor ?? '#58a6ff';
-
-    const toc = [
-      ['Features', '#features'], ['Transfer queue', '#queue'], ['Screenshots', '#screenshots'],
-      ['Install', '#install'], ['Getting started', '#dev'], ['Architecture', '#architecture'],
-      ['Comparison', '#comparison'], ['Roadmap', '#roadmap'], ['Known limitations', '#limitations'],
-      ['Security', '#security'], ['Contributing', '#license'],
-    ].map(([label, href]) => ({ label, href }));
-
-    const tabs = FEATURE_TABS.map(t => ({
-      label: t.label,
-      underline: s.tab === t.id ? accent : 'transparent',
-      color: s.tab === t.id ? '#e6edf3' : '#8b949e',
-      weight: s.tab === t.id ? '600' : '500',
-      select: () => this.setState({ tab: t.id }),
-    }));
-    const activeFeatures = (FEATURE_TABS.find(t => t.id === s.tab) || FEATURE_TABS[0]).items;
-
-    const shots = SHOTS.map(sh => ({
-      label: sh.label,
-      bg: s.shot === sh.id ? '#21262d' : 'transparent',
-      border: s.shot === sh.id ? '#30363d' : 'transparent',
-      color: s.shot === sh.id ? '#e6edf3' : '#8b949e',
-      select: () => this.setState({ shot: sh.id }),
-    }));
-    const shot = SHOTS.find(x => x.id === s.shot) || SHOTS[0];
-
-    const parts = s.parts.map((pct, i) => {
-      const done = pct >= 100;
-      const active = pct > 0 && !done;
-      return {
-        label: 'Part ' + (i + 1) + ' of 7',
-        width: pct.toFixed(0) + '%',
-        pctText: Math.round(pct) + '%',
-        bytes: (PART_MB * pct / 100).toFixed(1) + ' MB / ' + PART_MB.toFixed(1) + ' MB',
-        state: done ? 'Done' : active ? 'Active' : 'Queued',
-        stateColor: done ? '#3fb950' : active ? accent : '#6e7681',
-        bar: done ? '#3fb950' : '#2fb3a0',
-      };
-    });
-
-    const overall = s.parts.reduce((a, b) => a + b, 0) / (s.parts.length * 100);
-    const allDone = overall >= 1;
-    const activeCount = s.parts.filter(p => p > 0 && p < 100).length;
-    const queuedCount = s.parts.filter(p => p === 0).length;
-    const remainMb = TOTAL_MB * (1 - overall);
-
-    const commands = [
-      { note: 'Clone and install', cmd: 'git clone https://github.com/fzs1994/Flash-S3.git\ncd Flash-S3\nnpm install' },
-      { note: 'Run in development', cmd: 'npm start' },
-      { note: 'Build installers for your platform', cmd: 'npm run dist' },
-    ].map((c, i) => ({
-      note: c.note,
-      cmd: c.cmd,
-      copy: () => this.copy(c.cmd, i),
-      copyLabel: s.copied === i ? 'Copied' : 'Copy',
-      copyColor: s.copied === i ? '#3fb950' : '#8b949e',
-    }));
-
-    const platforms = [
-      { name: 'Windows', file: 'Flash-S3-Setup-1.0.0.exe' },
-      { name: 'macOS', file: 'Flash-S3-1.0.0.dmg' },
-      { name: 'Linux', file: 'Flash-S3-1.0.0.AppImage' },
-    ].map(p => ({
-      ...p,
-      badge: p.name === s.platform ? 'detected' : '',
-      bg: p.name === s.platform ? 'rgba(47,111,176,.12)' : '#0f1319',
-      border: p.name === s.platform ? 'rgba(88,166,255,.45)' : '#30363d',
-    }));
-
-    const visibleRows = (s.expanded ? ROWS : ROWS.slice(0, 6)).map(r => ({
-      label: r.label,
-      a: r.a,
-      b: r.b,
-      aColor: r.a === 'Yes' ? '#3fb950' : '#8b949e',
-      bColor: r.b === 'Yes' ? '#3fb950' : r.b === 'No' ? '#6e7681' : '#d29922',
-    }));
-
-    const roadmap = ROADMAP.map((r, i) => {
-      const done = s.roadmap[i];
-      return {
-        title: r.title,
-        body: r.body,
-        check: done ? '✓' : '',
-        border: done ? 'rgba(63,185,80,.3)' : '#30363d',
-        boxBorder: done ? '#3fb950' : '#484f58',
-        boxBg: done ? '#238636' : 'transparent',
-        titleColor: done ? '#8b949e' : '#e6edf3',
-        strike: done ? 'line-through' : 'none',
-        toggle: () => this.setState(st => {
-          const next = st.roadmap.slice();
-          next[i] = !next[i];
-          return { roadmap: next };
-        }),
-      };
-    });
-    const doneCount = s.roadmap.filter(Boolean).length;
-
-    return {
-      toc, tabs, activeFeatures, shots, parts, commands, platforms, visibleRows, roadmap,
-      limits: LIMITS, security: SECURITY, layers: LAYERS,
-      platformLabel: s.platform,
-      show1: s.shot === 'queue' ? 'block' : 'none',
-      show2: s.shot === 'browse' ? 'block' : 'none',
-      show3: s.shot === 'dual' ? 'block' : 'none',
-      show4: s.shot === 'context' ? 'block' : 'none',
-      show5: s.shot === 'connections' ? 'block' : 'none',
-      activeShotLabel: shot.label,
-      activeShotCaption: shot.caption,
-      overallWidth: (overall * 100).toFixed(1) + '%',
-      overallPct: Math.round(overall * 100) + '%',
-      transferred: (TOTAL_MB * overall).toFixed(1) + ' MB',
-      speedText: allDone || !s.running ? '0 B/s' : '8.7 MB/s',
-      etaText: allDone ? 'complete' : !s.running ? 'paused' : Math.max(1, Math.round(remainMb / 8.7)) + 's',
-      queueSummary: activeCount + ' active · ' + queuedCount + ' queued · total speed ' + (allDone || !s.running ? '0 B/s' : '8.7 MB/s'),
-      runLabel: allDone ? 'Replay' : s.running ? 'Pause' : 'Resume',
-      toggleRun: () => {
-        if (allDone) this.setState({ parts: [0, 0, 0, 0, 0, 0, 0], running: true });
-        else this.setState(st => ({ running: !st.running }));
-      },
-      resetDemo: () => this.setState({ parts: [47, 37, 43, 41, 0, 0, 0], running: false }),
-      toggleRows: () => this.setState(st => ({ expanded: !st.expanded })),
-      rowsLabel: s.expanded ? 'Show fewer' : 'Show all ' + ROWS.length + ' rows',
-      roadmapProgress: doneCount + ' of ' + ROADMAP.length + ' shipped — tick an item to track your own build',
-      roadmapWidth: (doneCount / ROADMAP.length * 100).toFixed(0) + '%',
-    };
-  }
-}
-
-</script>
-</body>
+    </script>
+  </body>
 </html>
