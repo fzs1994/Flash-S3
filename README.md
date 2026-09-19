@@ -12,7 +12,7 @@ Multi-account tabs, dual-pane transfers, and a multipart queue that actually sho
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 ![stack](https://img.shields.io/badge/built%20with-Electron%20%2B%20Angular-58a6ff)
 
-### → [**Interactive overview & screenshots**](https://fzs1994.github.io/flash-s3) ←
+### → [**Interactive overview & screenshots**](https://fzs1994.github.io/Flash-S3) ←
 
 [Download](https://github.com/fzs1994/Flash-S3/releases) · [Issues](https://github.com/fzs1994/Flash-S3/issues) · [Release notes](RELEASE_NOTES.md)
 

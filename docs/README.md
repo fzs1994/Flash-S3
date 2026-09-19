@@ -12,7 +12,7 @@ Multi-account tabs, dual-pane transfers, and a multipart queue that actually sho
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 ![stack](https://img.shields.io/badge/built%20with-Electron%20%2B%20Angular-58a6ff)
 
-### → [**Interactive overview & screenshots**](https://fzs1994.github.io/flash-s3) ←
+### → [**Interactive overview & screenshots**](https://fzs1994.github.io/Flash-S3) ←
 
 [Download](https://github.com/fzs1994/Flash-S3/releases) · [Issues](https://github.com/fzs1994/Flash-S3/issues) · [Release notes](RELEASE_NOTES.md)
 
@@ -48,7 +48,7 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 
 **Dual-pane view**
 
-- A classic Total-Commander-style layout: two completely independent, side-by-side browsing panes, each free to point at any saved connection and any bucket — including two different buckets in the *same* AWS account at once.
+- A classic Total-Commander-style layout: two completely independent, side-by-side browsing panes, each free to point at any saved connection and any bucket — including two different buckets in the _same_ AWS account at once.
 - Drag-resizable divider between the panes, with the split remembered across restarts.
 - Copy or move the current selection straight to whatever the other pane is showing, via the mini toolbar or a right-click context menu — including across different AWS accounts.
 
@@ -66,7 +66,7 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 ### Known limitations (v1.0.0)
 
 - Pausing an in-flight upload/download aborts the current HTTP request; resuming restarts that file from byte 0 rather than a true byte-offset resume.
-- Pausing or cancelling a copy/move only takes effect *between* items, not mid-item, and a paused/retried copy job re-copies from the first item rather than resuming partway. Acceptable in practice since same-account S3-to-S3 copies are typically near-instant per object.
+- Pausing or cancelling a copy/move only takes effect _between_ items, not mid-item, and a paused/retried copy job re-copies from the first item rather than resuming partway. Acceptable in practice since same-account S3-to-S3 copies are typically near-instant per object.
 - Object versioning is not exposed — the listing shows current versions only.
 - Static access keys only; IAM Identity Center, MFA and assumed roles are on the roadmap.
 - Search filters the current prefix, not the whole bucket.
@@ -77,23 +77,23 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 
 [S3 Browser](https://s3browser.com/) (by Netsdk Software) is a long-running, feature-rich Windows client for Amazon S3 — this project is styled after it and owes it the UI inspiration. It's a much more mature product overall (see its [full feature list](https://s3browser.com/)), so this is an honest side-by-side rather than a claim of outright superiority:
 
-| Area | Flash S3 (this build) | S3 Browser |
-| --- | --- | --- |
-| Platform | Windows, macOS, and Linux (Electron) | Windows only (incl. Windows Server) |
-| Dual-pane / side-by-side browsing | Yes — two independent panes, drag-resizable, cross-pane copy/move | No — closest equivalent is the one-way/two-way Folder Sync Tool, not a live two-pane browser |
-| Multi-account, multi-tab browsing | Yes — several connections open as tabs simultaneously | Multiple accounts supported, but one active account view at a time |
-| Copy/move across accounts | Yes, including in the dual-pane view | Yes (a longstanding S3 Browser feature) |
-| Transfer queue visibility for copy/move | Yes — copy/move shows up in the same queue as uploads/downloads with progress and errors | Copy/move runs as its own operation, separate from the upload/download queue |
-| Bookmarks | Yes — add/edit/delete, "Add current" | No dedicated bookmarks; has a bucket/account list instead |
-| CSV export of a folder listing | Yes, full paginated listing | Not a built-in export; primarily supports scripted/CLI listing |
-| Local in-folder search/filter | Yes | Advanced search/filtering across criteria (name, size, date, metadata) |
-| Cost | Free, single build, no Free/Pro split | Free tier + paid Pro tier gating some features |
-| Folder/bucket sync tool | No (see Roadmap) | Yes — a signature, mature feature with exclusion rules, scheduling, metadata caching |
-| Bucket policy / ACL / CORS / lifecycle editors | No (see Roadmap) | Yes |
-| Versioning UI, storage class management | No (see Roadmap) | Yes |
-| CloudFront management | No (see Roadmap) | Yes |
-| Client-side encryption, transfer acceleration, bandwidth throttling | No (see Roadmap) | Yes |
-| AWS SSO / IAM tooling, CLI automation | No (see Roadmap) | Yes |
+| Area                                                                | Flash S3 (this build)                                                                    | S3 Browser                                                                                   |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Platform                                                            | Windows, macOS, and Linux (Electron)                                                     | Windows only (incl. Windows Server)                                                          |
+| Dual-pane / side-by-side browsing                                   | Yes — two independent panes, drag-resizable, cross-pane copy/move                        | No — closest equivalent is the one-way/two-way Folder Sync Tool, not a live two-pane browser |
+| Multi-account, multi-tab browsing                                   | Yes — several connections open as tabs simultaneously                                    | Multiple accounts supported, but one active account view at a time                           |
+| Copy/move across accounts                                           | Yes, including in the dual-pane view                                                     | Yes (a longstanding S3 Browser feature)                                                      |
+| Transfer queue visibility for copy/move                             | Yes — copy/move shows up in the same queue as uploads/downloads with progress and errors | Copy/move runs as its own operation, separate from the upload/download queue                 |
+| Bookmarks                                                           | Yes — add/edit/delete, "Add current"                                                     | No dedicated bookmarks; has a bucket/account list instead                                    |
+| CSV export of a folder listing                                      | Yes, full paginated listing                                                              | Not a built-in export; primarily supports scripted/CLI listing                               |
+| Local in-folder search/filter                                       | Yes                                                                                      | Advanced search/filtering across criteria (name, size, date, metadata)                       |
+| Cost                                                                | Free, single build, no Free/Pro split                                                    | Free tier + paid Pro tier gating some features                                               |
+| Folder/bucket sync tool                                             | No (see Roadmap)                                                                         | Yes — a signature, mature feature with exclusion rules, scheduling, metadata caching         |
+| Bucket policy / ACL / CORS / lifecycle editors                      | No (see Roadmap)                                                                         | Yes                                                                                          |
+| Versioning UI, storage class management                             | No (see Roadmap)                                                                         | Yes                                                                                          |
+| CloudFront management                                               | No (see Roadmap)                                                                         | Yes                                                                                          |
+| Client-side encryption, transfer acceleration, bandwidth throttling | No (see Roadmap)                                                                         | Yes                                                                                          |
+| AWS SSO / IAM tooling, CLI automation                               | No (see Roadmap)                                                                         | Yes                                                                                          |
 
 In short: this build is currently strongest where day-to-day browsing and moving files around is concerned — especially the dual-pane workflow and cross-platform support — while S3 Browser remains far ahead on bucket administration, sync, and account/security tooling. The Roadmap below tracks closing that gap.
 
@@ -128,6 +128,7 @@ npm run dist:linux   # Linux (AppImage)
 ```
 
 Notes:
+
 - Changes under `electron/` (main process, IPC, preload) require a full restart of `npm start` to take effect — only the Angular renderer live-reloads.
 - Output lands in `release/`. Icons are expected at `build-resources/icon.ico` / `.icns` / `.png` — add your own before building an installer (a default Electron icon is used if they're missing, which electron-builder will warn about).
 
