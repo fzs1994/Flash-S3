@@ -7,7 +7,7 @@
 **A desktop S3 client for people who are done with the AWS console.**
 Multi-account tabs, dual-pane transfers, and a multipart queue that actually shows you what it's doing.
 
-![version](https://img.shields.io/badge/version-1.0.0-2f6fb0)
+![version](https://img.shields.io/badge/version-0.0.2-2f6fb0)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 ![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 ![stack](https://img.shields.io/badge/built%20with-Electron%20%2B%20Angular-58a6ff)
@@ -63,7 +63,7 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 - Cross-pane copy/move runs through this same queue, so it's visible, cancelable, and reports errors instead of happening silently.
 - Whichever open tab or pane is looking at an affected folder auto-refreshes the moment its transfer completes.
 
-### Known limitations (v1.0.0)
+### Known limitations (v0.0.2)
 
 - Pausing an in-flight upload/download aborts the current HTTP request; resuming restarts that file from byte 0 rather than a true byte-offset resume.
 - Pausing or cancelling a copy/move only takes effect _between_ items, not mid-item, and a paused/retried copy job re-copies from the first item rather than resuming partway. Acceptable in practice since same-account S3-to-S3 copies are typically near-instant per object.
@@ -103,9 +103,9 @@ Download an installer from the [Releases page](https://github.com/fzs1994/Flash-
 
 | Platform | File                       |
 | -------- | -------------------------- |
-| Windows  | `Flash-S3-Setup-1.0.0.exe` |
-| macOS    | `Flash-S3-1.0.0.dmg`       |
-| Linux    | `Flash-S3-1.0.0.AppImage`  |
+| Windows  | `Flash-S3-Setup-0.0.2.exe` |
+| macOS    | `Flash-S3-0.0.2.dmg`       |
+| Linux    | `Flash-S3-0.0.2.AppImage`  |
 
 Add an account under **Connections → New**. Credentials go to the OS credential store, not the repo.
 
