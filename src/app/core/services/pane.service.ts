@@ -130,6 +130,10 @@ export class PaneService {
     this.updatePane(id, { selectedKeys: current });
   }
 
+  setSelection(id: PaneId, keys: Iterable<string>): void {
+    this.updatePane(id, { selectedKeys: new Set(keys) });
+  }
+
   clearSelection(id: PaneId): void {
     this.updatePane(id, { selectedKeys: new Set() });
   }

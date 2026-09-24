@@ -89,6 +89,8 @@
   width: 100%;
   font-size: 12px;
   display: block;
+  // Shift+click and rubber-band drags would otherwise highlight row text.
+  user-select: none;
 }
 .pane__grid thead,
 .pane__grid tbody {
@@ -107,6 +109,7 @@
   color: var(--s3b-muted);
   position: sticky;
   top: 0;
+  z-index: 2;
 }
 .pane__grid td {
   padding: 4px 8px;

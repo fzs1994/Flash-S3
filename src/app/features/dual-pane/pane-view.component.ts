@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, Input, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MarqueeSelectDirective, MarqueeSelectEvent, rangeKeys } from '../../core/directives/marquee-select.directive';
 import { PaneId, S3ListItem } from '../../core/models/models';
 import { ConnectionService } from '../../core/services/connection.service';
 import { ElectronService } from '../../core/services/electron.service';
@@ -26,7 +27,7 @@ function formatBytes(bytes?: number): string {
 @Component({
   selector: 'app-pane-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContextMenuComponent, PropertiesDialogComponent],
+  imports: [CommonModule, FormsModule, ContextMenuComponent, PropertiesDialogComponent, MarqueeSelectDirective],
   templateUrl: './pane-view.component.html',
   styleUrl: './pane-view.component.scss'
 })
@@ -39,6 +40,11 @@ export class PaneViewComponent {
   readonly contextMenu = signal<{ x: number; y: number } | null>(null);
   readonly folderContextMenu = signal<{ x: number; y: number } | null>(null);
   readonly propertiesItem = signal<S3ListItem | null>(null);
+
+  /** Row the next Shift+click range starts from. */
+  private selectionAnchor: string | null = null;
+  /** Selection as it was when a Ctrl/Shift rubber-band drag began. */
+  private marqueeBase: ReadonlySet<string> = new Set();
 
   readonly otherPaneReady = computed(() => {
     const otherId = this.paneId === 'left' ? 'right' : 'left';
@@ -116,7 +122,27 @@ export class PaneViewComponent {
 
   onRowClick(item: S3ListItem, ev: MouseEvent): void {
     this.panes.setActivePane(this.paneId);
-    this.panes.toggleSelect(this.paneId, item.key, !(ev.ctrlKey || ev.metaKey));
+    const additive = ev.ctrlKey || ev.metaKey;
+    // Shift+click selects the range from the anchor row; Ctrl+Shift adds it to the selection.
+    if (ev.shiftKey && this.selectionAnchor) {
+      const range = rangeKeys(this.state.items.map((i) => i.key), this.selectionAnchor, item.key);
+      if (range.length) {
+        this.panes.setSelection(this.paneId, additive ? [...this.state.selectedKeys, ...range] : range);
+        return;
+      }
+    }
+    this.panes.toggleSelect(this.paneId, item.key, !additive);
+    this.selectionAnchor = item.key;
+  }
+
+  onMarqueeStart(): void {
+    this.panes.setActivePane(this.paneId);
+    this.marqueeBase = this.state.selectedKeys;
+  }
+
+  onMarqueeChange(ev: MarqueeSelectEvent): void {
+    this.panes.setActivePane(this.paneId);
+    this.panes.setSelection(this.paneId, ev.additive ? [...this.marqueeBase, ...ev.keys] : ev.keys);
   }
 
   onRowDoubleClick(item: S3ListItem): void {
@@ -131,6 +157,7 @@ export class PaneViewComponent {
     this.panes.setActivePane(this.paneId);
     if (!this.state.selectedKeys.has(item.key)) {
       this.panes.toggleSelect(this.paneId, item.key, true);
+      this.selectionAnchor = item.key;
     }
     this.contextMenu.set({ x: ev.clientX, y: ev.clientY });
   }

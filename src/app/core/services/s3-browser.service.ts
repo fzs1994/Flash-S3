@@ -178,6 +178,12 @@ export class S3BrowserService {
     this.updateTab(connectionId, { selectedKeys: current });
   }
 
+  setSelection(keys: Iterable<string>): void {
+    const connectionId = this.activeConnectionId();
+    if (!connectionId) return;
+    this.updateTab(connectionId, { selectedKeys: new Set(keys) });
+  }
+
   clearSelection(): void {
     const connectionId = this.activeConnectionId();
     if (!connectionId) return;

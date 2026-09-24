@@ -51,7 +51,13 @@
   <div class="pane__empty" *ngIf="!state.connectionId">Choose a connection to get started.</div>
   <div class="pane__empty" *ngIf="state.connectionId && !state.bucket">Choose a bucket to browse.</div>
 
-  <table class="pane__grid" *ngIf="state.bucket">
+  <table
+    class="pane__grid"
+    *ngIf="state.bucket"
+    appMarqueeSelect
+    (marqueeStart)="onMarqueeStart()"
+    (marqueeChange)="onMarqueeChange($event)"
+  >
     <thead>
       <tr>
         <th class="col-name">Name</th>
@@ -75,6 +81,7 @@
       </tr>
       <tr
         *ngFor="let item of state.items"
+        [attr.data-select-key]="item.key"
         (click)="onRowClick(item, $event)"
         (dblclick)="onRowDoubleClick(item)"
         (contextmenu)="onRowContextMenu(item, $event)"

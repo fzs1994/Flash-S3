@@ -112,6 +112,15 @@ button {
   z-index: 10;
 }
 
+/* Rubber-band selection box drawn by MarqueeSelectDirective. */
+.s3b-marquee {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  border: 1px solid var(--s3b-blue);
+  background: color-mix(in srgb, var(--s3b-blue) 18%, transparent);
+}
+
 .fi-spin {
   display: inline-block;
   animation: s3b-spin 1s linear infinite;

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, HostListener, Output, computed, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MarqueeSelectDirective, MarqueeSelectEvent, rangeKeys } from '../../core/directives/marquee-select.directive';
 import { S3ListItem } from '../../core/models/models';
 import { ElectronService } from '../../core/services/electron.service';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
@@ -19,7 +20,7 @@ function formatBytes(bytes?: number): string {
 @Component({
   selector: 'app-object-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContextMenuComponent],
+  imports: [CommonModule, FormsModule, ContextMenuComponent, MarqueeSelectDirective],
   templateUrl: './object-list.component.html',
   styleUrl: './object-list.component.scss'
 })
@@ -32,6 +33,11 @@ export class ObjectListComponent {
   @Output() propertiesRequested = new EventEmitter<void>();
 
   isDragOver = false;
+
+  /** Row the next Shift+click range starts from. */
+  private selectionAnchor: string | null = null;
+  /** Selection as it was when a Ctrl/Shift rubber-band drag began, so the box adds to it rather than replacing it. */
+  private marqueeBase: ReadonlySet<string> = new Set();
 
   readonly searchTerm = signal('');
 
@@ -156,11 +162,26 @@ export class ObjectListComponent {
   }
 
   onRowClick(item: S3ListItem, ev: MouseEvent): void {
-    if (ev.ctrlKey || ev.metaKey) {
-      this.s3.toggleSelect(item.key, false);
-    } else {
-      this.s3.toggleSelect(item.key, true);
+    const additive = ev.ctrlKey || ev.metaKey;
+    // Shift+click selects everything between the last plain/Ctrl-clicked row
+    // (the anchor) and this one; Ctrl+Shift adds that range to the selection.
+    if (ev.shiftKey && this.selectionAnchor) {
+      const range = rangeKeys(this.filteredItems().map((i) => i.key), this.selectionAnchor, item.key);
+      if (range.length) {
+        this.s3.setSelection(additive ? [...this.s3.selectedKeys(), ...range] : range);
+        return;
+      }
     }
+    this.s3.toggleSelect(item.key, !additive);
+    this.selectionAnchor = item.key;
+  }
+
+  onMarqueeStart(): void {
+    this.marqueeBase = this.s3.selectedKeys();
+  }
+
+  onMarqueeChange(ev: MarqueeSelectEvent): void {
+    this.s3.setSelection(ev.additive ? [...this.marqueeBase, ...ev.keys] : ev.keys);
   }
 
   onRowDoubleClick(item: S3ListItem): void {
@@ -177,6 +198,7 @@ export class ObjectListComponent {
     // keeps it intact so bulk actions apply to the whole selection.
     if (!this.s3.selectedKeys().has(item.key)) {
       this.s3.toggleSelect(item.key, true);
+      this.selectionAnchor = item.key;
     }
     this.contextMenu.set({ x: ev.clientX, y: ev.clientY });
   }
