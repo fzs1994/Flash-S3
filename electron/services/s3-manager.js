@@ -456,6 +456,59 @@ class S3Manager {
   }
 
   /**
+   * Short-lived presigned URL for the in-app preview (image/PDF/video/audio
+   * tags load it directly, so no bucket CORS is needed and media streams via
+   * range requests). The response headers are overridden so an object stored
+   * as application/octet-stream or with an "attachment" disposition still
+   * renders inline instead of triggering a download.
+   */
+  async getPreviewUrl(connectionId, bucket, key, contentType) {
+    const client = await this.getClientForBucket(connectionId, bucket);
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ResponseContentType: contentType || undefined,
+      ResponseContentDisposition: 'inline'
+    });
+    const url = await getSignedUrl(client, command, { expiresIn: 15 * 60 });
+    return { url };
+  }
+
+  /**
+   * First `maxBytes` of a text object, read here rather than in the renderer
+   * because a renderer fetch() to S3 would be blocked by bucket CORS. A NUL
+   * byte in the sample means it's really binary, so we refuse rather than
+   * showing garbage.
+   */
+  async getTextPreview(connectionId, bucket, key, maxBytes = 1024 * 1024) {
+    const client = await this.getClientForBucket(connectionId, bucket);
+    let res;
+    try {
+      res = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key, Range: `bytes=0-${maxBytes - 1}` }));
+    } catch (err) {
+      if (err && (err.name === 'InvalidObjectState' || err.Code === 'InvalidObjectState')) {
+        throw new Error('This object is archived (Glacier / Deep Archive) - restore it before previewing.');
+      }
+      // S3 rejects any Range on a 0-byte object with 416 InvalidRange.
+      if (err && (err.name === 'InvalidRange' || err.$metadata?.httpStatusCode === 416)) {
+        return { text: '', truncated: false, totalSize: 0 };
+      }
+      throw err;
+    }
+    const bytes = await res.Body.transformToByteArray();
+    if (bytes.includes(0)) throw new Error('This file appears to be binary and cannot be shown as text.');
+
+    // ContentRange looks like "bytes 0-1048575/52428800"; absent for objects smaller than the range.
+    const rangeTotal = res.ContentRange ? Number(res.ContentRange.split('/')[1]) : NaN;
+    const totalSize = Number.isFinite(rangeTotal) ? rangeTotal : bytes.length;
+    return {
+      text: new TextDecoder('utf-8').decode(bytes),
+      truncated: totalSize > bytes.length,
+      totalSize
+    };
+  }
+
+  /**
    * The object's plain, unsigned S3 URL - the same address the object lives
    * at regardless of anyone's credentials. Only actually reachable by anyone
    * without a signature if the object/bucket policy allows public/anonymous

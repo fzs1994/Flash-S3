@@ -81,6 +81,14 @@ function registerIpcHandlers(ipcMain, getWindow) {
     s3Manager.getPresignedUrl(connectionId, bucket, key, expiresInSeconds)
   );
 
+  ipcMain.handle('s3:getPreviewUrl', async (_e, { connectionId, bucket, key, contentType }) =>
+    s3Manager.getPreviewUrl(connectionId, bucket, key, contentType)
+  );
+
+  ipcMain.handle('s3:getTextPreview', async (_e, { connectionId, bucket, key, maxBytes }) =>
+    s3Manager.getTextPreview(connectionId, bucket, key, maxBytes)
+  );
+
   ipcMain.handle('s3:getPublicUrl', async (_e, { connectionId, bucket, key }) =>
     s3Manager.getPublicUrl(connectionId, bucket, key)
   );

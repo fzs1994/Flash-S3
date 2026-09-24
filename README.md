@@ -41,6 +41,7 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 
 **Object actions**
 
+- **Inline preview** — double-click a file, press Space, or right-click → Preview to view images, PDFs, video/audio (streamed), and text/code files (first 1 MB) without downloading; ←/→ steps through the folder.
 - New folder, rename, delete (multi-select), presigned share URL generation, and properties — all from a right-click context menu on the file grid, and a blank-space context menu for the current folder.
 - Copy and move objects within a bucket, across buckets, or across entirely different saved AWS accounts — folders recurse automatically, and guardrails stop you from copying a folder into itself or onto its own current location.
 - Upload whole directory trees via drag-and-drop or native folder picker, structure intact.
@@ -172,7 +173,7 @@ Notes:
 
 **Viewing & navigation**
 
-- [ ] Inline preview for images/text/PDF without downloading.
+- [x] Inline preview for images/text/PDF without downloading.
 - [ ] Sort/filter columns in the file list (by size, date, extension).
 - [ ] Recursive/global search across all buckets in a connection, not just the current folder.
 - [ ] Recently visited folders history, separate from bookmarks.

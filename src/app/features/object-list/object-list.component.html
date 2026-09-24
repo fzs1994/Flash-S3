@@ -93,4 +93,13 @@
     (itemSelected)="onFolderContextMenuAction($event)"
     (closed)="folderContextMenu.set(null)"
   ></app-context-menu>
+
+  <app-preview-dialog
+    *ngIf="previewItem() as item"
+    [items]="previewItems()"
+    [startKey]="item.key"
+    [connectionId]="s3.activeConnectionId()"
+    [bucket]="s3.currentBucket()"
+    (closed)="previewItem.set(null)"
+  ></app-preview-dialog>
 </div>

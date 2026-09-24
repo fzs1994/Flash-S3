@@ -134,4 +134,13 @@
     [bucket]="state.bucket"
     (closed)="propertiesItem.set(null)"
   ></app-properties-dialog>
+
+  <app-preview-dialog
+    *ngIf="previewItem() as item"
+    [items]="previewItems()"
+    [startKey]="item.key"
+    [connectionId]="state.connectionId"
+    [bucket]="state.bucket"
+    (closed)="previewItem.set(null)"
+  ></app-preview-dialog>
 </div>

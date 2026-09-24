@@ -7,7 +7,9 @@ import { ElectronService } from '../../core/services/electron.service';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TransferService } from '../../core/services/transfer.service';
+import { isPreviewable } from '../../core/utils/preview-types';
 import { ContextMenuComponent, ContextMenuEntry } from '../context-menu/context-menu.component';
+import { PreviewDialogComponent } from '../dialogs/preview-dialog.component';
 
 function formatBytes(bytes?: number): string {
   if (bytes === undefined || bytes === null) return '';
@@ -20,7 +22,7 @@ function formatBytes(bytes?: number): string {
 @Component({
   selector: 'app-object-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContextMenuComponent, MarqueeSelectDirective],
+  imports: [CommonModule, FormsModule, ContextMenuComponent, MarqueeSelectDirective, PreviewDialogComponent],
   templateUrl: './object-list.component.html',
   styleUrl: './object-list.component.scss'
 })
@@ -50,11 +52,28 @@ export class ObjectListComponent {
 
   readonly contextMenu = signal<{ x: number; y: number } | null>(null);
 
+  /** File open in the preview viewer; prev/next steps through `previewItems` (the previewable files in on-screen order). */
+  readonly previewItem = signal<S3ListItem | null>(null);
+  readonly previewItems = computed(() => this.filteredItems().filter(isPreviewable));
+
+  /** The one selected item, if exactly one is selected. */
+  private readonly singleSelected = computed(() => {
+    const keys = this.s3.selectedKeys();
+    if (keys.size !== 1) return null;
+    const [key] = keys;
+    return this.s3.items().find((i) => i.key === key) ?? null;
+  });
+
   readonly contextMenuItems = computed<ContextMenuEntry[]>(() => {
     const count = this.s3.selectedKeys().size;
     if (!count) return [];
     const single = count === 1;
+    const selected = this.singleSelected();
 
+    const previewGroup: ContextMenuEntry[] =
+      selected && isPreviewable(selected)
+        ? [{ type: 'item', id: 'preview', label: 'Preview', icon: 'fi-rr-eye', colorClass: 'ic-blue' }]
+        : [];
     const primaryGroup: ContextMenuEntry[] = [
       { type: 'item', id: 'download', label: 'Download', icon: 'fi-rr-download', colorClass: 'ic-green' },
       { type: 'item', id: 'copy', label: 'Copy To…', icon: 'fi-rr-copy', colorClass: 'ic-teal' },
@@ -71,7 +90,7 @@ export class ObjectListComponent {
         ]
       : [];
 
-    const groups = [primaryGroup, editGroup, shareGroup].filter((g) => g.length);
+    const groups = [previewGroup, primaryGroup, editGroup, shareGroup].filter((g) => g.length);
     const entries: ContextMenuEntry[] = [];
     groups.forEach((group, i) => {
       if (i > 0) entries.push({ type: 'divider' });
@@ -124,8 +143,9 @@ export class ObjectListComponent {
   formatBytes = formatBytes;
 
   /**
-   * Delete key removes the current selection; F2 renames it (only when
-   * exactly one item is selected, matching the context menu's own rule).
+   * Delete key removes the current selection; F2 renames it and Space
+   * previews it (both only when exactly one item is selected, matching the
+   * context menu's own rule).
    * Ignored while the user is typing anywhere (search box, rename dialog,
    * bookmark panel, etc.) and while any modal overlay (Connections, Copy/Move,
    * New Folder/Rename/Share URL, Transfer Settings) is open, so a background
@@ -143,6 +163,12 @@ export class ObjectListComponent {
     } else if (ev.key === 'F2' && count === 1) {
       ev.preventDefault();
       this.renameRequested.emit();
+    } else if (ev.key === ' ' && count === 1) {
+      ev.preventDefault();
+      const item = this.singleSelected();
+      if (item?.type !== 'file') return;
+      if (isPreviewable(item)) this.previewItem.set(item);
+      else this.toast.show('No preview available for this file type', 'info');
     }
   }
 
@@ -154,7 +180,7 @@ export class ObjectListComponent {
   }
 
   private isModalOpen(): boolean {
-    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .props-overlay, .overlay');
+    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .props-overlay, .preview-overlay, .overlay');
   }
 
   clearSearch(): void {
@@ -186,6 +212,7 @@ export class ObjectListComponent {
 
   onRowDoubleClick(item: S3ListItem): void {
     if (item.type === 'folder') this.s3.openFolderItem(item);
+    else if (isPreviewable(item)) this.previewItem.set(item);
   }
 
   onRowContextMenu(item: S3ListItem, ev: MouseEvent): void {
@@ -211,6 +238,9 @@ export class ObjectListComponent {
 
   onContextMenuAction(actionId: string): void {
     switch (actionId) {
+      case 'preview':
+        this.previewItem.set(this.singleSelected());
+        break;
       case 'download':
         this.download();
         break;

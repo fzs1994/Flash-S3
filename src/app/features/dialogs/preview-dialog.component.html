@@ -1,0 +1,95 @@
+<!-- contextmenu is stopped here so it doesn't bubble to the host list's own right-click menu. -->
+<div
+  class="preview-overlay"
+  (mousedown)="onOverlayMouseDown($event)"
+  (click)="onOverlayClick($event)"
+  (contextmenu)="$event.stopPropagation()"
+>
+  <div class="preview-dialog" (click)="$event.stopPropagation()">
+    <header class="preview-header">
+      <i
+        class="fi"
+        [class.fi-rr-picture]="kind() === 'image'"
+        [class.fi-rr-file-pdf]="kind() === 'pdf'"
+        [class.fi-rr-play-alt]="kind() === 'video'"
+        [class.fi-rr-music-alt]="kind() === 'audio'"
+        [class.fi-rr-document]="kind() === 'text'"
+        [class.ic-blue]="true"
+      ></i>
+      <span class="preview-title" [title]="item()?.key">{{ item()?.name }}</span>
+      <span class="preview-meta" *ngIf="item()?.size !== undefined">{{ formatBytes(item()?.size) }}</span>
+      <span class="preview-meta" *ngIf="items.length > 1">{{ index() + 1 }} / {{ items.length }}</span>
+      <span class="preview-spacer"></span>
+      <div class="preview-zoom" *ngIf="kind() === 'image' && !error() && content()">
+        <button (click)="zoomOut()" [disabled]="!canZoomOut" title="Zoom out (-)"><i class="fi fi-rr-zoom-out"></i></button>
+        <span class="preview-zoom-level">{{ zoomPercent() }}%</span>
+        <button (click)="zoomIn()" [disabled]="!canZoomIn" title="Zoom in (+)"><i class="fi fi-rr-zoom-in"></i></button>
+        <button (click)="zoomToFit()" [class.active]="zoom() === 'fit'" title="Fit to window (0)">Fit</button>
+        <button (click)="zoomActualSize()" [class.active]="zoom() === 1" title="Actual size (1)">100%</button>
+      </div>
+      <button (click)="download()" title="Download"><i class="fi fi-rr-download ic-green"></i></button>
+      <button (click)="close()" title="Close (Esc)"><i class="fi fi-rr-cross"></i></button>
+    </header>
+
+    <div class="preview-body">
+      <button class="preview-nav preview-nav--prev" *ngIf="hasPrev" (click)="prev()" title="Previous (←)">
+        <i class="fi fi-rr-angle-left"></i>
+      </button>
+
+      <div class="preview-status" *ngIf="loading() || mediaLoading()"><span class="s3b-spinner"></span> Loading preview…</div>
+
+      <div class="preview-error" *ngIf="error() as err">
+        <i class="fi fi-rr-eye-crossed"></i>
+        <p>Preview not available</p>
+        <small>{{ err }}</small>
+      </div>
+
+      <ng-container *ngIf="!error() && content() as c">
+        <div
+          *ngIf="c.kind === 'image'"
+          #imageScroller
+          class="preview-image-scroller"
+          [class.zoomed]="zoom() !== 'fit'"
+          [class.pannable]="isOverflowing()"
+          [class.panning]="panning()"
+          (wheel)="onImageWheel($event)"
+        >
+          <img
+            #img
+            class="preview-image"
+            [src]="c.url"
+            [alt]="item()?.name"
+            [style.width.px]="imageWidth"
+            [style.height.px]="imageHeight"
+            draggable="false"
+            (load)="onImageLoaded(img)"
+            (error)="onMediaError()"
+            (mousedown)="onImageMouseDown($event)"
+            (dblclick)="onImageDoubleClick($event)"
+          />
+        </div>
+        <iframe *ngIf="c.kind === 'pdf'" class="preview-pdf" [src]="c.url" (load)="onMediaLoaded()"></iframe>
+        <video
+          *ngIf="c.kind === 'video'"
+          class="preview-video"
+          [src]="c.url"
+          controls
+          autoplay
+          (loadedmetadata)="onMediaLoaded()"
+          (error)="onMediaError()"
+        ></video>
+        <audio *ngIf="c.kind === 'audio'" class="preview-audio" [src]="c.url" controls autoplay (error)="onMediaError()"></audio>
+        <div *ngIf="c.kind === 'text'" class="preview-text-wrap">
+          <p class="preview-truncated" *ngIf="c.truncated">
+            Showing the first 1 MB of {{ formatBytes(c.totalSize) }}. Download the file to see all of it.
+          </p>
+          <pre class="preview-text">{{ c.text }}</pre>
+        </div>
+      </ng-container>
+
+      <button class="preview-nav preview-nav--next" *ngIf="hasNext" (click)="next()" title="Next (→)">
+        <i class="fi fi-rr-angle-right"></i>
+      </button>
+    </div>
+  </div>
+</div>

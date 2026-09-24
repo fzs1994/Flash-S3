@@ -6,8 +6,11 @@ import { PaneId, S3ListItem } from '../../core/models/models';
 import { ConnectionService } from '../../core/services/connection.service';
 import { ElectronService } from '../../core/services/electron.service';
 import { PaneService } from '../../core/services/pane.service';
+import { ToastService } from '../../core/services/toast.service';
 import { TransferService } from '../../core/services/transfer.service';
+import { isPreviewable } from '../../core/utils/preview-types';
 import { ContextMenuComponent, ContextMenuEntry } from '../context-menu/context-menu.component';
+import { PreviewDialogComponent } from '../dialogs/preview-dialog.component';
 import { PropertiesDialogComponent } from '../dialogs/properties-dialog.component';
 
 function formatBytes(bytes?: number): string {
@@ -27,7 +30,7 @@ function formatBytes(bytes?: number): string {
 @Component({
   selector: 'app-pane-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContextMenuComponent, PropertiesDialogComponent, MarqueeSelectDirective],
+  imports: [CommonModule, FormsModule, ContextMenuComponent, PropertiesDialogComponent, PreviewDialogComponent, MarqueeSelectDirective],
   templateUrl: './pane-view.component.html',
   styleUrl: './pane-view.component.scss'
 })
@@ -40,6 +43,9 @@ export class PaneViewComponent {
   readonly contextMenu = signal<{ x: number; y: number } | null>(null);
   readonly folderContextMenu = signal<{ x: number; y: number } | null>(null);
   readonly propertiesItem = signal<S3ListItem | null>(null);
+  /** File open in the preview viewer; prev/next steps through `previewItems`. */
+  readonly previewItem = signal<S3ListItem | null>(null);
+  readonly previewItems = computed(() => this.panes.pane(this.paneId).items.filter(isPreviewable));
 
   /** Row the next Shift+click range starts from. */
   private selectionAnchor: string | null = null;
@@ -57,10 +63,13 @@ export class PaneViewComponent {
     const count = p.selectedKeys.size;
     if (!count) return [];
     const canSend = this.otherPaneReady();
+    const selected = this.singleSelected();
 
-    const entries: ContextMenuEntry[] = [
-      { type: 'item', id: 'download', label: 'Download', icon: 'fi-rr-download', colorClass: 'ic-green' }
-    ];
+    const entries: ContextMenuEntry[] = [];
+    if (selected && isPreviewable(selected)) {
+      entries.push({ type: 'item', id: 'preview', label: 'Preview', icon: 'fi-rr-eye', colorClass: 'ic-blue' }, { type: 'divider' });
+    }
+    entries.push({ type: 'item', id: 'download', label: 'Download', icon: 'fi-rr-download', colorClass: 'ic-green' });
     if (canSend) {
       entries.push(
         { type: 'item', id: 'copy', label: 'Copy to other pane', icon: 'fi-rr-copy', colorClass: 'ic-teal' },
@@ -93,13 +102,22 @@ export class PaneViewComponent {
     public panes: PaneService,
     public connectionService: ConnectionService,
     private electron: ElectronService,
-    private transfers: TransferService
+    private transfers: TransferService,
+    private toast: ToastService
   ) {}
 
   formatBytes = formatBytes;
 
   get state() {
     return this.panes.pane(this.paneId);
+  }
+
+  /** The one selected item in this pane, if exactly one is selected. */
+  private singleSelected(): S3ListItem | null {
+    const p = this.panes.pane(this.paneId);
+    if (p.selectedKeys.size !== 1) return null;
+    const [key] = p.selectedKeys;
+    return p.items.find((i) => i.key === key) ?? null;
   }
 
   /** Points toward whichever side the other pane actually sits on, so the move icon reads correctly on both sides. */
@@ -146,7 +164,8 @@ export class PaneViewComponent {
   }
 
   onRowDoubleClick(item: S3ListItem): void {
-    this.panes.openFolderItem(this.paneId, item);
+    if (item.type === 'folder') this.panes.openFolderItem(this.paneId, item);
+    else if (isPreviewable(item)) this.previewItem.set(item);
   }
 
   onRowContextMenu(item: S3ListItem, ev: MouseEvent): void {
@@ -171,7 +190,7 @@ export class PaneViewComponent {
   }
 
   /**
-   * Delete removes whichever pane's selection the user last interacted with -
+   * Delete removes (and Space previews) whichever pane's selection the user last interacted with -
    * both panes' components are mounted at once in dual-pane mode, so without
    * checking `activePaneId` a single Delete press would fire in both. Also
    * ignored while typing or while a modal overlay is open, same reasoning as
@@ -181,10 +200,17 @@ export class PaneViewComponent {
   onDocumentKeydown(ev: KeyboardEvent): void {
     if (this.panes.activePaneId() !== this.paneId) return;
     if (this.isTypingTarget(ev.target) || this.isModalOpen()) return;
-    if (ev.key !== 'Delete') return;
     if (!this.state.selectedKeys.size) return;
-    ev.preventDefault();
-    this.deleteSelected();
+    if (ev.key === 'Delete') {
+      ev.preventDefault();
+      this.deleteSelected();
+    } else if (ev.key === ' ' && this.state.selectedKeys.size === 1) {
+      ev.preventDefault();
+      const item = this.singleSelected();
+      if (item?.type !== 'file') return;
+      if (isPreviewable(item)) this.previewItem.set(item);
+      else this.toast.show('No preview available for this file type', 'info');
+    }
   }
 
   private isTypingTarget(target: EventTarget | null): boolean {
@@ -195,11 +221,14 @@ export class PaneViewComponent {
   }
 
   private isModalOpen(): boolean {
-    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .props-overlay, .overlay');
+    return !!document.querySelector('.connections-overlay, .settings-overlay, .cm-overlay, .props-overlay, .preview-overlay, .overlay');
   }
 
   onContextMenuAction(actionId: string): void {
     switch (actionId) {
+      case 'preview':
+        this.previewItem.set(this.singleSelected());
+        break;
       case 'download':
         this.download();
         break;
