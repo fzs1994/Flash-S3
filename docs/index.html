@@ -964,6 +964,13 @@
           { mark: '2', title: 'Instant bucket filter', body: 'Type to narrow a list of hundreds of buckets. The object list has its own filter for the current prefix.' },
           { mark: '3', title: 'Real columns', body: 'Name, size, last modified and storage class, sortable, with folder-aware navigation and a clickable breadcrumb.' },
           { mark: '4', title: 'Bookmarks', body: 'Star the four prefixes you actually live in and jump straight back to them next launch.' },
+          { mark: '5', title: 'Explorer-style selection', body: 'Ctrl+click to pick, Shift+click for a range, or drag a selection box across rows — in the main list and in both panes.' },
+        ]},
+        { id: 'preview', label: 'Preview', items: [
+          { mark: '1', title: 'Look before you download', body: 'Images, PDFs, video, audio and text/code files open in an in-app viewer straight from S3 — no temp files, no round trip to your Downloads folder.' },
+          { mark: '2', title: 'Quick Look keys', body: 'Double-click a file, press Space, or right-click → Preview. ←/→ steps through the folder, Esc or Space closes.' },
+          { mark: '3', title: 'Zoom & pan', body: 'Fit, 100%, +/− and Ctrl+wheel zoom toward the cursor for images, from 5% to 1000%; drag to pan and double-click to toggle fit.' },
+          { mark: '4', title: 'Streams, doesn’t hoard', body: 'Video and audio start playing immediately via range requests; text shows the first 1 MB as plain source, never rendered.' },
         ]},
         { id: 'dual', label: 'Dual pane', items: [
           { mark: '1', title: 'Two panes, two accounts', body: 'Each pane picks its own connection and bucket, so a cross-account copy is one action instead of a download and a re-upload.' },
@@ -1026,7 +1033,7 @@
         { title: 'Bucket administration — Static hosting & lifecycle', body: 'Website hosting configuration and lifecycle rule management.' },
         { title: 'Sync & automation — Folder ⇄ prefix sync', body: 'One-way or two-way sync between a local folder and an S3 prefix, with a dry-run diff — the single biggest gap vs. S3 Browser.' },
         { title: 'Sync & automation — Scheduled backups', body: 'e.g. "sync this folder nightly."' },
-        { title: 'Viewing & navigation — Inline preview', body: 'Images, text and PDF without downloading.' },
+        { title: 'Viewing & navigation — Inline preview', body: 'Images (with zoom), text, PDF, video and audio without downloading.', done: true },
         { title: 'Viewing & navigation — Sortable/filterable columns', body: 'By size, date and extension.' },
         { title: 'Viewing & navigation — Bucket-wide search', body: 'Recursive search across every bucket in a connection, not just the current folder.' },
         { title: 'Viewing & navigation — Recent folders history', body: 'Separate from bookmarks.' },
@@ -1045,7 +1052,8 @@
         'Object versioning is not exposed yet — the listing shows current versions only, so a delete on a versioned bucket leaves a marker you cannot see from Flash S3.',
         'Authentication is static access keys. IAM Identity Center, MFA prompts and assumed roles are on the roadmap, not in v0.0.2.',
         'Search filters the prefix you are looking at, not the whole bucket. Very wide prefixes still page in as you scroll.',
-        'Glacier and Deep Archive objects list correctly but cannot be restored from the app; restores still need the console or the CLI.',
+        'Glacier and Deep Archive objects list correctly but cannot be restored (or previewed) from the app; restores still need the console or the CLI.',
+        'Text previews show the first 1 MB of a file; download it to see the rest. Office documents, archives and other formats outside the supported list are not previewable.',
         'Server-side copy is used where the API allows it; cross-region moves of very large objects fall back to a download and re-upload.',
       ];
 
@@ -1054,6 +1062,7 @@
         'contextIsolation is enabled and nodeIntegration is disabled in the Electron main process; the renderer only ever sees the explicit API surface exposed over the preload bridge, never Node or the filesystem directly.',
         'Nothing is sent anywhere except AWS, or your chosen S3-compatible endpoint. There is no telemetry, no account, no update server call-home beyond the GitHub release check.',
         'Presigned share URLs are generated locally and expire. Flash S3 never holds a copy of a link it made for you.',
+        'Previews load from presigned URLs that expire after 15 minutes. Text files are fetched by the main process and displayed as plain source, so HTML or scripts in a previewed file are never rendered or executed.',
         'The app only ever has the permissions of the key you give it — scope a read-only IAM user if that is all you need.',
       ];
 
@@ -1265,7 +1274,7 @@
             resetDemo: () => this.setState({ parts: [47, 37, 43, 41, 0, 0, 0], running: false }),
             toggleRows: () => this.setState(st => ({ expanded: !st.expanded })),
             rowsLabel: s.expanded ? 'Show fewer' : 'Show all ' + ROWS.length + ' rows',
-            roadmapProgress: ROADMAP.length + ' planned improvements across 6 areas — open an issue if one of these is blocking you',
+            roadmapProgress: ROADMAP.filter(r => !r.done).length + ' planned improvements across 6 areas, ' + ROADMAP.filter(r => r.done).length + ' shipped — open an issue if one of these is blocking you',
           };
         }
       }

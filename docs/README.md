@@ -41,6 +41,9 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 
 **Object actions**
 
+- **Inline preview** — double-click a file, press Space, or right-click → Preview to view images, PDFs, video/audio (streamed), and text/code files (first 1 MB) without downloading; ←/→ steps through the folder.
+- **Image zoom & pan** — Fit, 100%, +/− and Ctrl+wheel (zooms toward the cursor) from 5% to 1000%; drag to pan a zoomed image, double-click to toggle fit ↔ 100%. Keyboard: `+`/`-`, `0` fit, `1` actual size.
+- **Explorer-style selection** — Ctrl+click to toggle, Shift+click to select a range, or drag a selection box across rows (with Ctrl/Shift to add to the selection); works in the main grid and both dual-pane panes.
 - New folder, rename, delete (multi-select), presigned share URL generation, and properties — all from a right-click context menu on the file grid, and a blank-space context menu for the current folder.
 - Copy and move objects within a bucket, across buckets, or across entirely different saved AWS accounts — folders recurse automatically, and guardrails stop you from copying a folder into itself or onto its own current location.
 - Upload whole directory trees via drag-and-drop or native folder picker, structure intact.
@@ -70,7 +73,8 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 - Object versioning is not exposed — the listing shows current versions only.
 - Static access keys only; IAM Identity Center, MFA and assumed roles are on the roadmap.
 - Search filters the current prefix, not the whole bucket.
-- Glacier objects list but can't be restored from the app.
+- Glacier objects list but can't be restored (or previewed) from the app.
+- Text previews show the first 1 MB of a file; formats outside the supported list (Office documents, archives, etc.) aren't previewable.
 - Cross-region moves of very large objects fall back to download + re-upload.
 
 ## How this compares to S3 Browser
@@ -142,7 +146,7 @@ Notes:
 | Packaging | electron-builder | NSIS installer, signed DMG, AppImage from one tree.                            |
 
 - **Electron main process** (`electron/`) owns all AWS SDK calls and the transfer queue. The Angular renderer never talks to AWS directly.
-  - `electron/services/s3-manager.js` — bucket/object CRUD, cross-account copy/move, and CSV export via `@aws-sdk/client-s3`.
+  - `electron/services/s3-manager.js` — bucket/object CRUD, cross-account copy/move, CSV export, and preview (presigned URLs + ranged text reads) via `@aws-sdk/client-s3`.
   - `electron/services/transfer-queue.js` — the concurrent upload/download/copy-move engine.
   - `electron/services/credential-store.js` — encrypted profile storage.
   - `electron/ipc/register.js` — wires it all to `ipcMain.handle(...)`.
@@ -172,7 +176,7 @@ Notes:
 
 **Viewing & navigation**
 
-- [ ] Inline preview for images/text/PDF without downloading.
+- [x] Inline preview for images (with zoom), text, PDF, video and audio without downloading.
 - [ ] Sort/filter columns in the file list (by size, date, extension).
 - [ ] Recursive/global search across all buckets in a connection, not just the current folder.
 - [ ] Recently visited folders history, separate from bookmarks.
@@ -195,6 +199,7 @@ Notes:
 - Credentials live in Keychain / Credential Manager / libsecret via Electron's `safeStorage`; if the OS has no available encryption backend, they fall back to base64 (not secure) — flagged in `credential-store.js` for follow-up (e.g., requiring OS keychain unlock).
 - `contextIsolation: true` and `nodeIntegration: false` are enforced in `electron/main.js`; the renderer only ever sees the explicit API surface defined in `electron/preload.js`.
 - Nothing leaves your machine except signed HTTPS requests to AWS (or your chosen S3-compatible endpoint) — no telemetry, no account. Presigned share links are generated locally and expire.
+- Previews load from presigned URLs that expire after 15 minutes; text files are fetched by the main process and shown as plain source, so HTML or scripts in a previewed file are never rendered or executed.
 
 ## Contributing
 
