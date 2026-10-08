@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(node --check \"electron/services/transfer-queue.js\")",
+      "Bash(npm install *)",
+      "Bash(tasklist //FI \"IMAGENAME eq electron.exe\")",
+      "Bash(xargs grep -ln \"socket\")",
+      "Bash(mkdir -p \"C:/Users/FAIZAN~1/AppData/Local/Temp/claude/D--CodeMaster-POCs-S3-Browser-Clone/699f8c1a-f413-4077-9efa-90b1b97169e7/scratchpad\")",
+      "Bash(node -e ' *)",
+      "Bash(node backpressure-test.js)",
+      "Bash(node backpressure-test2.js)",
+      "Bash(node race-test.js)",
+      "Bash(node race-test-fixed.js)",
+      "Bash(node backpressure-test3.js)",
+      "Bash(node --check \"D:/CodeMaster/POCs/S3 Browser Clone/electron/services/transfer-queue.js\")",
+      "Bash(npx ng *)"
+    ]
+  }
+}

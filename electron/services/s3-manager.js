@@ -273,8 +273,31 @@ class S3Manager {
     return { key: folderKey };
   }
 
-  async deleteObjects(connectionId, bucket, keys) {
+  /** Lists every object key under `prefix` (recursive, includes the folder marker object). */
+  async _listAllKeys(client, bucket, prefix) {
+    const keys = [];
+    let continuationToken;
+    do {
+      const res = await client.send(
+        new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: continuationToken, MaxKeys: 1000 })
+      );
+      for (const obj of res.Contents || []) keys.push(obj.Key);
+      continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined;
+    } while (continuationToken);
+    return keys;
+  }
+
+  async deleteObjects(connectionId, bucket, inputKeys) {
     const client = await this.getClientForBucket(connectionId, bucket);
+    // Folders are virtual: a key ending in "/" means "everything under this prefix".
+    const keySet = new Set();
+    for (const key of inputKeys) {
+      keySet.add(key);
+      if (key.endsWith('/')) {
+        for (const k of await this._listAllKeys(client, bucket, key)) keySet.add(k);
+      }
+    }
+    const keys = Array.from(keySet);
     // S3 batch delete supports up to 1000 keys per request.
     const chunks = [];
     for (let i = 0; i < keys.length; i += 1000) chunks.push(keys.slice(i, i + 1000));
@@ -292,6 +315,29 @@ class S3Manager {
 
   async renameObject(connectionId, bucket, oldKey, newKey) {
     const client = await this.getClientForBucket(connectionId, bucket);
+    if (oldKey.endsWith('/')) {
+      // Folder rename: copy every object under the old prefix to the new prefix, then delete the originals.
+      const newPrefix = newKey.endsWith('/') ? newKey : `${newKey}/`;
+      if (newPrefix === oldKey) return { newKey: newPrefix };
+      if (newPrefix.startsWith(oldKey)) throw new Error('Cannot rename a folder into itself.');
+      const keys = await this._listAllKeys(client, bucket, oldKey);
+      if (!keys.includes(oldKey)) {
+        // Folder had no marker object (implicit); give the new folder one so empty renames still show up.
+        await client.send(new PutObjectCommand({ Bucket: bucket, Key: newPrefix, Body: '' }));
+      }
+      for (const key of keys) {
+        const destKey = `${newPrefix}${key.slice(oldKey.length)}`;
+        await client.send(
+          new CopyObjectCommand({
+            Bucket: bucket,
+            CopySource: `/${bucket}/${encodeURIComponent(key).replace(/%2F/g, '/')}`,
+            Key: destKey
+          })
+        );
+      }
+      await this.deleteObjects(connectionId, bucket, keys);
+      return { newKey: newPrefix };
+    }
     await client.send(
       new CopyObjectCommand({
         Bucket: bucket,
