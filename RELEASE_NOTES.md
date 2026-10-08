@@ -1,3 +1,82 @@
+# Flash S3 — v0.0.3
+
+**Release date:** October 8, 2026
+
+Feature release: an in-app file previewer, an ACL (permissions) editor,
+sortable/filterable columns, a folder-browser destination picker for copy/move,
+a refreshed look, and fixes for folder delete/rename and selection. See the
+[README](./README.md) for the full feature list and roadmap.
+
+## Highlights
+
+- **Permissions (ACL) viewer/editor** — right-click a file → *Permissions
+  (ACL)…*, or click the shield icon next to a bucket. A per-grantee grid shows
+  and edits who can read the object/bucket and its ACL; add Everyone, any
+  authenticated AWS user, the S3 log-delivery group, or an AWS account by
+  canonical ID. Private / Authenticated read / Public read presets are
+  included, with a confirmation before anything becomes public. Buckets with
+  ACLs disabled ("Bucket owner enforced") show an explanation instead of an
+  error.
+- **Inline preview** — double-click a file, press Space, or right-click →
+  *Preview* to view images, PDFs, video and audio (streamed), and text/code
+  (first 1 MB) without downloading; ←/→ steps through the folder. Images get
+  Fit/100%/zoom (5%–1000%, Ctrl+wheel toward the cursor), pan, and
+  double-click to toggle fit.
+- **Sortable, filterable columns** — click a header to sort by name, type
+  (extension), size, date, or storage class (folders stay grouped on top). A
+  new file-type filter narrows the list to folders or a single extension.
+  Dropdowns for buckets and regions are now searchable.
+- **Browse to pick a copy/move destination** — the Copy/Move dialog now shows
+  a folder browser: double-click to open folders, click to pick one, with a
+  breadcrumb and "up" button, instead of typing a path.
+- **Refreshed UI** — a consistent custom dropdown replaces the native
+  selects, icons are now filled, the filter/search controls line up, and the
+  light theme is tinted with the app's blue instead of flat white.
+- **Selection** — fixed drag-selection and Shift+click range selection in the
+  file list.
+- **Folder delete and rename fixed** — deleting a folder now recursively
+  deletes everything inside it (previously only empty folders could be
+  removed), and renaming a folder moves its whole contents instead of creating
+  a stray 0 KB file. Failed deletes now report the S3 error instead of
+  failing silently.
+- **Smoother workflow** — a loading overlay shows over the browse window while
+  renaming; the rename/new-folder input is focused automatically; Esc closes
+  dialogs and popups; Bookmarks and Dual Pane are usable right at startup
+  before any connection is open.
+- **Mobile-friendly docs site** — the hosted overview now adapts to phones
+  and tablets.
+
+## Known limitations
+
+- Pausing an in-flight upload/download aborts the current request; resuming
+  restarts that file from byte 0 rather than a true byte-offset resume.
+- Pausing or cancelling a copy/move only takes effect *between* items, not
+  mid-item, and a paused/retried copy job re-copies from the first item
+  rather than resuming partway.
+- ACL editing only works on buckets whose Object Ownership allows ACLs; new
+  buckets default to "Bucket owner enforced", which rejects ACL calls.
+- Object versioning is not exposed — the listing shows current versions only.
+- Static access keys only; IAM Identity Center, MFA, and assumed roles are
+  on the roadmap.
+- Search filters the current prefix, not the whole bucket.
+- Glacier objects list but can't be restored (or previewed) from the app.
+- Text previews show the first 1 MB of a file; Office documents, archives,
+  and other formats outside the supported list aren't previewable.
+- Cross-region moves of very large objects fall back to download + re-upload.
+
+## Upgrade notes
+
+No breaking changes. Install over the previous version — saved connections,
+bookmarks, and encrypted credentials carry over as-is.
+
+## What's next
+
+See the **Roadmap** section in the README for planned work, most notably
+local folder ↔ prefix sync, an object versioning browser, SSO/assumed-role
+support, bucket policy/CORS editors, and true resumable pause for transfers.
+
+---
+
 # Flash S3 — v0.0.2
 
 **Release date:** September 19, 2026
