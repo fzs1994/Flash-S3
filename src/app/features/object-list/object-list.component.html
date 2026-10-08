@@ -13,12 +13,24 @@
     </span>
   </div>
 
-  <div class="list-search" *ngIf="s3.currentBucket() && s3.items().length">
-    <i class="fi fi-rr-search"></i>
-    <input type="text" placeholder="Search this folder…" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
-    <button *ngIf="searchTerm()" class="list-search-clear" title="Clear search" (click)="clearSearch()">
-      <i class="fi fi-rr-cross"></i>
-    </button>
+  <div class="list-tools" *ngIf="s3.currentBucket() && s3.items().length">
+    <div class="list-search">
+      <i class="fi fi-sr-search"></i>
+      <input type="text" placeholder="Search this folder…" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
+      <button *ngIf="searchTerm()" class="list-search-clear" title="Clear search" (click)="clearSearch()">
+        <i class="fi fi-sr-cross"></i>
+      </button>
+    </div>
+    <app-dropdown
+      class="type-filter"
+      [compact]="true"
+      align="right"
+      triggerIcon="fi-sr-filter"
+      [options]="typeOptions()"
+      [value]="typeFilter()"
+      [active]="!!typeFilter()"
+      (valueChange)="typeFilter.set($event)"
+    ></app-dropdown>
   </div>
 
   <div class="empty-state" *ngIf="!s3.currentBucket()">Select a bucket from the left to browse its contents.</div>
@@ -32,10 +44,21 @@
   >
     <thead>
       <tr>
-        <th class="col-name">Name</th>
-        <th class="col-size">Size</th>
-        <th class="col-date">Last Modified</th>
-        <th class="col-class">Storage Class</th>
+        <th class="col-name sortable" [class.sorted]="sortKey() === 'name'" (click)="toggleSort('name')">
+          Name <i class="fi sort-ind" [ngClass]="sortKey() === 'name' ? sortIcon('name') : 'fi-sr-arrow-small-up'"></i>
+        </th>
+        <th class="col-ext sortable" [class.sorted]="sortKey() === 'ext'" (click)="toggleSort('ext')">
+          Type <i class="fi sort-ind" [ngClass]="sortKey() === 'ext' ? sortIcon('ext') : 'fi-sr-arrow-small-up'"></i>
+        </th>
+        <th class="col-size sortable" [class.sorted]="sortKey() === 'size'" (click)="toggleSort('size')">
+          Size <i class="fi sort-ind" [ngClass]="sortKey() === 'size' ? sortIcon('size') : 'fi-sr-arrow-small-up'"></i>
+        </th>
+        <th class="col-date sortable" [class.sorted]="sortKey() === 'date'" (click)="toggleSort('date')">
+          Last Modified <i class="fi sort-ind" [ngClass]="sortKey() === 'date' ? sortIcon('date') : 'fi-sr-arrow-small-up'"></i>
+        </th>
+        <th class="col-class sortable" [class.sorted]="sortKey() === 'class'" (click)="toggleSort('class')">
+          Storage Class <i class="fi sort-ind" [ngClass]="sortKey() === 'class' ? sortIcon('class') : 'fi-sr-arrow-small-up'"></i>
+        </th>
       </tr>
     </thead>
     <tbody>
@@ -51,23 +74,24 @@
           <span class="icon">
             <i
               class="fi"
-              [class.fi-rr-folder]="item.type === 'folder'"
+              [class.fi-sr-folder]="item.type === 'folder'"
               [class.ic-amber]="item.type === 'folder'"
-              [class.fi-rr-file]="item.type === 'file'"
+              [class.fi-sr-file]="item.type === 'file'"
               [class.ic-blue]="item.type === 'file'"
             ></i>
           </span>
           {{ item.name }}
         </td>
+        <td class="col-ext">{{ item.type === 'folder' ? 'Folder' : extensionOf(item) ? extensionOf(item) : '' }}</td>
         <td class="col-size">{{ item.type === 'file' ? formatBytes(item.size) : '' }}</td>
         <td class="col-date">{{ item.lastModified ? (item.lastModified | date: 'short') : '' }}</td>
         <td class="col-class">{{ item.storageClass || '' }}</td>
       </tr>
       <tr *ngIf="!s3.items().length">
-        <td colspan="4" class="empty-row">This folder is empty.</td>
+        <td colspan="5" class="empty-row">This folder is empty.</td>
       </tr>
       <tr *ngIf="s3.items().length && !filteredItems().length">
-        <td colspan="4" class="empty-row">No files or folders match "{{ searchTerm() }}".</td>
+        <td colspan="5" class="empty-row">No files or folders match the current search / filter.</td>
       </tr>
     </tbody>
   </table>

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DropdownComponent, DropdownOption } from '../dropdown/dropdown.component';
 import { ConnectionProfile, ConnectionProfileInput } from '../../core/models/models';
 import { ConnectionService } from '../../core/services/connection.service';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
@@ -8,7 +9,7 @@ import { S3BrowserService } from '../../core/services/s3-browser.service';
 @Component({
   selector: 'app-connection-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownComponent],
   templateUrl: './connection-manager.component.html',
   styleUrl: './connection-manager.component.scss'
 })
@@ -38,6 +39,8 @@ export class ConnectionManagerComponent {
     'sa-east-1',
     'ca-central-1'
   ];
+
+  readonly regionOptions: DropdownOption[] = this.regions.map((r) => ({ value: r, label: r }));
 
   constructor(
     public connectionService: ConnectionService,

@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { BucketInfo } from '../../core/models/models';
+import { BucketInfo, S3ListItem } from '../../core/models/models';
+import { DropdownComponent, DropdownOption } from '../dropdown/dropdown.component';
+import { BucketSelectComponent } from '../bucket-select/bucket-select.component';
 import { ConnectionService } from '../../core/services/connection.service';
 import { ElectronService } from '../../core/services/electron.service';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
@@ -16,7 +18,7 @@ import { S3BrowserService } from '../../core/services/s3-browser.service';
 @Component({
   selector: 'app-copy-move-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BucketSelectComponent, DropdownComponent],
   templateUrl: './copy-move-dialog.component.html',
   styleUrl: './copy-move-dialog.component.scss'
 })
@@ -26,7 +28,18 @@ export class CopyMoveDialogComponent implements OnInit {
 
   readonly destConnectionId = signal<string | null>(null);
   readonly destBucket = signal<string | null>(null);
-  destPrefix = '';
+  /** Folder currently open in the destination browser (always '' or ends with '/'). */
+  readonly browsePrefix = signal('');
+  /** Subfolder single-clicked in the browser; when set it - not the open folder - is the destination. */
+  readonly selectedFolder = signal<string | null>(null);
+  readonly folders = signal<S3ListItem[]>([]);
+  readonly loadingFolders = signal(false);
+
+  readonly destPrefix = computed(() => this.selectedFolder() ?? this.browsePrefix());
+  readonly crumbs = computed(() => {
+    const parts = this.browsePrefix().split('/').filter(Boolean);
+    return parts.map((name, i) => ({ name, prefix: parts.slice(0, i + 1).join('/') + '/' }));
+  });
 
   readonly destBuckets = signal<BucketInfo[]>([]);
   readonly loadingBuckets = signal(false);
@@ -34,6 +47,10 @@ export class CopyMoveDialogComponent implements OnInit {
   readonly errorMsg = signal<string | null>(null);
 
   readonly selectedItems = computed(() => this.s3.items().filter((i) => this.s3.selectedKeys().has(i.key)));
+
+  readonly connectionOptions = computed<DropdownOption[]>(() =>
+    this.connectionService.connections().map((c) => ({ value: c.id, label: c.name, icon: 'fi-sr-hdd' }))
+  );
 
   readonly title = computed(() => (this.mode === 'move' ? 'Move to…' : 'Copy to…'));
   readonly confirmLabel = computed(() => (this.running() ? 'Working…' : this.mode === 'move' ? 'Move' : 'Copy'));
@@ -51,14 +68,58 @@ export class CopyMoveDialogComponent implements OnInit {
     const connectionId = this.s3.activeConnectionId();
     this.destConnectionId.set(connectionId);
     this.destBucket.set(this.s3.currentBucket());
-    this.destPrefix = this.s3.currentPrefix();
     this.destBuckets.set(this.s3.buckets());
+    void this.openFolder(this.s3.currentPrefix());
+  }
+
+  /** Opens `prefix` in the destination browser and loads its subfolders. */
+  async openFolder(prefix: string): Promise<void> {
+    this.browsePrefix.set(prefix);
+    this.selectedFolder.set(null);
+    this.folders.set([]);
+    const connectionId = this.destConnectionId();
+    const bucket = this.destBucket();
+    if (!connectionId || !bucket) return;
+
+    this.loadingFolders.set(true);
+    try {
+      const folders: S3ListItem[] = [];
+      let token: string | undefined;
+      // Folders arrive interleaved with files, page by page; cap pages so a huge flat folder can't stall the dialog.
+      for (let page = 0; page < 20; page++) {
+        const res = await this.electron.api.s3.listObjects(connectionId, bucket, prefix, token);
+        // Ignore the result if the user navigated elsewhere while this was loading.
+        if (this.browsePrefix() !== prefix || this.destBucket() !== bucket || this.destConnectionId() !== connectionId) return;
+        folders.push(...res.items.filter((i: S3ListItem) => i.type === 'folder'));
+        if (!res.nextContinuationToken) break;
+        token = res.nextContinuationToken;
+      }
+      this.folders.set(folders);
+    } catch (err: any) {
+      this.errorMsg.set(err?.message || String(err));
+    } finally {
+      this.loadingFolders.set(false);
+    }
+  }
+
+  onBucketChange(bucket: string): void {
+    this.destBucket.set(bucket);
+    this.errorMsg.set(null);
+    void this.openFolder('');
+  }
+
+  goUp(): void {
+    const crumbs = this.crumbs();
+    void this.openFolder(crumbs.length > 1 ? crumbs[crumbs.length - 2].prefix : '');
   }
 
   async onConnectionChange(connectionId: string): Promise<void> {
     this.destConnectionId.set(connectionId || null);
     this.destBucket.set(null);
     this.errorMsg.set(null);
+    this.browsePrefix.set('');
+    this.selectedFolder.set(null);
+    this.folders.set([]);
     if (!connectionId) {
       this.destBuckets.set([]);
       return;
@@ -80,6 +141,7 @@ export class CopyMoveDialogComponent implements OnInit {
     }
   }
 
+  @HostListener('document:keydown.escape')
   cancel(): void {
     this.closed.emit();
   }
@@ -91,7 +153,7 @@ export class CopyMoveDialogComponent implements OnInit {
       this.errorMsg.set('Choose a destination bucket.');
       return;
     }
-    const prefix = this.normalizePrefix(this.destPrefix);
+    const prefix = this.destPrefix();
 
     this.running.set(true);
     this.errorMsg.set(null);
@@ -103,11 +165,5 @@ export class CopyMoveDialogComponent implements OnInit {
     } finally {
       this.running.set(false);
     }
-  }
-
-  private normalizePrefix(raw: string): string {
-    const trimmed = raw.trim().replace(/^\/+/, '');
-    if (!trimmed) return '';
-    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
   }
 }

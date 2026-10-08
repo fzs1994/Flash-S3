@@ -8,15 +8,15 @@
       [title]="favorites.showFavoritesOnly() ? 'Showing favorite buckets only' : 'Show favorite buckets only'"
       (click)="favorites.toggleShowFavoritesOnly()"
     >
-      <i class="fi fi-rr-star"></i>
+      <i class="fi fi-sr-star"></i>
     </button>
   </div>
 
   <div class="tree__search" *ngIf="s3.buckets().length">
-    <i class="fi fi-rr-search"></i>
+    <i class="fi fi-sr-search"></i>
     <input type="text" placeholder="Search buckets…" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
     <button *ngIf="searchTerm()" class="tree__search-clear" title="Clear search" (click)="clearSearch()">
-      <i class="fi fi-rr-cross"></i>
+      <i class="fi fi-sr-cross"></i>
     </button>
   </div>
 
@@ -27,7 +27,7 @@
       [class.active]="b.name === s3.currentBucket()"
       (click)="select(b.name)"
     >
-      <span class="icon"><i class="fi fi-rr-box ic-amber"></i></span>
+      <span class="icon"><i class="fi fi-sr-box ic-amber"></i></span>
       <span class="name">{{ b.name }}</span>
       <button
         class="tree__favorite-btn"
@@ -35,7 +35,7 @@
         [title]="isFavorite(b.name) ? 'Remove from favorites' : 'Add to favorites'"
         (click)="toggleFavorite(b.name, $event)"
       >
-        <i class="fi fi-rr-star"></i>
+        <i class="fi fi-sr-star"></i>
       </button>
     </div>
     <div class="tree__empty" *ngIf="!s3.buckets().length && !s3.loading()">

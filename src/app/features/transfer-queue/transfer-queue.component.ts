@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DropdownComponent, DropdownOption } from '../dropdown/dropdown.component';
 import { TransferPart, TransferTask } from '../../core/models/models';
 import { TransferService } from '../../core/services/transfer.service';
 
@@ -40,7 +41,7 @@ function tabForTask(task: TransferTask): Exclude<QueueTab, 'all'> {
 @Component({
   selector: 'app-transfer-queue',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DropdownComponent],
   templateUrl: './transfer-queue.component.html',
   styleUrl: './transfer-queue.component.scss'
 })
@@ -50,6 +51,7 @@ export class TransferQueueComponent {
 
   readonly collapsed = signal(false);
   readonly concurrencyOptions = [1, 2, 3, 4, 6, 8, 12, 16];
+  readonly concurrencyDropdownOptions: DropdownOption[] = this.concurrencyOptions.map((n) => ({ value: n, label: String(n) }));
 
   readonly showSettings = signal(false);
   readonly settingsError = signal<string | null>(null);
@@ -147,17 +149,17 @@ export class TransferQueueComponent {
   statusIcon(status: TransferTask['status']): string {
     switch (status) {
       case 'active':
-        return 'fi-rr-refresh fi-spin';
+        return 'fi-sr-refresh fi-spin';
       case 'queued':
-        return 'fi-rr-hourglass';
+        return 'fi-sr-hourglass';
       case 'paused':
-        return 'fi-rr-pause';
+        return 'fi-sr-pause';
       case 'completed':
-        return 'fi-rr-check';
+        return 'fi-sr-check';
       case 'error':
-        return 'fi-rr-exclamation';
+        return 'fi-sr-exclamation';
       case 'canceled':
-        return 'fi-rr-cross';
+        return 'fi-sr-cross';
       default:
         return '';
     }

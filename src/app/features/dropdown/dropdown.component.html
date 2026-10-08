@@ -1,0 +1,44 @@
+<button
+  #trigger
+  type="button"
+  class="dd-trigger"
+  [class.open]="open()"
+  [class.active]="active"
+  [disabled]="disabled"
+  (click)="toggle()"
+  (keydown.arrowdown)="!open() && toggle()"
+>
+  <i class="fi" [ngClass]="triggerIcon" *ngIf="triggerIcon"></i>
+  <span class="dd-label" [class.placeholder]="!selected">{{ selected ? selected.label : placeholder }}</span>
+  <i class="fi fi-sr-angle-small-down dd-chev"></i>
+</button>
+
+<div class="dd-menu" *ngIf="open()" [ngStyle]="menuStyle()">
+  <div class="dd-search" *ngIf="searchable">
+    <i class="fi fi-sr-search"></i>
+    <input
+      #searchInput
+      type="text"
+      [placeholder]="searchPlaceholder"
+      [(ngModel)]="search"
+      (ngModelChange)="highlighted = 0"
+      (keydown)="onKey($event)"
+    />
+  </div>
+  <div #list class="dd-list" tabindex="-1" (keydown)="onKey($event)">
+    <button
+      type="button"
+      class="dd-item"
+      *ngFor="let o of filtered; let i = index"
+      [class.highlighted]="i === highlighted"
+      [class.selected]="o.value === value"
+      (mouseenter)="highlighted = i"
+      (click)="choose(o)"
+    >
+      <i class="fi" [ngClass]="o.icon" *ngIf="o.icon"></i>
+      <span class="dd-item__label">{{ o.label }}</span>
+      <i class="fi fi-sr-check dd-tick" *ngIf="o.value === value"></i>
+    </button>
+    <div class="dd-empty" *ngIf="!filtered.length">{{ options.length ? 'No matches' : emptyText }}</div>
+  </div>
+</div>

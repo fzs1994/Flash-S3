@@ -20,14 +20,14 @@
         "
         (click)="transfers.toggleProgressDisplayMode()"
       >
-        <i class="fi fi-rr-layers ic-teal"></i>
+        <i class="fi fi-sr-layers ic-teal"></i>
       </button>
       <button title="Transfer settings" (click)="openSettings()">
-        <i class="fi fi-rr-settings-sliders ic-blue"></i>
+        <i class="fi fi-sr-settings-sliders ic-blue"></i>
       </button>
     </div>
 
-    <i class="fi collapse-toggle" [class.fi-rr-angle-small-up]="!collapsed()" [class.fi-rr-angle-small-down]="collapsed()"></i>
+    <i class="fi collapse-toggle" [class.fi-sr-angle-small-up]="!collapsed()" [class.fi-sr-angle-small-down]="collapsed()"></i>
   </div>
 
   <div class="queue-tabs" *ngIf="!collapsed()" (click)="$event.stopPropagation()">
@@ -58,10 +58,10 @@
         <span class="task-type" [title]="task.type === 'copy' ? (task.move ? 'Move' : 'Copy') : ''"
           ><i
             class="fi"
-            [class.fi-rr-upload]="task.type === 'upload'"
-            [class.fi-rr-download]="task.type === 'download'"
-            [class.fi-rr-copy]="task.type === 'copy' && !task.move"
-            [class.fi-rr-arrow-right]="task.type === 'copy' && task.move"
+            [class.fi-sr-upload]="task.type === 'upload'"
+            [class.fi-sr-download]="task.type === 'download'"
+            [class.fi-sr-copy]="task.type === 'copy' && !task.move"
+            [class.fi-sr-arrow-right]="task.type === 'copy' && task.move"
           ></i
         ></span>
         <span class="task-name" [title]="task.key">
@@ -83,16 +83,16 @@
 
         <div class="task-actions">
           <button *ngIf="task.status === 'active'" (click)="transfers.pause(task.id)" title="Pause">
-            <i class="fi fi-rr-pause ic-amber"></i>
+            <i class="fi fi-sr-pause ic-amber"></i>
           </button>
           <button *ngIf="task.status === 'paused'" (click)="transfers.resume(task.id)" title="Resume">
-            <i class="fi fi-rr-play ic-green"></i>
+            <i class="fi fi-sr-play ic-green"></i>
           </button>
           <button *ngIf="task.status === 'error'" (click)="transfers.retry(task.id)" title="Retry">
-            <i class="fi fi-rr-refresh ic-blue"></i>
+            <i class="fi fi-sr-refresh ic-blue"></i>
           </button>
           <button *ngIf="!['completed', 'canceled'].includes(task.status)" (click)="transfers.cancel(task.id)" title="Cancel">
-            <i class="fi fi-rr-cross ic-red"></i>
+            <i class="fi fi-sr-cross ic-red"></i>
           </button>
         </div>
       </div>
@@ -115,15 +115,13 @@
 
   <div class="settings-overlay" *ngIf="showSettings()" (click)="closeSettings()">
     <div class="settings-dialog" (click)="$event.stopPropagation()">
-      <h3><i class="fi fi-rr-settings-sliders ic-blue"></i> Transfer Settings</h3>
+      <h3><i class="fi fi-sr-settings-sliders ic-blue"></i> Transfer Settings</h3>
 
       <label
         >Concurrent transfers
         <span class="hint">How many files upload/download at the same time.</span>
       </label>
-      <select [(ngModel)]="settingsForm.concurrency">
-        <option *ngFor="let n of concurrencyOptions" [value]="n">{{ n }}</option>
-      </select>
+      <app-dropdown [options]="concurrencyDropdownOptions" [(value)]="settingsForm.concurrency"></app-dropdown>
 
       <label
         >Part size (MB)

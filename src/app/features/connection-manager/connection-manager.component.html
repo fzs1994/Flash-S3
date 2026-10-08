@@ -1,7 +1,7 @@
 <div class="conn-panel">
   <div class="conn-panel__header">
     <span>Connections</span>
-    <button class="btn-add" (click)="newConnection()" title="New connection"><i class="fi fi-rr-plus"></i> New</button>
+    <button class="btn-add" (click)="newConnection()" title="New connection"><i class="fi fi-sr-plus"></i> New</button>
   </div>
 
   <div class="conn-list">
@@ -20,8 +20,8 @@
         <div class="conn-item__meta">{{ c.accessKeyId }} &middot; {{ c.region }}</div>
       </div>
       <div class="conn-item__actions">
-        <button class="btn-edit" title="Edit" (click)="editConnection(c, $event)"><i class="fi fi-rr-edit ic-amber"></i></button>
-        <button class="btn-remove" title="Remove" (click)="remove(c, $event)"><i class="fi fi-rr-cross ic-red"></i></button>
+        <button class="btn-edit" title="Edit" (click)="editConnection(c, $event)"><i class="fi fi-sr-edit ic-amber"></i></button>
+        <button class="btn-remove" title="Remove" (click)="remove(c, $event)"><i class="fi fi-sr-cross ic-red"></i></button>
       </div>
     </div>
     <div class="conn-empty" *ngIf="!connectionService.connections().length">
@@ -50,9 +50,7 @@
       />
 
       <label>Region</label>
-      <select [(ngModel)]="form.region">
-        <option *ngFor="let r of regions" [value]="r">{{ r }}</option>
-      </select>
+      <app-dropdown [options]="regionOptions" [(value)]="form.region" [searchable]="true" searchPlaceholder="Search regions…"></app-dropdown>
 
       <div class="test-result" *ngIf="testResult() as r" [class.ok]="r.ok" [class.fail]="!r.ok">
         {{ r.ok ? 'Connection successful.' : 'Failed: ' + r.error }}
@@ -60,7 +58,7 @@
 
       <div class="form-actions">
         <button (click)="testConnection()" [disabled]="testing()">
-          <i class="fi fi-rr-refresh ic-blue" *ngIf="testing()" [class.fi-spin]="testing()"></i>
+          <i class="fi fi-sr-refresh ic-blue" *ngIf="testing()" [class.fi-spin]="testing()"></i>
           {{ testing() ? 'Testing…' : 'Test Connection' }}
         </button>
         <div class="spacer"></div>
@@ -70,7 +68,7 @@
           (click)="save()"
           [disabled]="saving() || !form.name || !form.accessKeyId || (!isEditing() && !form.secretAccessKey)"
         >
-          <i class="fi fi-rr-refresh" *ngIf="saving()" [class.fi-spin]="saving()"></i>
+          <i class="fi fi-sr-refresh" *ngIf="saving()" [class.fi-spin]="saving()"></i>
           {{ saving() ? 'Saving…' : isEditing() ? 'Save Changes' : 'Save & Connect' }}
         </button>
       </div>

@@ -8,14 +8,14 @@
       [class.active]="tab.connectionId === s3.activeConnectionId()"
       (click)="selectTab(tab.connectionId)"
     >
-      <i class="fi fi-rr-server ic-blue"></i>
+      <i class="fi fi-sr-hdd ic-blue"></i>
       <span class="tab__label">{{ tab.name }}</span>
       <button class="tab__close" title="Close connection" (click)="closeTab(tab.connectionId, $event)">
-        <i class="fi fi-rr-cross"></i>
+        <i class="fi fi-sr-cross"></i>
       </button>
     </div>
     <button class="tab-add" title="Open another connection" (click)="showConnectionsPanel.set(true)">
-      <i class="fi fi-rr-plus ic-blue"></i>
+      <i class="fi fi-sr-plus ic-blue"></i>
     </button>
   </div>
 
@@ -49,7 +49,7 @@
       <div class="connections-modal__header">
         <span>Manage Connections</span>
         <button (click)="showConnectionsPanel.set(false)" [disabled]="!s3.tabs().length">
-          <i class="fi fi-rr-cross"></i>
+          <i class="fi fi-sr-cross"></i>
         </button>
       </div>
       <app-connection-manager (connected)="onConnected($event)"></app-connection-manager>
@@ -90,10 +90,10 @@
 
   <div class="toast" *ngIf="toast.toast() as t" [ngClass]="'toast-' + t.type">
     <i class="fi" [ngClass]="{
-      'fi-rr-check': t.type === 'success',
-      'fi-rr-cross-circle': t.type === 'danger',
-      'fi-rr-triangle-warning': t.type === 'warning',
-      'fi-rr-info': t.type === 'info'
+      'fi-sr-check': t.type === 'success',
+      'fi-sr-cross-circle': t.type === 'danger',
+      'fi-sr-triangle-warning': t.type === 'warning',
+      'fi-sr-info': t.type === 'info'
     }"></i>
     <span>{{ t.message }}</span>
   </div>

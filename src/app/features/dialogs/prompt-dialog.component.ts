@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 /**
@@ -27,6 +27,14 @@ export class PromptDialogComponent {
   @Input() confirmLabel = 'OK';
   /** When set, the dialog shows a list of choice buttons instead of the text input/confirm row - used for "Signed vs. unsigned URL" style pickers. */
   @Input() choices?: PromptDialogChoice[];
+  /** Focuses (and selects) the text input as soon as the dialog renders it. */
+  @ViewChild('textInput') set textInput(ref: ElementRef<HTMLInputElement> | undefined) {
+    if (!ref) return;
+    setTimeout(() => {
+      ref.nativeElement.focus();
+      ref.nativeElement.select();
+    });
+  }
   @Output() confirmed = new EventEmitter<string>();
   @Output() cancelled = new EventEmitter<void>();
   @Output() choiceSelected = new EventEmitter<string>();
@@ -35,6 +43,7 @@ export class PromptDialogComponent {
     this.confirmed.emit(this.value);
   }
 
+  @HostListener('document:keydown.escape')
   onCancel(): void {
     this.cancelled.emit();
   }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, HostListener, effect, signal, untracked } from '@angular/core';
 import { S3ListItem } from './core/models/models';
 import { ConnectionService } from './core/services/connection.service';
 import { S3BrowserService } from './core/services/s3-browser.service';
@@ -59,14 +59,13 @@ function persistPanelSize(key: string, value: number): void {
 })
 export class AppComponent {
   readonly showConnectionsPanel = signal(true);
-  readonly dialogMode = signal<DialogMode>(null);
-  readonly copyMoveMode = signal<'copy' | 'move' | null>(null);
+  readonly dialogMode = signal<DialogMode>(null);  readonly copyMoveMode = signal<'copy' | 'move' | null>(null);
   readonly propertiesItem = signal<S3ListItem | null>(null);
   dialogValue = '';
 
   readonly shareUrlChoices: PromptDialogChoice[] = [
-    { id: 'signed', label: 'Signed URL (expires in 1 hour)', icon: 'fi-rr-lock ic-amber' },
-    { id: 'unsigned', label: 'Unsigned URL (plain S3 path)', icon: 'fi-rr-link ic-teal' }
+    { id: 'signed', label: 'Signed URL (expires in 1 hour)', icon: 'fi-sr-lock ic-amber' },
+    { id: 'unsigned', label: 'Unsigned URL (plain S3 path)', icon: 'fi-sr-link ic-teal' }
   ];
 
   readonly sidebarWidth = signal(loadPanelSize('s3b:sidebarWidth', 240));
@@ -77,7 +76,25 @@ export class AppComponent {
     public s3: S3BrowserService,
     public connectionService: ConnectionService,
     public toast: ToastService
-  ) {}
+  ) {
+    // The toolbar sits above the Manage Connections overlay, so Bookmarks and Dual Pane work with no
+    // connection open. Get the overlay out of the way once either one takes the user somewhere.
+    let prevTabs = this.s3.tabs().length;
+    let prevDual = this.s3.dualPaneMode();
+    effect(
+      () => {
+        const tabs = this.s3.tabs().length;
+        const dual = this.s3.dualPaneMode();
+        untracked(() => {
+          if ((dual && !prevDual) || tabs > prevTabs) this.showConnectionsPanel.set(false);
+          else if (!dual && prevDual && tabs === 0) this.showConnectionsPanel.set(true);
+          prevTabs = tabs;
+          prevDual = dual;
+        });
+      },
+      { allowSignalWrites: true }
+    );
+  }
 
   startSidebarResize(ev: MouseEvent): void {
     ev.preventDefault();
@@ -91,6 +108,12 @@ export class AppComponent {
     this.resizing = 'queue';
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'row-resize';
+  }
+
+  /** Esc closes the Manage Connections modal (only when at least one connection tab is open, matching its close button). */
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showConnectionsPanel() && this.s3.tabs().length) this.showConnectionsPanel.set(false);
   }
 
   @HostListener('document:mousemove', ['$event'])

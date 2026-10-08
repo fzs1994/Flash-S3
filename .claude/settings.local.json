@@ -14,7 +14,10 @@
       "Bash(node race-test-fixed.js)",
       "Bash(node backpressure-test3.js)",
       "Bash(node --check \"D:/CodeMaster/POCs/S3 Browser Clone/electron/services/transfer-queue.js\")",
-      "Bash(npx ng *)"
+      "Bash(npx ng *)",
+      "Bash(python -)",
+      "Bash(xargs sed -i 's/fi-rr-server/fi-sr-hdd/g; s/fi-rr-/fi-sr-/g')",
+      "Bash(sed -i 's#css/regular/rounded.css#css/solid/rounded.css#' angular.json)"
     ]
   }
 }

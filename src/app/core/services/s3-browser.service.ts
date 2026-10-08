@@ -216,7 +216,14 @@ export class S3BrowserService {
     if (!connectionId || !tab?.currentBucket) return;
     const parentPrefix = oldKey.substring(0, oldKey.lastIndexOf('/', oldKey.length - 2) + 1);
     const newKey = `${parentPrefix}${newName}`;
-    await this.electron.api.s3.renameObject(connectionId, tab.currentBucket, oldKey, newKey);
+    // Drives the active browse window's loading overlay for the duration of the rename.
+    this.updateTab(connectionId, { loading: true });
+    try {
+      await this.electron.api.s3.renameObject(connectionId, tab.currentBucket, oldKey, newKey);
+    } catch (err) {
+      this.updateTab(connectionId, { loading: false });
+      throw err;
+    }
     await this.refreshListing();
   }
 

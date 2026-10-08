@@ -1,33 +1,34 @@
 <div class="pane" (contextmenu)="onContainerContextMenu($event)">
   <div class="pane__pickers">
-    <select [ngModel]="state.connectionId" (ngModelChange)="onConnectionChange($event)">
-      <option [value]="null" disabled>Choose a connection…</option>
-      <option *ngFor="let c of connectionService.connections()" [value]="c.id">{{ c.name }}</option>
-    </select>
-    <select
-      [ngModel]="state.bucket"
-      (ngModelChange)="onBucketChange($event)"
+    <app-dropdown
+      [options]="connectionOptions()"
+      [value]="state.connectionId"
+      (valueChange)="onConnectionChange($event)"
+      placeholder="Choose a connection…"
+    ></app-dropdown>
+    <app-bucket-select
+      [buckets]="state.buckets"
+      [value]="state.bucket"
+      (valueChange)="onBucketChange($event)"
       [disabled]="state.loadingBuckets || !state.connectionId"
-    >
-      <option [value]="null" disabled>{{ state.loadingBuckets ? 'Loading buckets…' : 'Choose a bucket…' }}</option>
-      <option *ngFor="let b of state.buckets" [value]="b.name">{{ b.name }}</option>
-    </select>
+      [placeholder]="state.loadingBuckets ? 'Loading buckets…' : 'Choose a bucket…'"
+    ></app-bucket-select>
   </div>
 
   <div class="pane__toolbar" *ngIf="state.bucket">
-    <button (click)="refresh()" title="Refresh"><i class="fi fi-rr-refresh ic-blue" [class.fi-spin]="state.loading"></i></button>
-    <button (click)="startAddFolder()" title="New folder"><i class="fi fi-rr-folder ic-amber"></i></button>
-    <button (click)="uploadFiles()" title="Upload files"><i class="fi fi-rr-upload ic-blue"></i></button>
+    <button (click)="refresh()" title="Refresh"><i class="fi fi-sr-refresh ic-blue" [class.fi-spin]="state.loading"></i></button>
+    <button (click)="startAddFolder()" title="New folder"><i class="fi fi-sr-folder ic-amber"></i></button>
+    <button (click)="uploadFiles()" title="Upload files"><i class="fi fi-sr-upload ic-blue"></i></button>
     <div class="pane__spacer"></div>
     <button *ngIf="state.selectedKeys.size" (click)="download()" title="Download selected">
-      <i class="fi fi-rr-download ic-green"></i>
+      <i class="fi fi-sr-download ic-green"></i>
     </button>
     <button
       *ngIf="state.selectedKeys.size && otherPaneReady()"
       (click)="copyToOtherPane(false)"
       title="Copy selected to the other pane"
     >
-      <i class="fi fi-rr-copy ic-teal"></i>
+      <i class="fi fi-sr-copy ic-teal"></i>
     </button>
     <button
       *ngIf="state.selectedKeys.size && otherPaneReady()"
@@ -37,7 +38,7 @@
       <i class="fi" [class]="moveArrowIcon" [class.ic-purple]="true"></i>
     </button>
     <button *ngIf="state.selectedKeys.size" (click)="deleteSelected()" title="Delete selected" class="danger">
-      <i class="fi fi-rr-trash ic-red"></i>
+      <i class="fi fi-sr-trash ic-red"></i>
     </button>
   </div>
 
@@ -67,7 +68,7 @@
     <tbody>
       <tr class="pane__new-folder-row" *ngIf="addingFolder()">
         <td colspan="2">
-          <i class="fi fi-rr-folder ic-amber"></i>
+          <i class="fi fi-sr-folder ic-amber"></i>
           <input
             type="text"
             [(ngModel)]="newFolderName"
@@ -75,8 +76,8 @@
             (keyup.enter)="confirmAddFolder()"
             (keyup.escape)="cancelAddFolder()"
           />
-          <button (click)="confirmAddFolder()" title="Create"><i class="fi fi-rr-check ic-green"></i></button>
-          <button (click)="cancelAddFolder()" title="Cancel"><i class="fi fi-rr-cross ic-muted"></i></button>
+          <button (click)="confirmAddFolder()" title="Create"><i class="fi fi-sr-check ic-green"></i></button>
+          <button (click)="cancelAddFolder()" title="Cancel"><i class="fi fi-sr-cross ic-muted"></i></button>
         </td>
       </tr>
       <tr
@@ -90,9 +91,9 @@
         <td class="col-name">
           <i
             class="fi"
-            [class.fi-rr-folder]="item.type === 'folder'"
+            [class.fi-sr-folder]="item.type === 'folder'"
             [class.ic-amber]="item.type === 'folder'"
-            [class.fi-rr-file]="item.type === 'file'"
+            [class.fi-sr-file]="item.type === 'file'"
             [class.ic-blue]="item.type === 'file'"
           ></i>
           {{ item.name }}

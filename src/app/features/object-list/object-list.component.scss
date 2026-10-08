@@ -33,18 +33,26 @@
   text-align: center;
   color: var(--s3b-muted);
 }
+.list-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 10px;
+  flex-shrink: 0;
+}
 .list-search {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 6px 10px;
-  padding: 4px 8px;
+  flex: 1;
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 8px;
   border: 1px solid var(--s3b-border);
   border-radius: 4px;
   background: var(--s3b-surface);
   color: var(--s3b-muted);
   font-size: 12px;
-  flex-shrink: 0;
   max-width: 320px;
 }
 .list-search input {
@@ -118,6 +126,49 @@
 .col-name {
   flex: 3;
   min-width: 200px;
+}
+.col-ext {
+  flex: 0.7;
+  min-width: 70px;
+  color: var(--s3b-muted);
+}
+th.sortable {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+th.sortable.col-size {
+  justify-content: flex-end;
+}
+th.sortable:hover {
+  color: var(--s3b-text);
+}
+th.sortable .sort-ind {
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+th.sortable:hover .sort-ind {
+  opacity: 0.45;
+}
+th.sortable.sorted {
+  color: var(--s3b-blue);
+}
+th.sortable.sorted .sort-ind {
+  opacity: 1;
+}
+
+.type-filter {
+  margin-left: auto;
+}
+.list-search .fi,
+th.sortable .fi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 .col-size {
   flex: 1;

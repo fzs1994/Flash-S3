@@ -19,7 +19,7 @@
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/assets", "src/favicon.ico"],
-            "styles": ["node_modules/@flaticon/flaticon-uicons/css/regular/rounded.css", "src/styles.scss"],
+            "styles": ["node_modules/@flaticon/flaticon-uicons/css/solid/rounded.css", "src/styles.scss"],
             "scripts": []
           },
           "configurations": {

@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, Input, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DropdownComponent, DropdownOption } from '../dropdown/dropdown.component';
+import { BucketSelectComponent } from '../bucket-select/bucket-select.component';
 import { MarqueeSelectDirective, MarqueeSelectEvent, rangeKeys } from '../../core/directives/marquee-select.directive';
 import { PaneId, S3ListItem } from '../../core/models/models';
 import { ConnectionService } from '../../core/services/connection.service';
@@ -30,7 +32,7 @@ function formatBytes(bytes?: number): string {
 @Component({
   selector: 'app-pane-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContextMenuComponent, PropertiesDialogComponent, PreviewDialogComponent, MarqueeSelectDirective],
+  imports: [CommonModule, FormsModule, BucketSelectComponent, DropdownComponent, ContextMenuComponent, PropertiesDialogComponent, PreviewDialogComponent, MarqueeSelectDirective],
   templateUrl: './pane-view.component.html',
   styleUrl: './pane-view.component.scss'
 })
@@ -67,21 +69,21 @@ export class PaneViewComponent {
 
     const entries: ContextMenuEntry[] = [];
     if (selected && isPreviewable(selected)) {
-      entries.push({ type: 'item', id: 'preview', label: 'Preview', icon: 'fi-rr-eye', colorClass: 'ic-blue' }, { type: 'divider' });
+      entries.push({ type: 'item', id: 'preview', label: 'Preview', icon: 'fi-sr-eye', colorClass: 'ic-blue' }, { type: 'divider' });
     }
-    entries.push({ type: 'item', id: 'download', label: 'Download', icon: 'fi-rr-download', colorClass: 'ic-green' });
+    entries.push({ type: 'item', id: 'download', label: 'Download', icon: 'fi-sr-download', colorClass: 'ic-green' });
     if (canSend) {
       entries.push(
-        { type: 'item', id: 'copy', label: 'Copy to other pane', icon: 'fi-rr-copy', colorClass: 'ic-teal' },
+        { type: 'item', id: 'copy', label: 'Copy to other pane', icon: 'fi-sr-copy', colorClass: 'ic-teal' },
         { type: 'item', id: 'move', label: 'Move to other pane', icon: this.moveArrowIcon, colorClass: 'ic-purple' }
       );
     }
     entries.push(
       { type: 'divider' },
-      { type: 'item', id: 'delete', label: 'Delete', icon: 'fi-rr-trash', colorClass: 'ic-red', danger: true }
+      { type: 'item', id: 'delete', label: 'Delete', icon: 'fi-sr-trash', colorClass: 'ic-red', danger: true }
     );
     if (count === 1) {
-      entries.push({ type: 'divider' }, { type: 'item', id: 'properties', label: 'Properties', icon: 'fi-rr-info', colorClass: 'ic-blue' });
+      entries.push({ type: 'divider' }, { type: 'item', id: 'properties', label: 'Properties', icon: 'fi-sr-info', colorClass: 'ic-blue' });
     }
     return entries;
   });
@@ -90,11 +92,11 @@ export class PaneViewComponent {
   readonly folderContextMenuItems = computed<ContextMenuEntry[]>(() => {
     if (!this.state.bucket) return [];
     return [
-      { type: 'item', id: 'refresh', label: 'Refresh', icon: 'fi-rr-refresh', colorClass: 'ic-blue' },
-      { type: 'item', id: 'newFolder', label: 'New Folder', icon: 'fi-rr-folder', colorClass: 'ic-amber' },
+      { type: 'item', id: 'refresh', label: 'Refresh', icon: 'fi-sr-refresh', colorClass: 'ic-blue' },
+      { type: 'item', id: 'newFolder', label: 'New Folder', icon: 'fi-sr-folder', colorClass: 'ic-amber' },
       { type: 'divider' },
-      { type: 'item', id: 'uploadFiles', label: 'Upload Files…', icon: 'fi-rr-upload', colorClass: 'ic-blue' },
-      { type: 'item', id: 'uploadFolder', label: 'Upload Folder…', icon: 'fi-rr-upload', colorClass: 'ic-blue' }
+      { type: 'item', id: 'uploadFiles', label: 'Upload Files…', icon: 'fi-sr-upload', colorClass: 'ic-blue' },
+      { type: 'item', id: 'uploadFolder', label: 'Upload Folder…', icon: 'fi-sr-upload', colorClass: 'ic-blue' }
     ];
   });
 
@@ -122,8 +124,12 @@ export class PaneViewComponent {
 
   /** Points toward whichever side the other pane actually sits on, so the move icon reads correctly on both sides. */
   get moveArrowIcon(): string {
-    return this.paneId === 'left' ? 'fi-rr-arrow-right' : 'fi-rr-arrow-left';
+    return this.paneId === 'left' ? 'fi-sr-arrow-right' : 'fi-sr-arrow-left';
   }
+
+  readonly connectionOptions = computed<DropdownOption[]>(() =>
+    this.connectionService.connections().map((c) => ({ value: c.id, label: c.name, icon: 'fi-sr-hdd' }))
+  );
 
   async onConnectionChange(connectionId: string): Promise<void> {
     const conn = this.connectionService.connections().find((c) => c.id === connectionId);

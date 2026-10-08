@@ -1,0 +1,145 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+:host(.compact) {
+  display: inline-block;
+}
+.fi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.dd-trigger {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 4px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+:host(.compact) .dd-trigger {
+  width: auto;
+}
+.dd-trigger:hover:not(:disabled),
+.dd-trigger.open {
+  border-color: var(--s3b-blue);
+}
+.dd-trigger.active {
+  background: color-mix(in srgb, var(--s3b-blue) 12%, var(--s3b-surface));
+  border-color: var(--s3b-blue);
+  color: var(--s3b-blue);
+}
+.dd-trigger:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.dd-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dd-label.placeholder {
+  color: var(--s3b-muted);
+}
+.dd-chev {
+  font-size: 14px;
+  color: var(--s3b-muted);
+  transition: transform 0.15s;
+}
+.dd-trigger.open .dd-chev {
+  transform: rotate(180deg);
+}
+
+.dd-menu {
+  position: fixed;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 4px;
+  background: var(--s3b-surface);
+  border: 1px solid var(--s3b-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--s3b-shadow);
+  font-size: 12.5px;
+}
+.dd-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 30px;
+  height: 30px;
+  margin: 2px 2px 6px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--s3b-border);
+  border-radius: 4px;
+  color: var(--s3b-muted);
+}
+.dd-search:focus-within {
+  border-color: var(--s3b-blue);
+}
+.dd-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--s3b-text);
+  font-size: 12.5px;
+}
+.dd-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  outline: none;
+}
+.dd-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 9px;
+  border: none;
+  border-radius: 5px;
+  background: none;
+  color: var(--s3b-text);
+  font-size: inherit;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+.dd-item__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dd-item.highlighted {
+  background: var(--s3b-row-hover);
+}
+.dd-item.selected {
+  color: var(--s3b-blue);
+  font-weight: 600;
+}
+.dd-tick {
+  margin-left: auto;
+}
+.dd-empty {
+  padding: 8px 10px;
+  color: var(--s3b-muted);
+}

@@ -11,7 +11,8 @@
   background: var(--s3b-surface);
   border-radius: 6px;
   padding: 20px;
-  width: 420px;
+  width: 480px;
+  max-width: 94vw;
   box-shadow: 0 8px 30px var(--s3b-shadow);
 }
 .cm-dialog h3 {
@@ -53,6 +54,73 @@
 }
 .cm-dialog select:disabled {
   opacity: 0.6;
+}
+.cm-browser {
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cm-crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--s3b-border);
+  font-size: 12px;
+}
+.cm-crumbs button {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: var(--s3b-text);
+  cursor: pointer;
+  border-radius: 3px;
+}
+.cm-crumbs button:hover:not(:disabled) {
+  background: var(--s3b-border);
+}
+.cm-crumbs button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cm-sep {
+  color: var(--s3b-muted);
+}
+.cm-folders {
+  height: 180px;
+  overflow-y: auto;
+  user-select: none;
+}
+.cm-folder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: var(--s3b-text);
+  cursor: default;
+}
+.cm-folder:hover {
+  background: color-mix(in srgb, var(--s3b-blue) 10%, transparent);
+}
+.cm-folder.selected {
+  background: var(--s3b-blue);
+  color: #fff;
+}
+.cm-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  font-size: 12px;
+  color: var(--s3b-muted);
+}
+.cm-dest {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--s3b-muted);
+  word-break: break-all;
 }
 .cm-error {
   margin: 12px 0 0;

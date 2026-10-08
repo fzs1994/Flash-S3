@@ -5,6 +5,9 @@
   padding: 6px 8px;
   background: var(--s3b-toolbar-bg);
   border-bottom: 1px solid var(--s3b-border);
+  /* Stay above the Manage Connections overlay (z-index 40) so Bookmarks / Dual Pane remain clickable before any connection is open. */
+  position: relative;
+  z-index: 50;
 }
 button {
   background: var(--s3b-surface);

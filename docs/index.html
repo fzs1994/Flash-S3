@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -404,7 +404,10 @@
                   </sc-for>
                 </div>
 
-                <div data-r="panel" style="border: 1px solid #30363d; border-top: none; border-radius: 0 0 12px 12px; background: #0f1319; padding: 28px">
+                <div
+                  data-r="panel"
+                  style="border: 1px solid #30363d; border-top: none; border-radius: 0 0 12px 12px; background: #0f1319; padding: 28px"
+                >
                   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px">
                     <sc-for list="{{ activeFeatures }}" as="f" hint-placeholder-count="4">
                       <div style="min-width: 0">
@@ -1210,7 +1213,7 @@
 
       class Component extends DCLogic {
         state = {
-          tab: 'transfer',
+          tab: 'browse',
           shot: 'queue',
           running: true,
           parts: [47, 37, 43, 41, 0, 0, 0],

@@ -5,6 +5,6 @@
   <span class="sep" *ngIf="selectedCount()">|</span>
   <span *ngIf="selectedCount()">{{ selectedCount() }} selected</span>
   <span class="fill"></span>
-  <span *ngIf="s3.loading()" class="loading"><i class="fi fi-rr-refresh fi-spin ic-blue"></i> Loading…</span>
+  <span *ngIf="s3.loading()" class="loading"><i class="fi fi-sr-refresh fi-spin ic-blue"></i> Loading…</span>
   <span *ngIf="s3.errorMessage() as err" class="error">{{ err }}</span>
 </div>

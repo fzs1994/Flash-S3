@@ -5,8 +5,8 @@
     <ng-container *ngIf="!choices; else choicesTpl">
       <label>{{ label }}</label>
       <div class="value-row">
-        <input [(ngModel)]="value" [readOnly]="readonlyValue" (keyup.enter)="!readonlyValue && onConfirm()" />
-        <button *ngIf="readonlyValue" (click)="copyToClipboard()" title="Copy"><i class="fi fi-rr-copy ic-blue"></i></button>
+        <input #textInput [(ngModel)]="value" [readOnly]="readonlyValue" (keyup.enter)="!readonlyValue && onConfirm()" />
+        <button *ngIf="readonlyValue" (click)="copyToClipboard()" title="Copy"><i class="fi fi-sr-copy ic-blue"></i></button>
       </div>
       <div class="actions">
         <button (click)="onCancel()">{{ readonlyValue ? 'Close' : 'Cancel' }}</button>

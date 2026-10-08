@@ -1,24 +1,25 @@
 :root {
   --s3b-blue: #2f6fb0;
   --s3b-blue-dark: #1f4d7d;
-  --s3b-toolbar-bg: #eef2f7;
-  --s3b-border: #c9d3dc;
-  --s3b-divider: #eef1f4;
-  --s3b-sidebar-bg: #f7f9fb;
-  --s3b-row-hover: #e8f1fb;
-  --s3b-row-selected: #cfe3f7;
-  --s3b-text: #1f2a33;
-  --s3b-muted: #66757f;
+  /* Light theme: cool blue-tinted neutrals built around the brand blue, so panels read as part of the app rather than flat white. */
+  --s3b-toolbar-bg: #dce8f5;
+  --s3b-border: #b6c9de;
+  --s3b-divider: #dfe9f3;
+  --s3b-sidebar-bg: #eaf2fb;
+  --s3b-row-hover: #deebf9;
+  --s3b-row-selected: #bfd9f3;
+  --s3b-text: #1b2a3a;
+  --s3b-muted: #5b6f84;
   --s3b-green: #3fa74b;
   --s3b-red: #c0392b;
   --s3b-amber: #d69621;
   --s3b-purple: #7a5fc0;
   --s3b-teal: #1f9c8f;
-  --s3b-surface: #ffffff;
-  --s3b-surface-alt: #f4f6f8;
-  --s3b-overlay: rgba(0, 0, 0, 0.35);
-  --s3b-shadow: rgba(0, 0, 0, 0.25);
-  --s3b-scrollbar: #c2ccd6;
+  --s3b-surface: #f7fafd;
+  --s3b-surface-alt: #e4eef9;
+  --s3b-overlay: rgba(20, 40, 70, 0.38);
+  --s3b-shadow: rgba(20, 40, 70, 0.28);
+  --s3b-scrollbar: #aebfd3;
   color-scheme: light;
 }
 

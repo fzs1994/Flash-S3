@@ -19,6 +19,13 @@
   border-bottom: 1px solid var(--s3b-border);
   flex-shrink: 0;
 }
+.pane__pickers app-bucket-select,
+.pane__pickers app-dropdown {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  --bs-pad: 5px 6px;
+}
 .pane__pickers select {
   flex: 1;
   min-width: 0;

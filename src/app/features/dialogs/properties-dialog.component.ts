@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output, signal } from '@angular/core';
 import { ObjectProperties, S3ListItem } from '../../core/models/models';
 import { ElectronService } from '../../core/services/electron.service';
 
@@ -55,6 +55,7 @@ export class PropertiesDialogComponent implements OnInit {
     }
   }
 
+  @HostListener('document:keydown.escape')
   close(): void {
     this.closed.emit();
   }

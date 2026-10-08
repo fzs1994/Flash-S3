@@ -9,6 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { TransferService } from '../../core/services/transfer.service';
 import { isPreviewable } from '../../core/utils/preview-types';
 import { ContextMenuComponent, ContextMenuEntry } from '../context-menu/context-menu.component';
+import { DropdownComponent } from '../dropdown/dropdown.component';
 import { PreviewDialogComponent } from '../dialogs/preview-dialog.component';
 
 function formatBytes(bytes?: number): string {
@@ -19,10 +20,49 @@ function formatBytes(bytes?: number): string {
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+type SortKey = 'name' | 'ext' | 'size' | 'date' | 'class';
+const NO_EXT = '__none__';
+const FOLDERS_ONLY = '__folders__';
+
+/** Lower-cased extension without the dot; '' for folders, extensionless files and dotfiles like ".env". */
+function extensionOf(item: S3ListItem): string {
+  if (item.type === 'folder') return '';
+  const dot = item.name.lastIndexOf('.');
+  return dot > 0 ? item.name.slice(dot + 1).toLowerCase() : '';
+}
+
+/** Explorer-style: folders always group above files, then the chosen column, with name as the tiebreaker. */
+function sortItems(items: S3ListItem[], key: SortKey, dir: 'asc' | 'desc'): S3ListItem[] {
+  const sign = dir === 'asc' ? 1 : -1;
+  const byName = (a: S3ListItem, b: S3ListItem) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+  const value = (i: S3ListItem): string | number => {
+    switch (key) {
+      case 'ext':
+        return extensionOf(i);
+      case 'size':
+        return i.size ?? -1;
+      case 'date':
+        return i.lastModified ? new Date(i.lastModified).getTime() : -1;
+      case 'class':
+        return i.storageClass ?? '';
+      default:
+        return '';
+    }
+  };
+  return [...items].sort((a, b) => {
+    if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+    if (key === 'name') return sign * byName(a, b);
+    const va = value(a);
+    const vb = value(b);
+    const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb));
+    return cmp !== 0 ? sign * cmp : byName(a, b);
+  });
+}
+
 @Component({
   selector: 'app-object-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContextMenuComponent, MarqueeSelectDirective, PreviewDialogComponent],
+  imports: [CommonModule, FormsModule, DropdownComponent, ContextMenuComponent, MarqueeSelectDirective, PreviewDialogComponent],
   templateUrl: './object-list.component.html',
   styleUrl: './object-list.component.scss'
 })
@@ -43,12 +83,54 @@ export class ObjectListComponent {
 
   readonly searchTerm = signal('');
 
+  readonly sortKey = signal<SortKey>('name');
+  readonly sortDir = signal<'asc' | 'desc'>('asc');
+  /** Type filter: '' = everything, '__folders__' = folders only, otherwise a file extension ('' extension is '__none__'). */
+  readonly typeFilter = signal('');
+
+  /** Distinct file extensions in the current folder, for the type filter dropdown. */
+  readonly availableExtensions = computed(() => {
+    const exts = new Set<string>();
+    for (const i of this.s3.items()) if (i.type === 'file') exts.add(extensionOf(i) || NO_EXT);
+    return Array.from(exts).sort((a, b) => (a === NO_EXT ? 1 : b === NO_EXT ? -1 : a.localeCompare(b)));
+  });
+
   readonly filteredItems = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
-    const items = this.s3.items();
-    if (!term) return items;
-    return items.filter((i) => i.name.toLowerCase().includes(term));
+    const type = this.typeFilter();
+    let items = this.s3.items();
+    if (term) items = items.filter((i) => i.name.toLowerCase().includes(term));
+    if (type === FOLDERS_ONLY) items = items.filter((i) => i.type === 'folder');
+    else if (type) items = items.filter((i) => i.type === 'file' && (extensionOf(i) || NO_EXT) === type);
+    return sortItems(items, this.sortKey(), this.sortDir());
   });
+
+  toggleSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.update((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortKey.set(key);
+      // Newest / largest first feels more natural for date and size.
+      this.sortDir.set(key === 'size' || key === 'date' ? 'desc' : 'asc');
+    }
+  }
+
+  sortIcon(key: SortKey): string {
+    return this.sortDir() === 'asc' ? 'fi-sr-arrow-small-up' : 'fi-sr-arrow-small-down';
+  }
+
+  readonly typeOptions = computed(() => [
+    { value: '', label: 'All types', icon: 'fi-sr-apps' },
+    { value: FOLDERS_ONLY, label: 'Folders only', icon: 'fi-sr-folder' },
+    ...this.availableExtensions().map((ext) => ({
+      value: ext,
+      label: ext === NO_EXT ? 'No extension' : `.${ext}`,
+      icon: 'fi-sr-file'
+    }))
+  ]);
+
+
+  extensionOf = extensionOf;
 
   readonly contextMenu = signal<{ x: number; y: number } | null>(null);
 
@@ -72,21 +154,21 @@ export class ObjectListComponent {
 
     const previewGroup: ContextMenuEntry[] =
       selected && isPreviewable(selected)
-        ? [{ type: 'item', id: 'preview', label: 'Preview', icon: 'fi-rr-eye', colorClass: 'ic-blue' }]
+        ? [{ type: 'item', id: 'preview', label: 'Preview', icon: 'fi-sr-eye', colorClass: 'ic-blue' }]
         : [];
     const primaryGroup: ContextMenuEntry[] = [
-      { type: 'item', id: 'download', label: 'Download', icon: 'fi-rr-download', colorClass: 'ic-green' },
-      { type: 'item', id: 'copy', label: 'Copy To…', icon: 'fi-rr-copy', colorClass: 'ic-teal' },
-      { type: 'item', id: 'move', label: 'Move To…', icon: 'fi-rr-arrow-right', colorClass: 'ic-purple' }
+      { type: 'item', id: 'download', label: 'Download', icon: 'fi-sr-download', colorClass: 'ic-green' },
+      { type: 'item', id: 'copy', label: 'Copy To…', icon: 'fi-sr-copy', colorClass: 'ic-teal' },
+      { type: 'item', id: 'move', label: 'Move To…', icon: 'fi-sr-arrow-right', colorClass: 'ic-purple' }
     ];
     const editGroup: ContextMenuEntry[] = [
-      ...(single ? [{ type: 'item', id: 'rename', label: 'Rename', icon: 'fi-rr-edit', colorClass: 'ic-amber' } as ContextMenuEntry] : []),
-      { type: 'item', id: 'delete', label: 'Delete', icon: 'fi-rr-trash', colorClass: 'ic-red', danger: true }
+      ...(single ? [{ type: 'item', id: 'rename', label: 'Rename', icon: 'fi-sr-edit', colorClass: 'ic-amber' } as ContextMenuEntry] : []),
+      { type: 'item', id: 'delete', label: 'Delete', icon: 'fi-sr-trash', colorClass: 'ic-red', danger: true }
     ];
     const shareGroup: ContextMenuEntry[] = single
       ? [
-          { type: 'item', id: 'shareUrl', label: 'Share URL…', icon: 'fi-rr-link', colorClass: 'ic-teal' },
-          { type: 'item', id: 'properties', label: 'Properties', icon: 'fi-rr-info', colorClass: 'ic-blue' }
+          { type: 'item', id: 'shareUrl', label: 'Share URL…', icon: 'fi-sr-link', colorClass: 'ic-teal' },
+          { type: 'item', id: 'properties', label: 'Properties', icon: 'fi-sr-info', colorClass: 'ic-blue' }
         ]
       : [];
 
@@ -109,16 +191,16 @@ export class ObjectListComponent {
   readonly folderContextMenuItems = computed<ContextMenuEntry[]>(() => {
     const hasBucket = !!this.s3.currentBucket();
     const entries: ContextMenuEntry[] = [
-      { type: 'item', id: 'refresh', label: 'Refresh', icon: 'fi-rr-refresh', colorClass: 'ic-blue' }
+      { type: 'item', id: 'refresh', label: 'Refresh', icon: 'fi-sr-refresh', colorClass: 'ic-blue' }
     ];
     if (hasBucket) {
       entries.push(
-        { type: 'item', id: 'newFolder', label: 'New Folder', icon: 'fi-rr-folder', colorClass: 'ic-amber' },
+        { type: 'item', id: 'newFolder', label: 'New Folder', icon: 'fi-sr-folder', colorClass: 'ic-amber' },
         { type: 'divider' },
-        { type: 'item', id: 'uploadFiles', label: 'Upload Files…', icon: 'fi-rr-upload', colorClass: 'ic-blue' },
-        { type: 'item', id: 'uploadFolder', label: 'Upload Folder…', icon: 'fi-rr-upload', colorClass: 'ic-blue' },
+        { type: 'item', id: 'uploadFiles', label: 'Upload Files…', icon: 'fi-sr-upload', colorClass: 'ic-blue' },
+        { type: 'item', id: 'uploadFolder', label: 'Upload Folder…', icon: 'fi-sr-upload', colorClass: 'ic-blue' },
         { type: 'divider' },
-        { type: 'item', id: 'exportCsv', label: 'Export CSV…', icon: 'fi-rr-file-export', colorClass: 'ic-teal' }
+        { type: 'item', id: 'exportCsv', label: 'Export CSV…', icon: 'fi-sr-file-export', colorClass: 'ic-teal' }
       );
     }
     return entries;
@@ -137,6 +219,7 @@ export class ObjectListComponent {
       this.s3.currentBucket();
       this.s3.currentPrefix();
       this.searchTerm.set('');
+      this.typeFilter.set('');
     }, { allowSignalWrites: true });
   }
 

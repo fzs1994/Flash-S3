@@ -303,12 +303,17 @@ class S3Manager {
     for (let i = 0; i < keys.length; i += 1000) chunks.push(keys.slice(i, i + 1000));
 
     for (const chunk of chunks) {
-      await client.send(
+      const res = await client.send(
         new DeleteObjectsCommand({
           Bucket: bucket,
           Delete: { Objects: chunk.map((Key) => ({ Key })), Quiet: true }
         })
       );
+      // DeleteObjects reports per-key failures in the body rather than throwing.
+      if (res.Errors?.length) {
+        const e = res.Errors[0];
+        throw new Error(`Failed to delete ${res.Errors.length} object(s), e.g. "${e.Key}": ${e.Message || e.Code}`);
+      }
     }
     return { deleted: keys.length };
   }
@@ -335,7 +340,8 @@ class S3Manager {
           })
         );
       }
-      await this.deleteObjects(connectionId, bucket, keys);
+      // Delete every original object, plus the folder marker itself even if the listing didn't return it.
+      await this.deleteObjects(connectionId, bucket, [...new Set([...keys, oldKey])]);
       return { newKey: newPrefix };
     }
     await client.send(
