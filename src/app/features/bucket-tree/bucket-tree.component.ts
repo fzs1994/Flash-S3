@@ -1,18 +1,21 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AclDialogComponent } from '../dialogs/acl-dialog.component';
 import { BucketFavoritesService } from '../../core/services/bucket-favorites.service';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
 
 @Component({
   selector: 'app-bucket-tree',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AclDialogComponent],
   templateUrl: './bucket-tree.component.html',
   styleUrl: './bucket-tree.component.scss'
 })
 export class BucketTreeComponent {
   readonly searchTerm = signal('');
+  /** Bucket whose ACL is open in the permissions dialog. */
+  readonly aclBucket = signal<string | null>(null);
 
   readonly filteredBuckets = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -35,6 +38,11 @@ export class BucketTreeComponent {
 
   select(bucketName: string): void {
     this.s3.openBucket(bucketName);
+  }
+
+  openAcl(bucketName: string, ev: Event): void {
+    ev.stopPropagation();
+    this.aclBucket.set(bucketName);
   }
 
   clearSearch(): void {

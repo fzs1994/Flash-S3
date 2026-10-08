@@ -9,6 +9,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { TransferService } from '../../core/services/transfer.service';
 import { isPreviewable } from '../../core/utils/preview-types';
 import { ContextMenuComponent, ContextMenuEntry } from '../context-menu/context-menu.component';
+import { AclDialogComponent } from '../dialogs/acl-dialog.component';
 import { DropdownComponent } from '../dropdown/dropdown.component';
 import { PreviewDialogComponent } from '../dialogs/preview-dialog.component';
 
@@ -62,7 +63,7 @@ function sortItems(items: S3ListItem[], key: SortKey, dir: 'asc' | 'desc'): S3Li
 @Component({
   selector: 'app-object-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, DropdownComponent, ContextMenuComponent, MarqueeSelectDirective, PreviewDialogComponent],
+  imports: [CommonModule, FormsModule, DropdownComponent, AclDialogComponent, ContextMenuComponent, MarqueeSelectDirective, PreviewDialogComponent],
   templateUrl: './object-list.component.html',
   styleUrl: './object-list.component.scss'
 })
@@ -132,6 +133,9 @@ export class ObjectListComponent {
 
   extensionOf = extensionOf;
 
+  /** Object (key) or bucket (key: null) whose ACL is open in the permissions dialog. */
+  readonly aclTarget = signal<{ key: string | null } | null>(null);
+
   readonly contextMenu = signal<{ x: number; y: number } | null>(null);
 
   /** File open in the preview viewer; prev/next steps through `previewItems` (the previewable files in on-screen order). */
@@ -168,6 +172,9 @@ export class ObjectListComponent {
     const shareGroup: ContextMenuEntry[] = single
       ? [
           { type: 'item', id: 'shareUrl', label: 'Share URL…', icon: 'fi-sr-link', colorClass: 'ic-teal' },
+          ...(selected?.type === 'file'
+            ? [{ type: 'item', id: 'acl', label: 'Permissions (ACL)…', icon: 'fi-sr-shield-check', colorClass: 'ic-purple' } as ContextMenuEntry]
+            : []),
           { type: 'item', id: 'properties', label: 'Properties', icon: 'fi-sr-info', colorClass: 'ic-blue' }
         ]
       : [];
@@ -200,7 +207,9 @@ export class ObjectListComponent {
         { type: 'item', id: 'uploadFiles', label: 'Upload Files…', icon: 'fi-sr-upload', colorClass: 'ic-blue' },
         { type: 'item', id: 'uploadFolder', label: 'Upload Folder…', icon: 'fi-sr-upload', colorClass: 'ic-blue' },
         { type: 'divider' },
-        { type: 'item', id: 'exportCsv', label: 'Export CSV…', icon: 'fi-sr-file-export', colorClass: 'ic-teal' }
+        { type: 'item', id: 'exportCsv', label: 'Export CSV…', icon: 'fi-sr-file-export', colorClass: 'ic-teal' },
+        { type: 'divider' },
+        { type: 'item', id: 'bucketAcl', label: 'Bucket permissions (ACL)…', icon: 'fi-sr-shield-check', colorClass: 'ic-purple' }
       );
     }
     return entries;
@@ -345,6 +354,9 @@ export class ObjectListComponent {
       case 'properties':
         this.propertiesRequested.emit();
         break;
+      case 'acl':
+        if (this.singleSelected()) this.aclTarget.set({ key: this.singleSelected()!.key });
+        break;
     }
   }
 
@@ -366,6 +378,9 @@ export class ObjectListComponent {
         break;
       case 'exportCsv':
         this.s3.exportListingCsv();
+        break;
+      case 'bucketAcl':
+        this.aclTarget.set({ key: null });
         break;
     }
   }

@@ -93,6 +93,12 @@ function registerIpcHandlers(ipcMain, getWindow) {
     s3Manager.getPublicUrl(connectionId, bucket, key)
   );
 
+  ipcMain.handle('s3:getAcl', async (_e, { connectionId, bucket, key }) => s3Manager.getAcl(connectionId, bucket, key));
+
+  ipcMain.handle('s3:putAcl', async (_e, { connectionId, bucket, key, acl }) =>
+    s3Manager.putAcl(connectionId, bucket, key, acl)
+  );
+
   ipcMain.handle('s3:getObjectProperties', async (_e, { connectionId, bucket, key }) =>
     s3Manager.getObjectProperties(connectionId, bucket, key)
   );

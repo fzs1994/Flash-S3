@@ -118,6 +118,14 @@
     (closed)="folderContextMenu.set(null)"
   ></app-context-menu>
 
+  <app-acl-dialog
+    *ngIf="aclTarget() as t"
+    [connectionId]="s3.activeConnectionId()!"
+    [bucket]="s3.currentBucket()!"
+    [objectKey]="t.key"
+    (closed)="aclTarget.set(null)"
+  ></app-acl-dialog>
+
   <app-preview-dialog
     *ngIf="previewItem() as item"
     [items]="previewItems()"

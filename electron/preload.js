@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPublicUrl: (connectionId, bucket, key) => ipcRenderer.invoke('s3:getPublicUrl', { connectionId, bucket, key }),
     getObjectProperties: (connectionId, bucket, key) =>
       ipcRenderer.invoke('s3:getObjectProperties', { connectionId, bucket, key }),
+    getAcl: (connectionId, bucket, key) => ipcRenderer.invoke('s3:getAcl', { connectionId, bucket, key }),
+    putAcl: (connectionId, bucket, key, acl) => ipcRenderer.invoke('s3:putAcl', { connectionId, bucket, key, acl }),
     copyItems: (args) => ipcRenderer.invoke('s3:copyItems', args),
     exportListingCsv: (args) => ipcRenderer.invoke('s3:exportListingCsv', args)
   },

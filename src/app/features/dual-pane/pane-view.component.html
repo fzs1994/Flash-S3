@@ -136,6 +136,14 @@
     (closed)="propertiesItem.set(null)"
   ></app-properties-dialog>
 
+  <app-acl-dialog
+    *ngIf="aclKey() as key"
+    [connectionId]="state.connectionId!"
+    [bucket]="state.bucket!"
+    [objectKey]="key"
+    (closed)="aclKey.set(null)"
+  ></app-acl-dialog>
+
   <app-preview-dialog
     *ngIf="previewItem() as item"
     [items]="previewItems()"

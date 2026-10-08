@@ -1,0 +1,82 @@
+<div class="acl-overlay" (click)="close()">
+  <div class="acl-dialog" (click)="$event.stopPropagation()">
+    <h3>
+      <i class="fi ic-blue" [ngClass]="isBucket ? 'fi-sr-box' : 'fi-sr-shield-check'"></i>
+      <span class="acl-title">Permissions (ACL)</span>
+      <span class="acl-target" [title]="isBucket ? bucket : objectKey">{{ title }}</span>
+      <span class="acl-chip acl-chip--public" *ngIf="isPublic()"><i class="fi fi-sr-globe"></i> Public</span>
+    </h3>
+
+    <div class="acl-loading" *ngIf="loading()"><span class="s3b-spinner"></span> Loading permissions…</div>
+
+    <div class="acl-notice" *ngIf="notSupported()">
+      <i class="fi fi-sr-info"></i>
+      <div>
+        <strong>ACLs are disabled for this bucket.</strong>
+        <p>
+          The bucket uses "Bucket owner enforced" object ownership, so access is controlled by IAM and bucket policies instead. To
+          use ACLs, change Object Ownership on the bucket to "Bucket owner preferred" or "Object writer" in the S3 console.
+        </p>
+      </div>
+    </div>
+
+    <ng-container *ngIf="!loading() && !notSupported()">
+      <div class="acl-section-label">Quick presets <span class="acl-hint">replace all grants</span></div>
+      <div class="acl-presets">
+        <button *ngFor="let p of presets" [disabled]="saving()" (click)="applyPreset(p)" [title]="p.hint">
+          <i class="fi" [ngClass]="p.icon"></i> {{ p.label }}
+        </button>
+      </div>
+
+      <div class="acl-section-label">Grants</div>
+      <div class="acl-table">
+        <div class="acl-row acl-row--head">
+          <div class="acl-grantee">Grantee</div>
+          <div class="acl-perm" *ngFor="let c of columns" [title]="c.hint">{{ c.label }}</div>
+          <div class="acl-remove"></div>
+        </div>
+        <div class="acl-row" *ngFor="let r of rows()">
+          <div class="acl-grantee">
+            <i class="fi" [ngClass]="r.type === 'Group' ? 'fi-sr-users' : 'fi-sr-user'"></i>
+            <div class="acl-grantee__text">
+              <span class="acl-grantee__name">{{ r.label }}</span>
+              <span class="acl-grantee__sub" *ngIf="r.sub !== r.label" [title]="r.sub">{{ r.sub }}</span>
+            </div>
+          </div>
+          <div class="acl-perm" *ngFor="let c of columns">
+            <input type="checkbox" [checked]="has(r, c.perm)" (change)="toggle(r, c.perm)" [attr.aria-label]="c.label" />
+          </div>
+          <div class="acl-remove">
+            <button title="Remove grantee" [disabled]="r.isOwner" (click)="removeRow(r)"><i class="fi fi-sr-cross"></i></button>
+          </div>
+        </div>
+        <div class="acl-empty" *ngIf="!rows().length">No grants - only the owner can access this {{ isBucket ? 'bucket' : 'object' }}.</div>
+      </div>
+
+      <div class="acl-section-label">Add grantee</div>
+      <div class="acl-add">
+        <app-dropdown class="acl-add__type" [options]="granteeTypeOptions" [(value)]="newGranteeType"></app-dropdown>
+        <input
+          *ngIf="newGranteeType === 'user'"
+          type="text"
+          placeholder="Canonical user ID"
+          [(ngModel)]="newCanonicalId"
+          (keyup.enter)="addGrantee()"
+        />
+        <button (click)="addGrantee()"><i class="fi fi-sr-plus"></i> Add</button>
+      </div>
+    </ng-container>
+
+    <p class="acl-error" *ngIf="error()">{{ error() }}</p>
+
+    <div class="acl-actions">
+      <span class="acl-saved" *ngIf="saved()"><i class="fi fi-sr-check"></i> Saved</span>
+      <div class="acl-spacer"></div>
+      <button (click)="close()">Close</button>
+      <button class="primary" *ngIf="!notSupported()" [disabled]="loading() || saving() || !dirty()" (click)="save()">
+        <i class="fi fi-sr-refresh fi-spin" *ngIf="saving()"></i>
+        {{ saving() ? 'Saving…' : 'Save changes' }}
+      </button>
+    </div>
+  </div>
+</div>

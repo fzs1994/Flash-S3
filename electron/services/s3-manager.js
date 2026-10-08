@@ -11,7 +11,11 @@ const {
   DeleteBucketCommand,
   HeadBucketCommand,
   HeadObjectCommand,
-  GetObjectCommand
+  GetObjectCommand,
+  GetObjectAclCommand,
+  PutObjectAclCommand,
+  GetBucketAclCommand,
+  PutBucketAclCommand
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { Upload } = require('@aws-sdk/lib-storage');
@@ -594,6 +598,58 @@ class S3Manager {
       etag: res.ETag ? res.ETag.replace(/"/g, '') : null,
       versionId: res.VersionId || null
     };
+  }
+
+  /**
+   * Reads the ACL of an object (when `key` is given) or of the bucket itself.
+   * Returns { owner, grants[] } with each grant normalised to
+   * { type: 'CanonicalUser' | 'Group' | 'AmazonCustomerByEmail', id, displayName, uri, email, permission }.
+   * Buckets with "Bucket owner enforced" object ownership reject ACL calls; that error is passed through for the UI to explain.
+   */
+  async getAcl(connectionId, bucket, key) {
+    const client = await this.getClientForBucket(connectionId, bucket);
+    const res = key
+      ? await client.send(new GetObjectAclCommand({ Bucket: bucket, Key: key }))
+      : await client.send(new GetBucketAclCommand({ Bucket: bucket }));
+    return {
+      owner: { id: res.Owner?.ID || '', displayName: res.Owner?.DisplayName || '' },
+      grants: (res.Grants || []).map((g) => ({
+        type: g.Grantee?.Type || 'CanonicalUser',
+        id: g.Grantee?.ID || '',
+        displayName: g.Grantee?.DisplayName || '',
+        uri: g.Grantee?.URI || '',
+        email: g.Grantee?.EmailAddress || '',
+        permission: g.Permission
+      }))
+    };
+  }
+
+  /**
+   * Replaces the ACL of an object/bucket. Pass `canned` (e.g. 'private', 'public-read') to apply a canned ACL, or
+   * `owner` + `grants` (same shape getAcl returns) to write an explicit policy.
+   */
+  async putAcl(connectionId, bucket, key, { canned, owner, grants } = {}) {
+    const client = await this.getClientForBucket(connectionId, bucket);
+    const params = { Bucket: bucket };
+    if (key) params.Key = key;
+    if (canned) {
+      params.ACL = canned;
+    } else {
+      params.AccessControlPolicy = {
+        Owner: { ID: owner.id, ...(owner.displayName ? { DisplayName: owner.displayName } : {}) },
+        Grants: grants.map((g) => ({
+          Permission: g.permission,
+          Grantee:
+            g.type === 'Group'
+              ? { Type: 'Group', URI: g.uri }
+              : g.type === 'AmazonCustomerByEmail'
+                ? { Type: 'AmazonCustomerByEmail', EmailAddress: g.email }
+                : { Type: 'CanonicalUser', ID: g.id }
+        }))
+      };
+    }
+    await client.send(key ? new PutObjectAclCommand(params) : new PutBucketAclCommand(params));
+    return { ok: true };
   }
 }
 

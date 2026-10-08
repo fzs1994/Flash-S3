@@ -106,6 +106,9 @@
 .tree__favorite-btn.active {
   opacity: 1;
 }
+.tree__favorite-btn.tree__acl-btn:hover {
+  color: var(--s3b-purple);
+}
 .tree__favorite-btn:hover {
   color: var(--s3b-amber);
 }

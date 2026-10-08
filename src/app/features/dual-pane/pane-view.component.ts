@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, Input, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AclDialogComponent } from '../dialogs/acl-dialog.component';
 import { DropdownComponent, DropdownOption } from '../dropdown/dropdown.component';
 import { BucketSelectComponent } from '../bucket-select/bucket-select.component';
 import { MarqueeSelectDirective, MarqueeSelectEvent, rangeKeys } from '../../core/directives/marquee-select.directive';
@@ -32,7 +33,7 @@ function formatBytes(bytes?: number): string {
 @Component({
   selector: 'app-pane-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, BucketSelectComponent, DropdownComponent, ContextMenuComponent, PropertiesDialogComponent, PreviewDialogComponent, MarqueeSelectDirective],
+  imports: [CommonModule, FormsModule, BucketSelectComponent, DropdownComponent, AclDialogComponent, ContextMenuComponent, PropertiesDialogComponent, PreviewDialogComponent, MarqueeSelectDirective],
   templateUrl: './pane-view.component.html',
   styleUrl: './pane-view.component.scss'
 })
@@ -45,6 +46,8 @@ export class PaneViewComponent {
   readonly contextMenu = signal<{ x: number; y: number } | null>(null);
   readonly folderContextMenu = signal<{ x: number; y: number } | null>(null);
   readonly propertiesItem = signal<S3ListItem | null>(null);
+  /** Key of the object whose ACL is open in the permissions dialog. */
+  readonly aclKey = signal<string | null>(null);
   /** File open in the preview viewer; prev/next steps through `previewItems`. */
   readonly previewItem = signal<S3ListItem | null>(null);
   readonly previewItems = computed(() => this.panes.pane(this.paneId).items.filter(isPreviewable));
@@ -83,7 +86,11 @@ export class PaneViewComponent {
       { type: 'item', id: 'delete', label: 'Delete', icon: 'fi-sr-trash', colorClass: 'ic-red', danger: true }
     );
     if (count === 1) {
-      entries.push({ type: 'divider' }, { type: 'item', id: 'properties', label: 'Properties', icon: 'fi-sr-info', colorClass: 'ic-blue' });
+      entries.push({ type: 'divider' });
+      if (selected?.type === 'file') {
+        entries.push({ type: 'item', id: 'acl', label: 'Permissions (ACL)…', icon: 'fi-sr-shield-check', colorClass: 'ic-purple' });
+      }
+      entries.push({ type: 'item', id: 'properties', label: 'Properties', icon: 'fi-sr-info', colorClass: 'ic-blue' });
     }
     return entries;
   });
@@ -250,6 +257,11 @@ export class PaneViewComponent {
       case 'properties':
         this.openProperties();
         break;
+      case 'acl': {
+        const key = Array.from(this.state.selectedKeys)[0];
+        if (key) this.aclKey.set(key);
+        break;
+      }
     }
   }
 

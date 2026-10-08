@@ -29,6 +29,9 @@
     >
       <span class="icon"><i class="fi fi-sr-box ic-amber"></i></span>
       <span class="name">{{ b.name }}</span>
+      <button class="tree__favorite-btn tree__acl-btn" title="Bucket permissions (ACL)" (click)="openAcl(b.name, $event)">
+        <i class="fi fi-sr-shield-check"></i>
+      </button>
       <button
         class="tree__favorite-btn"
         [class.active]="isFavorite(b.name)"
@@ -48,6 +51,13 @@
       No buckets match "{{ searchTerm() }}".
     </div>
   </div>
+
+  <app-acl-dialog
+    *ngIf="aclBucket() as bucket"
+    [connectionId]="s3.activeConnectionId()!"
+    [bucket]="bucket"
+    (closed)="aclBucket.set(null)"
+  ></app-acl-dialog>
 
   <div class="s3b-loading-overlay" *ngIf="s3.loading() && !s3.buckets().length"><span class="s3b-spinner"></span> Loading buckets…</div>
 </div>

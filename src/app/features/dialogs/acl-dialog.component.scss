@@ -1,0 +1,234 @@
+.acl-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--s3b-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+.acl-dialog {
+  background: var(--s3b-surface);
+  border-radius: 8px;
+  padding: 18px 20px;
+  width: 620px;
+  max-width: 94vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 30px var(--s3b-shadow);
+}
+.acl-dialog h3 {
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--s3b-text);
+}
+.acl-target {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--s3b-muted);
+  font-weight: 400;
+}
+.acl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.acl-chip--public {
+  background: color-mix(in srgb, var(--s3b-amber) 20%, transparent);
+  color: var(--s3b-amber);
+}
+.fi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.acl-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 0;
+  color: var(--s3b-muted);
+  font-size: 12.5px;
+}
+.acl-notice {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 6px;
+  background: var(--s3b-surface-alt);
+  font-size: 12.5px;
+  color: var(--s3b-text);
+}
+.acl-notice p {
+  margin: 4px 0 0;
+  color: var(--s3b-muted);
+  line-height: 1.5;
+}
+.acl-section-label {
+  margin: 14px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--s3b-muted);
+}
+.acl-hint {
+  margin-left: 6px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.acl-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.acl-presets button,
+.acl-add button,
+.acl-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 4px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.acl-presets button:hover:not(:disabled),
+.acl-add button:hover {
+  border-color: var(--s3b-blue);
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.acl-table {
+  border: 1px solid var(--s3b-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.acl-row {
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--s3b-border);
+  font-size: 12.5px;
+}
+.acl-row:last-child {
+  border-bottom: none;
+}
+.acl-row--head {
+  background: var(--s3b-surface-alt);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--s3b-muted);
+}
+.acl-grantee {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.acl-grantee__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.acl-grantee__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--s3b-text);
+}
+.acl-grantee__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  color: var(--s3b-muted);
+}
+.acl-perm {
+  flex: 0 0 68px;
+  text-align: center;
+}
+.acl-remove {
+  flex: 0 0 28px;
+  text-align: right;
+}
+.acl-remove button {
+  border: none;
+  background: none;
+  color: var(--s3b-muted);
+  cursor: pointer;
+}
+.acl-remove button:hover:not(:disabled) {
+  color: var(--s3b-red);
+}
+.acl-empty {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--s3b-muted);
+}
+.acl-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.acl-add__type {
+  flex: 0 0 240px;
+}
+.acl-add input {
+  flex: 1;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 4px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  font-size: 12.5px;
+}
+.acl-error {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--s3b-red);
+  word-break: break-word;
+}
+.acl-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.acl-spacer {
+  flex: 1;
+}
+.acl-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--s3b-green);
+}
+.acl-actions button.primary {
+  background: var(--s3b-blue);
+  border-color: var(--s3b-blue);
+  color: #fff;
+}
