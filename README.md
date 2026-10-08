@@ -32,9 +32,10 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 
 - **Multi-account tabs** — save multiple AWS S3 credential profiles (access key/secret + region); open dev, stage and prod at once, each in its own tab that remembers its own bucket/folder/selection independently of the others.
 - **Encrypted credentials** — profiles are encrypted at rest via Electron's OS-level `safeStorage` (DPAPI / Keychain / libsecret), with "Test Connection" before saving and a confirmation prompt before deleting one.
-- **Bucket + object browser** — bucket list sidebar, breadcrumb folder navigation, Explorer-style grid (name, size, last modified, storage class).
+- **Bucket + object browser** — bucket list sidebar, breadcrumb folder navigation, Explorer-style grid (name, type, size, last modified, storage class).
 - **Bookmarks** — star deep prefixes ("Add current" wherever you're standing) and jump straight back with one click; add, edit, and delete from a dropdown panel.
 - **Local search & filters** — instantly filter the current folder's files/folders, or bucket lists, by name as you type, without hitting the network.
+- **Sortable, filterable columns** — click a header to sort by name, type (extension), size, date or storage class (folders stay grouped on top); a file-type filter narrows the list to folders or a single extension. Bucket and region dropdowns are searchable.
 - **Export to CSV** — dump the current folder's full listing (every page, not just what's on screen) via a native save dialog, for an audit or a spreadsheet.
 - **Dark mode**, resizable sidebar and transfer queue panel, with sizes remembered across restarts.
 - **Any S3-compatible endpoint** — MinIO, Wasabi, R2, and others, not just AWS.
@@ -45,7 +46,8 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 - **Image zoom & pan** — Fit, 100%, +/− and Ctrl+wheel (zooms toward the cursor) from 5% to 1000%; drag to pan a zoomed image, double-click to toggle fit ↔ 100%. Keyboard: `+`/`-`, `0` fit, `1` actual size.
 - **Explorer-style selection** — Ctrl+click to toggle, Shift+click to select a range, or drag a selection box across rows (with Ctrl/Shift to add to the selection); works in the main grid and both dual-pane panes.
 - New folder, rename, delete (multi-select), presigned share URL generation, and properties — all from a right-click context menu on the file grid, and a blank-space context menu for the current folder.
-- Copy and move objects within a bucket, across buckets, or across entirely different saved AWS accounts — folders recurse automatically, and guardrails stop you from copying a folder into itself or onto its own current location.
+- **Permissions (ACL) viewer/editor** — per object (right-click → Permissions) or per bucket (shield icon in the sidebar): a per-grantee permission grid, add/remove grantees (public, any authenticated AWS user, log delivery, canonical ID), and Private / Authenticated read / Public read presets, with a confirmation before anything becomes public.
+- Copy and move objects within a bucket, across buckets, or across entirely different saved AWS accounts — folders recurse automatically, a folder-browser picker lets you double-click your way to the destination, and guardrails stop you from copying a folder into itself or onto its own current location.
 - Upload whole directory trees via drag-and-drop or native folder picker, structure intact.
 - Toolbar buttons only appear when they're actually usable ("hide, don't disable") instead of sitting there greyed out.
 
@@ -73,6 +75,7 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 - Object versioning is not exposed — the listing shows current versions only.
 - Static access keys only; IAM Identity Center, MFA and assumed roles are on the roadmap.
 - Search filters the current prefix, not the whole bucket.
+- ACL editing only works on buckets whose Object Ownership allows ACLs; buckets using "Bucket owner enforced" (the default for new buckets) reject ACL calls, and the app says so.
 - Glacier objects list but can't be restored (or previewed) from the app.
 - Text previews show the first 1 MB of a file; formats outside the supported list (Office documents, archives, etc.) aren't previewable.
 - Cross-region moves of very large objects fall back to download + re-upload.
@@ -93,7 +96,7 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 | Local in-folder search/filter                                       | Yes                                                                                      | Advanced search/filtering across criteria (name, size, date, metadata)                       |
 | Cost                                                                | Free, single build, no Free/Pro split                                                    | Free tier + paid Pro tier gating some features                                               |
 | Folder/bucket sync tool                                             | No (see Roadmap)                                                                         | Yes — a signature, mature feature with exclusion rules, scheduling, metadata caching         |
-| Bucket policy / ACL / CORS / lifecycle editors                      | No (see Roadmap)                                                                         | Yes                                                                                          |
+| Bucket policy / ACL / CORS / lifecycle editors                      | ACL only (rest: see Roadmap)                                                                       | Yes                                                                                          |
 | Versioning UI, storage class management                             | No (see Roadmap)                                                                         | Yes                                                                                          |
 | CloudFront management                                               | No (see Roadmap)                                                                         | Yes                                                                                          |
 | Client-side encryption, transfer acceleration, bandwidth throttling | No (see Roadmap)                                                                         | Yes                                                                                          |
@@ -166,7 +169,7 @@ Notes:
 **Bucket administration**
 
 - [ ] Bucket policy and CORS editor (raw JSON with validation).
-- [ ] ACL viewer/editor per object or bucket.
+- [x] ACL viewer/editor per object or bucket.
 - [ ] Static website hosting and lifecycle rule management.
 
 **Sync & automation**
@@ -177,7 +180,7 @@ Notes:
 **Viewing & navigation**
 
 - [x] Inline preview for images (with zoom), text, PDF, video and audio without downloading.
-- [ ] Sort/filter columns in the file list (by size, date, extension).
+- [x] Sort/filter columns in the file list (by name, size, date, extension).
 - [ ] Recursive/global search across all buckets in a connection, not just the current folder.
 - [ ] Recently visited folders history, separate from bookmarks.
 
