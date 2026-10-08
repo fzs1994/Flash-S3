@@ -20,7 +20,8 @@
       "Bash(sed -i 's#css/regular/rounded.css#css/solid/rounded.css#' angular.json)",
       "Bash(git add *)",
       "Bash(git commit -q -m 'Add v0.0.3 release notes *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git check-ignore *)"
     ]
   }
 }
