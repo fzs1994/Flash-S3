@@ -1,11 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, effect, signal, untracked } from '@angular/core';
+import { Component, HostListener, OnInit, effect, signal, untracked } from '@angular/core';
 import { S3ListItem } from './core/models/models';
+import { AppSettingsService } from './core/services/app-settings.service';
 import { ConnectionService } from './core/services/connection.service';
 import { S3BrowserService } from './core/services/s3-browser.service';
+import { ThemeService } from './core/services/theme.service';
+import { UpdateService } from './core/services/update.service';
 import { ToastService } from './core/services/toast.service';
 import { BucketTreeComponent } from './features/bucket-tree/bucket-tree.component';
 import { ConnectionManagerComponent } from './features/connection-manager/connection-manager.component';
+import { ConfirmHostComponent } from './features/dialogs/confirm-host.component';
+import { LockScreenComponent } from './features/lock-screen/lock-screen.component';
 import { CopyMoveDialogComponent } from './features/dialogs/copy-move-dialog.component';
 import { PromptDialogChoice, PromptDialogComponent } from './features/dialogs/prompt-dialog.component';
 import { PropertiesDialogComponent } from './features/dialogs/properties-dialog.component';
@@ -21,6 +26,18 @@ const SIDEBAR_MIN = 160;
 const SIDEBAR_MAX = 480;
 const QUEUE_MIN = 120;
 const QUEUE_MAX = 560;
+
+/** 3600 -> "1 hour", 900 -> "15 minutes", 604800 -> "7 days". */
+function formatDuration(seconds: number): string {
+  const units: [number, string][] = [[86400, 'day'], [3600, 'hour'], [60, 'minute']];
+  for (const [size, label] of units) {
+    if (seconds >= size && seconds % size === 0) {
+      const n = seconds / size;
+      return `${n} ${label}${n === 1 ? '' : 's'}`;
+    }
+  }
+  return `${seconds} seconds`;
+}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -52,21 +69,25 @@ function persistPanelSize(key: string, value: number): void {
     PromptDialogComponent,
     PropertiesDialogComponent,
     CopyMoveDialogComponent,
-    DualPaneComponent
+    DualPaneComponent,
+    ConfirmHostComponent,
+    LockScreenComponent
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   readonly showConnectionsPanel = signal(true);
   readonly dialogMode = signal<DialogMode>(null);  readonly copyMoveMode = signal<'copy' | 'move' | null>(null);
   readonly propertiesItem = signal<S3ListItem | null>(null);
   dialogValue = '';
 
-  readonly shareUrlChoices: PromptDialogChoice[] = [
-    { id: 'signed', label: 'Signed URL (expires in 1 hour)', icon: 'fi-sr-lock ic-amber' },
-    { id: 'unsigned', label: 'Unsigned URL (plain S3 path)', icon: 'fi-sr-link ic-teal' }
-  ];
+  get shareUrlChoices(): PromptDialogChoice[] {
+    return [
+      { id: 'signed', label: `Signed URL (expires in ${formatDuration(this.appSettings.settings().presignExpirySeconds)})`, icon: 'fi-sr-lock ic-amber' },
+      { id: 'unsigned', label: 'Unsigned URL (plain S3 path)', icon: 'fi-sr-link ic-teal' }
+    ];
+  }
 
   readonly sidebarWidth = signal(loadPanelSize('s3b:sidebarWidth', 240));
   readonly queueHeight = signal(loadPanelSize('s3b:queueHeight', 240));
@@ -75,7 +96,11 @@ export class AppComponent {
   constructor(
     public s3: S3BrowserService,
     public connectionService: ConnectionService,
-    public toast: ToastService
+    public toast: ToastService,
+    public updates: UpdateService,
+    private appSettings: AppSettingsService,
+    // Not referenced directly: injecting it is what applies the saved theme (and follows changes from the settings window).
+    _theme: ThemeService
   ) {
     // The toolbar sits above the Manage Connections overlay, so Bookmarks and Dual Pane work with no
     // connection open. Get the overlay out of the way once either one takes the user somewhere.
@@ -94,6 +119,18 @@ export class AppComponent {
       },
       { allowSignalWrites: true }
     );
+  }
+
+  async ngOnInit(): Promise<void> {
+    await this.appSettings.ready();
+    const settings = this.appSettings.settings();
+    if (settings.defaultView === 'dual') this.s3.dualPaneMode.set(true);
+    try {
+      await this.connectionService.refresh();
+      if (settings.restoreLastSession) await this.s3.restoreLastSession(this.connectionService.connections());
+    } finally {
+      this.s3.startSavingSession();
+    }
   }
 
   startSidebarResize(ev: MouseEvent): void {
@@ -179,7 +216,7 @@ export class AppComponent {
     if (keys.length !== 1) return;
     const label = choiceId === 'signed' ? 'Signed URL' : 'Unsigned URL';
     try {
-      const url = choiceId === 'signed' ? await this.s3.generatePresignedUrl(keys[0], 3600) : await this.s3.generatePublicUrl(keys[0]);
+      const url = choiceId === 'signed' ? await this.s3.generatePresignedUrl(keys[0], this.appSettings.settings().presignExpirySeconds) : await this.s3.generatePublicUrl(keys[0]);
       await navigator.clipboard.writeText(url);
       this.toast.show(`${label} copied to clipboard`, 'success');
     } catch (err: any) {

@@ -177,3 +177,18 @@
   opacity: 0.6;
   cursor: default;
 }
+
+.prod-flag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.prod-flag input {
+  width: auto;
+  margin: 0;
+}
+.prod-flag .hint {
+  flex-basis: 100%;
+}

@@ -7,6 +7,9 @@
   [class.drag-over]="isDragOver"
 >
   <div class="breadcrumbs" *ngIf="s3.currentBucket()">
+    <button class="crumb-back" (click)="s3.goUp()" [disabled]="!s3.currentPrefix()" title="Up a folder">
+      <i class="fi fi-sr-arrow-up"></i>
+    </button>
     <span *ngFor="let crumb of s3.breadcrumbs(); let last = last">
       <a (click)="onBreadcrumbClick(crumb.prefix)" [class.last]="last">{{ crumb.label }}</a>
       <span class="sep" *ngIf="!last">/</span>
@@ -84,8 +87,13 @@
         </td>
         <td class="col-ext">{{ item.type === 'folder' ? 'Folder' : extensionOf(item) ? extensionOf(item) : '' }}</td>
         <td class="col-size">{{ item.type === 'file' ? formatBytes(item.size) : '' }}</td>
-        <td class="col-date">{{ item.lastModified ? (item.lastModified | date: 'short') : '' }}</td>
+        <td class="col-date">{{ item.lastModified ? (item.lastModified | date: appSettings.dateFormat() : appSettings.timeZone()) : '' }}</td>
         <td class="col-class">{{ item.storageClass || '' }}</td>
+      </tr>
+      <tr *ngIf="s3.nextContinuationToken()" class="load-more-row">
+        <td colspan="5" class="empty-row">
+          <button (click)="s3.loadMore()" [disabled]="s3.loading()">Load more…</button>
+        </td>
       </tr>
       <tr *ngIf="!s3.items().length">
         <td colspan="5" class="empty-row">This folder is empty.</td>

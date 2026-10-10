@@ -30,13 +30,7 @@
 
   <div class="spacer"></div>
 
-  <button (click)="theme.toggle()" title="Toggle dark mode">
-    <i
-      class="fi"
-      [class.fi-sr-moon]="theme.theme() === 'light'"
-      [class.fi-sr-sun]="theme.theme() === 'dark'"
-      [class.ic-purple]="theme.theme() === 'light'"
-      [class.ic-amber]="theme.theme() === 'dark'"
-    ></i>
+  <button (click)="openSettings()" title="General settings">
+    <i class="fi fi-sr-settings ic-blue"></i> Settings
   </button>
 </div>

@@ -1,0 +1,230 @@
+<div class="settings-page">
+  <div class="settings-body">
+  <nav class="tabs">
+    <button
+      *ngFor="let t of tabs"
+      class="tab"
+      [class.active]="activeTab() === t.id"
+      (click)="activeTab.set(t.id)"
+    >
+      <i class="fi" [ngClass]="[t.icon, t.color]"></i> {{ t.label }}
+    </button>
+  </nav>
+
+  <div class="settings-scroll">
+    <section *ngIf="activeTab() === 'transfers'">
+
+      <div class="row">
+        <div>
+          <label>Concurrent transfers <span class="hint">Files moved at the same time.</span></label>
+          <app-dropdown [options]="concurrencyOptions" [(value)]="form.concurrency"></app-dropdown>
+        </div>
+        <div>
+          <label>Part size (MB) <span class="hint">5-500 MB per upload part.</span></label>
+          <input type="number" min="5" max="500" step="1" [(ngModel)]="form.partSizeMB" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Upload speed limit (MB/s) <span class="hint">0 = unlimited. Shared by all uploads.</span></label>
+          <input type="number" min="0" step="0.5" [(ngModel)]="form.uploadMBps" />
+        </div>
+        <div>
+          <label>Download speed limit (MB/s) <span class="hint">0 = unlimited. Shared by all downloads.</span></label>
+          <input type="number" min="0" step="0.5" [(ngModel)]="form.downloadMBps" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Retry failed transfers <span class="hint">Permission and not-found errors are never retried.</span></label>
+          <app-dropdown [options]="retryOptions" [(value)]="form.retryCount"></app-dropdown>
+        </div>
+        <div>
+          <label>Delay before first retry (s) <span class="hint">Doubles after each failed attempt.</span></label>
+          <input type="number" min="1" max="300" step="1" [(ngModel)]="form.retryBackoffSeconds" [disabled]="!form.retryCount" />
+        </div>
+      </div>
+
+      <label>
+        Request timeout (seconds)
+        <span class="hint">How long a connection may take to open or sit idle before the request fails. 0 = no timeout.</span>
+      </label>
+      <input type="number" min="0" max="3600" step="5" [(ngModel)]="form.requestTimeoutSeconds" />
+
+      <label>If the file already exists <span class="hint">Applies to uploads (same key in the bucket) and downloads (same name in the folder).</span></label>
+      <app-dropdown [options]="ifExistsOptions" [(value)]="form.ifExists"></app-dropdown>
+
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.keepPartialDownloads" />
+        Keep partially downloaded files when a download fails or is canceled
+      </label>
+    </section>
+
+    <section *ngIf="activeTab() === 'browsing'">
+
+      <div class="row">
+        <div>
+          <label>Default sort</label>
+          <app-dropdown [options]="sortKeyOptions" [(value)]="form.defaultSortKey"></app-dropdown>
+        </div>
+        <div>
+          <label>Sort order</label>
+          <app-dropdown [options]="sortDirOptions" [(value)]="form.defaultSortDir"></app-dropdown>
+        </div>
+      </div>
+
+      <label>Default view on startup</label>
+      <app-dropdown [options]="viewOptions" [(value)]="form.defaultView"></app-dropdown>
+
+      <div class="row">
+        <div>
+          <label>Date format</label>
+          <app-dropdown [options]="dateFormatOptions" [(value)]="form.dateFormat"></app-dropdown>
+        </div>
+        <div>
+          <label>Time zone</label>
+          <app-dropdown [options]="timeZoneOptions" [(value)]="form.timeZone"></app-dropdown>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Size units</label>
+          <app-dropdown [options]="sizeUnitOptions" [(value)]="form.sizeUnits"></app-dropdown>
+        </div>
+        <div>
+          <label>Objects per page <span class="hint">100-1000. More load with "Load more".</span></label>
+          <input type="number" min="100" max="1000" step="100" [(ngModel)]="form.pageSize" />
+        </div>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.showHiddenItems" />
+        Show hidden items (names starting with a dot)
+      </label>
+    </section>
+
+    <section *ngIf="activeTab() === 'safety'">
+
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.confirmDelete" />
+        Ask for confirmation before deleting
+      </label>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.typeToConfirmProduction" />
+        On connections marked "Production", make me type the item name to confirm a delete
+        <span class="hint">Mark a connection as Production when you edit it in Manage Connections. This check is always on for those connections, even if the box above is unticked.</span>
+      </label>
+
+      <label>Share link (signed URL) expires after</label>
+      <app-dropdown [options]="expiryOptions" [(value)]="form.presignExpirySeconds"></app-dropdown>
+
+      <label>Default download folder <span class="hint">Leave empty to be asked each time.</span></label>
+      <div class="inline">
+        <input type="text" readonly [value]="form.defaultDownloadFolder || 'Ask each time'" />
+        <button (click)="browseDownloadFolder()">Browse…</button>
+        <button (click)="form.defaultDownloadFolder = ''" [disabled]="!form.defaultDownloadFolder">Clear</button>
+      </div>
+
+      <label>
+        Lock Flash S3 when idle
+        <span class="hint">Covers the window until the PIN is entered. Transfers keep running. Set a PIN first.</span>
+      </label>
+      <app-dropdown [options]="lockOptions" [(value)]="form.lockAfterMinutes" [disabled]="!hasPin()"></app-dropdown>
+
+      <label>
+        App lock PIN
+        <span class="hint">{{ hasPin() ? 'A PIN is set. Enter the current PIN to change or remove it.' : 'No PIN set. Choose 4-64 characters.' }}</span>
+      </label>
+      <div class="inline">
+        <input *ngIf="hasPin()" type="password" placeholder="Current PIN" [(ngModel)]="currentPin" autocomplete="off" />
+        <input type="password" [placeholder]="hasPin() ? 'New PIN' : 'PIN'" [(ngModel)]="newPin" autocomplete="off" />
+        <button (click)="setPin()" [disabled]="!newPin">{{ hasPin() ? 'Change' : 'Set PIN' }}</button>
+        <button *ngIf="hasPin()" (click)="removePin()" [disabled]="!currentPin">Remove</button>
+      </div>
+      <p class="pin-msg" *ngIf="pinMessage() as m" [class.ok]="m.ok" [class.err]="!m.ok">{{ m.text }}</p>
+    </section>
+
+    <section *ngIf="activeTab() === 'app'">
+      <div class="row">
+        <div>
+          <label>Theme</label>
+          <app-dropdown [options]="themeOptions" [value]="theme.theme()" (valueChange)="theme.setTheme($event)"></app-dropdown>
+        </div>
+        <div>
+          <label>When Flash S3 starts</label>
+          <app-dropdown [options]="startupOptions" [(value)]="form.startup"></app-dropdown>
+        </div>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.closeToTray" />
+        Keep running in the system tray when the window is closed
+        <span class="hint">Transfers continue in the background. Quit from the tray icon's menu.</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.restoreLastSession" />
+        Reopen my last connections, bucket and folder on startup
+      </label>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.notifyOnComplete" />
+        Show a notification when transfers finish while the app is in the background
+      </label>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.checkUpdatesOnLaunch" />
+        Check for updates on launch
+      </label>
+    </section>
+
+    <section *ngIf="activeTab() === 'about'" class="about">
+      <div class="about-head">
+        <img class="about-logo" src="assets/icon.png" alt="Flash S3" />
+        <div>
+          <div class="about-name">Flash S3</div>
+          <div class="about-version">Version {{ updates.state()?.currentVersion || '—' }}</div>
+        </div>
+      </div>
+      <p class="about-desc">
+        A fast, multi-threaded S3 file manager: browse buckets in single or dual panes, and move files through a queue
+        with pause, resume, retry and speed limits.
+      </p>
+
+      <dl class="about-details">
+        <dt>Author</dt>
+        <dd>Faizan Saiyed</dd>
+        <dt>License</dt>
+        <dd>GNU GPL v3.0</dd>
+        <dt>Website</dt>
+        <dd><a href="https://fzs1994.github.io/Flash-S3" target="_blank" rel="noopener">fzs1994.github.io/Flash-S3</a></dd>
+        <dt>Source code</dt>
+        <dd><a href="https://github.com/fzs1994/Flash-S3" target="_blank" rel="noopener">github.com/fzs1994/Flash-S3</a></dd>
+        <dt>Release notes</dt>
+        <dd><a href="https://github.com/fzs1994/Flash-S3/releases" target="_blank" rel="noopener">All releases</a></dd>
+        <dt>Report an issue</dt>
+        <dd><a href="https://github.com/fzs1994/Flash-S3/issues" target="_blank" rel="noopener">GitHub issues</a></dd>
+        <dt>Platform</dt>
+        <dd>{{ platformLabel }}</dd>
+        <dt>Electron / Chromium / Node</dt>
+        <dd>{{ versions.electron }} / {{ versions.chrome }} / {{ versions.node }}</dd>
+      </dl>
+
+      <ng-container *ngIf="updates.state() as u">
+        <button *ngIf="u.enabled" (click)="updates.check()" [disabled]="u.status === 'checking' || u.status === 'downloading'">
+          Check for updates
+        </button>
+        <span class="hint-inline" *ngIf="u.enabled">Results appear in the main window.</span>
+      </ng-container>
+    </section>
+  </div>
+  </div>
+
+  <footer>
+    <span class="error" *ngIf="error()">{{ error() }}</span>
+    <span class="ok" *ngIf="saved() && !error()"><i class="fi fi-sr-check"></i> Settings saved.</span>
+    <span class="fill"></span>
+    <button (click)="close()">Close</button>
+    <button class="primary" (click)="save()" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save' }}</button>
+  </footer>
+</div>

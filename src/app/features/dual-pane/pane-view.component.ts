@@ -6,23 +6,18 @@ import { DropdownComponent, DropdownOption } from '../dropdown/dropdown.componen
 import { BucketSelectComponent } from '../bucket-select/bucket-select.component';
 import { MarqueeSelectDirective, MarqueeSelectEvent, rangeKeys } from '../../core/directives/marquee-select.directive';
 import { PaneId, S3ListItem } from '../../core/models/models';
+import { AppSettingsService } from '../../core/services/app-settings.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { ConnectionService } from '../../core/services/connection.service';
 import { ElectronService } from '../../core/services/electron.service';
 import { PaneService } from '../../core/services/pane.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TransferService } from '../../core/services/transfer.service';
+import { sortItems, withoutHidden } from '../../core/utils/list-utils';
 import { isPreviewable } from '../../core/utils/preview-types';
 import { ContextMenuComponent, ContextMenuEntry } from '../context-menu/context-menu.component';
 import { PreviewDialogComponent } from '../dialogs/preview-dialog.component';
 import { PropertiesDialogComponent } from '../dialogs/properties-dialog.component';
-
-function formatBytes(bytes?: number): string {
-  if (bytes === undefined || bytes === null) return '';
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-}
 
 /**
  * One side of the dual-pane view. Fully self-contained: connection/bucket
@@ -112,10 +107,18 @@ export class PaneViewComponent {
     public connectionService: ConnectionService,
     private electron: ElectronService,
     private transfers: TransferService,
-    private toast: ToastService
+    private toast: ToastService,
+    private appSettings: AppSettingsService,
+    private confirm: ConfirmService
   ) {}
 
-  formatBytes = formatBytes;
+  formatBytes = (bytes?: number) => this.appSettings.formatSize(bytes);
+
+  /** The pane's items with the Browsing preferences applied (default sort, hidden items). */
+  readonly visibleItems = computed(() => {
+    const s = this.appSettings.settings();
+    return sortItems(withoutHidden(this.panes.pane(this.paneId).items, s), s.defaultSortKey, s.defaultSortDir);
+  });
 
   get state() {
     return this.panes.pane(this.paneId);
@@ -147,6 +150,25 @@ export class PaneViewComponent {
     this.panes.openBucket(this.paneId, bucket);
   }
 
+  /**
+   * breadcrumbs() builds fresh objects on every change-detection pass, so without a stable identity the links are
+   * destroyed and re-created whenever the mouse moves (the dual-pane splitter listens to document mousemove) -
+   * and a click only registers if mousedown and mouseup land on the same element.
+   */
+  trackByPrefix = (_: number, crumb: { prefix: string }) => crumb.prefix;
+
+  /** Whether the pane is inside a folder (not at the bucket root), i.e. there is a parent to go back to. */
+  get canGoUp(): boolean {
+    return !!this.state.bucket && !!this.state.prefix;
+  }
+
+  goUp(): void {
+    if (!this.canGoUp) return;
+    const parts = this.state.prefix.split('/').filter(Boolean);
+    parts.pop();
+    this.panes.openPrefix(this.paneId, parts.length ? `${parts.join('/')}/` : '');
+  }
+
   onBreadcrumbClick(prefix: string): void {
     this.panes.openPrefix(this.paneId, prefix);
   }
@@ -156,7 +178,7 @@ export class PaneViewComponent {
     const additive = ev.ctrlKey || ev.metaKey;
     // Shift+click selects the range from the anchor row; Ctrl+Shift adds it to the selection.
     if (ev.shiftKey && this.selectionAnchor) {
-      const range = rangeKeys(this.state.items.map((i) => i.key), this.selectionAnchor, item.key);
+      const range = rangeKeys(this.visibleItems().map((i) => i.key), this.selectionAnchor, item.key);
       if (range.length) {
         this.panes.setSelection(this.paneId, additive ? [...this.state.selectedKeys, ...range] : range);
         return;
@@ -349,7 +371,8 @@ export class PaneViewComponent {
   async deleteSelected(): Promise<void> {
     const count = this.state.selectedKeys.size;
     if (!count) return;
-    const ok = await this.electron.api.dialogs.confirm(`Delete ${count} item(s)?`, 'This action cannot be undone.');
+    const only = count === 1 ? this.state.items.find((i) => this.state.selectedKeys.has(i.key)) : null;
+    const ok = await this.confirm.confirmDelete({ count, singleName: only?.name, connectionId: this.state.connectionId });
     if (ok) await this.panes.deleteSelected(this.paneId);
   }
 

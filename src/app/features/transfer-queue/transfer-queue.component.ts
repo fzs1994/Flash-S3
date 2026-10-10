@@ -1,7 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, computed, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { DropdownComponent, DropdownOption } from '../dropdown/dropdown.component';
 import { TransferPart, TransferTask } from '../../core/models/models';
 import { TransferService } from '../../core/services/transfer.service';
 
@@ -41,7 +39,7 @@ function tabForTask(task: TransferTask): Exclude<QueueTab, 'all'> {
 @Component({
   selector: 'app-transfer-queue',
   standalone: true,
-  imports: [CommonModule, FormsModule, DropdownComponent],
+  imports: [CommonModule],
   templateUrl: './transfer-queue.component.html',
   styleUrl: './transfer-queue.component.scss'
 })
@@ -50,14 +48,6 @@ export class TransferQueueComponent {
   @Input() panelHeight = 240;
 
   readonly collapsed = signal(false);
-  readonly concurrencyOptions = [1, 2, 3, 4, 6, 8, 12, 16];
-  readonly concurrencyDropdownOptions: DropdownOption[] = this.concurrencyOptions.map((n) => ({ value: n, label: String(n) }));
-
-  readonly showSettings = signal(false);
-  readonly settingsError = signal<string | null>(null);
-  readonly settingsSaving = signal(false);
-  settingsForm = { concurrency: 4, partSizeMB: 8 };
-
   /** Which queue tab is currently selected - filters which tasks the list below shows. */
   readonly activeQueueTab = signal<QueueTab>('running');
 
@@ -103,47 +93,6 @@ export class TransferQueueComponent {
   onConcurrencyChange(ev: Event): void {
     const value = Number((ev.target as HTMLSelectElement).value);
     this.transfers.setConcurrency(value);
-  }
-
-  openSettings(): void {
-    this.settingsForm = {
-      concurrency: Number(this.transfers.concurrency()),
-      partSizeMB: Number(this.transfers.partSizeMB())
-    };
-    this.settingsError.set(null);
-    this.showSettings.set(true);
-  }
-
-  closeSettings(): void {
-    this.showSettings.set(false);
-  }
-
-  async applySettings(): Promise<void> {
-    const concurrency = Number(this.settingsForm.concurrency);
-    const partSizeMB = Number(this.settingsForm.partSizeMB);
-
-    if (!Number.isFinite(partSizeMB) || partSizeMB < 5 || partSizeMB > 500) {
-      this.settingsError.set('Part size must be a number between 5 and 500 MB.');
-      return;
-    }
-
-    this.settingsSaving.set(true);
-    this.settingsError.set(null);
-    try {
-      await Promise.all([this.transfers.setConcurrency(concurrency), this.transfers.setPartSizeMB(partSizeMB)]);
-      this.showSettings.set(false);
-    } catch (err: any) {
-      // Most common cause: the Electron main process (preload/IPC handlers) hasn't
-      // been restarted since these settings were added - `npm start`'s live reload
-      // only refreshes the Angular renderer, not the Electron shell itself.
-      this.settingsError.set(
-        err?.message?.includes('No handler registered') || err?.message?.includes('electronAPI bridge')
-          ? 'Could not reach the app backend. Please fully quit and restart Flash S3, then try again.'
-          : err?.message || 'Failed to save settings.'
-      );
-    } finally {
-      this.settingsSaving.set(false);
-    }
   }
 
   statusIcon(status: TransferTask['status']): string {

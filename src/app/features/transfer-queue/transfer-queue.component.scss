@@ -241,74 +241,11 @@
   color: var(--s3b-green);
 }
 
-.settings-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--s3b-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 70;
-}
-.settings-dialog {
-  background: var(--s3b-surface);
-  border-radius: 6px;
-  padding: 20px;
-  width: 360px;
-  box-shadow: 0 8px 30px var(--s3b-shadow);
-}
-.settings-dialog h3 {
-  margin: 0 0 14px;
-  font-size: 14px;
-  color: var(--s3b-text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.settings-dialog label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  margin: 12px 0 4px;
-  color: var(--s3b-text);
-}
-.settings-dialog label .hint {
-  display: block;
-  font-size: 11px;
-  font-weight: 400;
+.task-note {
   color: var(--s3b-muted);
-  margin-top: 2px;
-}
-.settings-dialog select,
-.settings-dialog input {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid var(--s3b-border);
-  border-radius: 3px;
-  font-size: 13px;
-  background: var(--s3b-surface);
-  color: var(--s3b-text);
-}
-.settings-error {
-  margin: 10px 0 0;
-  font-size: 12px;
-  color: var(--s3b-red);
-}
-.settings-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 18px;
-}
-.settings-actions button {
-  padding: 6px 12px;
-  border: 1px solid var(--s3b-border);
-  border-radius: 3px;
-  background: var(--s3b-surface);
-  color: var(--s3b-text);
-}
-.settings-actions button.primary {
-  background: var(--s3b-blue);
-  color: #fff;
-  border-color: var(--s3b-blue);
+  font-size: 11px;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

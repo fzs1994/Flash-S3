@@ -1,0 +1,218 @@
+:host {
+  display: block;
+  height: 100vh;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.settings-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tabs {
+  flex-shrink: 0;
+  padding: 8px 16px 0;
+  border-bottom: 1px solid var(--s3b-divider);
+  background: var(--s3b-sidebar-bg);
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+  overflow-x: auto;
+}
+.tabs .tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  font-size: 13px;
+}
+.tabs .tab:hover {
+  background: var(--s3b-row-hover);
+}
+.tabs .tab.active {
+  background: var(--s3b-surface);
+  border-bottom-color: var(--s3b-blue);
+  font-weight: 600;
+}
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 4px;
+}
+section {
+  padding-bottom: 12px;
+}
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 12px 0 4px;
+}
+/* Checkbox in its own column so wrapped label text and the hint line up under the text, not under the box. */
+label.check {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  column-gap: 8px;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 10px 0 0;
+}
+label.check input {
+  width: auto;
+  margin: 2px 0 0;
+}
+label .hint {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--s3b-muted);
+  margin-top: 2px;
+}
+label.check .hint {
+  grid-column: 2;
+  margin: 2px 0 0;
+}
+input[type='text'],
+input[type='number'],
+input[type='password'] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  font-size: 13px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+}
+input:disabled {
+  opacity: 0.55;
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+  /* Controls line up on the bottom edge even when one label has a hint line and its neighbour doesn't. */
+  align-items: end;
+}
+.row > div {
+  min-width: 0;
+}
+
+/* Standalone selects/numbers take the same half-width column as the paired ones. */
+app-dropdown {
+  display: block;
+}
+section > app-dropdown,
+section > input[type='number'] {
+  width: calc(50% - 6px);
+}
+.inline {
+  display: flex;
+  gap: 6px;
+}
+.about-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+.about-logo {
+  width: 48px;
+  height: 48px;
+  /* The icon has white lettering on a transparent background - give it a dark tile so it reads in the light theme too. */
+  padding: 6px;
+  box-sizing: content-box;
+  border-radius: 12px;
+  background: #1b2a3a;
+}
+.about-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+.about-version {
+  font-size: 12px;
+  color: var(--s3b-muted);
+}
+.about-desc {
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.about-details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 18px;
+  margin: 0 0 16px;
+  font-size: 13px;
+}
+.about-details dt {
+  color: var(--s3b-muted);
+}
+.about-details dd {
+  margin: 0;
+}
+.about-details a {
+  color: var(--s3b-blue);
+  text-decoration: none;
+}
+.about-details a:hover {
+  text-decoration: underline;
+}
+.hint-inline {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--s3b-muted);
+}
+.pin-msg {
+  margin: 6px 0 0;
+  font-size: 12px;
+}
+.pin-msg.ok,
+.ok {
+  color: var(--s3b-green);
+}
+.pin-msg.err,
+.error {
+  color: var(--s3b-red);
+}
+button {
+  padding: 6px 12px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+button.primary {
+  background: var(--s3b-blue);
+  color: #fff;
+  border-color: var(--s3b-blue);
+}
+footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-top: 1px solid var(--s3b-divider);
+  font-size: 12px;
+}
+footer .fill {
+  flex: 1;
+}

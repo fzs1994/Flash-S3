@@ -1,14 +1,77 @@
-const { dialog, shell } = require('electron');
+const path = require('path');
+const { BrowserWindow, Notification, dialog, shell } = require('electron');
 const { CredentialStore } = require('../services/credential-store');
 const { BookmarkStore } = require('../services/bookmark-store');
 const { S3Manager } = require('../services/s3-manager');
 const { TransferQueueManager } = require('../services/transfer-queue');
+const { UpdaterService } = require('../services/updater');
 
-function registerIpcHandlers(ipcMain, getWindow) {
+/** Asks what to do about a file that already exists at the target; resolves to { action, applyAll }. */
+function makeAskExists(getWindow) {
+  return async (task) => {
+    const isDownload = task.type === 'download';
+    const name = isDownload ? path.basename(task.localPath) : task.key;
+    const res = await dialog.showMessageBox(getWindow(), {
+      type: 'question',
+      buttons: ['Skip', 'Overwrite', 'Keep both'],
+      defaultId: 0,
+      cancelId: 0,
+      message: `"${name}" already exists`,
+      detail: isDownload
+        ? 'A file with this name is already in the destination folder.'
+        : 'An object with this key already exists in the bucket.',
+      checkboxLabel: 'Apply to all remaining files in this batch'
+    });
+    return { action: ['skip', 'overwrite', 'rename'][res.response], applyAll: res.checkboxChecked };
+  };
+}
+
+function registerIpcHandlers(ipcMain, getWindow, { openSettingsWindow, appSettings, showMainWindow }) {
   const credentialStore = new CredentialStore();
   const bookmarkStore = new BookmarkStore();
-  const s3Manager = new S3Manager(credentialStore);
-  const transferQueue = new TransferQueueManager(s3Manager);
+  const s3Manager = new S3Manager(credentialStore, appSettings);
+  const transferQueue = new TransferQueueManager(s3Manager, appSettings, makeAskExists(getWindow));
+
+  // --- App settings (shared by every window) ---
+  let lastTimeout = appSettings.get().requestTimeoutSeconds;
+  appSettings.on('change', (settings) => {
+    if (settings.requestTimeoutSeconds !== lastTimeout) {
+      lastTimeout = settings.requestTimeoutSeconds;
+      s3Manager.invalidateAllClients();
+    }
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send('appSettings:changed', settings);
+    }
+  });
+  ipcMain.handle('appSettings:get', () => appSettings.get());
+  ipcMain.handle('appSettings:set', (_e, patch) => appSettings.set(patch));
+  ipcMain.handle('lock:hasPin', () => appSettings.hasPin());
+  ipcMain.handle('lock:setPin', (_e, { pin, currentPin }) => appSettings.setPin(pin, currentPin));
+  ipcMain.handle('lock:clearPin', (_e, currentPin) => appSettings.clearPin(currentPin));
+  ipcMain.handle('lock:verify', (_e, pin) => appSettings.verifyPin(pin));
+
+  // Desktop notification when the queue drains - only if the user isn't already looking at the app.
+  transferQueue.on('idle', ({ completed, failed, skipped }) => {
+    if (!appSettings.get().notifyOnComplete || !Notification.isSupported()) return;
+    const win = getWindow();
+    if (win && !win.isDestroyed() && win.isVisible() && win.isFocused()) return;
+    const parts = [];
+    if (completed) parts.push(`${completed} completed`);
+    if (failed) parts.push(`${failed} failed`);
+    if (skipped) parts.push(`${skipped} skipped`);
+    const n = new Notification({ title: 'Flash S3 - transfers finished', body: parts.join(', ') });
+    n.on('click', () => showMainWindow());
+    n.show();
+  });
+
+  ipcMain.handle('settings:openWindow', () => openSettingsWindow());
+
+  const updater = new UpdaterService(getWindow, appSettings);
+  ipcMain.handle('updater:getState', () => updater.getState());
+  ipcMain.handle('updater:check', () => updater.check(true));
+  ipcMain.handle('updater:download', () => updater.download());
+  ipcMain.handle('updater:install', () => updater.install());
+  updater.start();
 
   transferQueue.on('update', (snapshot) => {
     const win = getWindow();
@@ -124,6 +187,7 @@ function registerIpcHandlers(ipcMain, getWindow) {
   ipcMain.handle('transfers:resumeAll', () => transferQueue.resumeAll());
   ipcMain.handle('transfers:setConcurrency', (_e, n) => transferQueue.setConcurrency(n));
   ipcMain.handle('transfers:setPartSizeMB', (_e, mb) => transferQueue.setPartSizeMB(mb));
+  ipcMain.handle('transfers:setSpeedLimits', (_e, limits) => transferQueue.setSpeedLimits(limits));
   ipcMain.handle('transfers:getSettings', () => transferQueue.getSettings());
   ipcMain.handle('transfers:getSnapshot', () => transferQueue.getSnapshot());
 

@@ -203,3 +203,38 @@ th.sortable .fi {
   font-weight: 600;
   pointer-events: none;
 }
+
+.load-more-row button {
+  padding: 4px 14px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  background: var(--s3b-surface);
+  color: var(--s3b-blue);
+  cursor: pointer;
+}
+
+/* Explorer-style back arrow in front of the breadcrumbs. */
+.crumb-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  padding: 0;
+  vertical-align: middle;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--s3b-blue);
+  font-size: 12px;
+  cursor: pointer;
+}
+.crumb-back:hover:not(:disabled) {
+  background: var(--s3b-row-hover);
+}
+.crumb-back:disabled {
+  color: var(--s3b-muted);
+  opacity: 0.45;
+  cursor: default;
+}

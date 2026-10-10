@@ -66,6 +66,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     resumeAll: () => ipcRenderer.invoke('transfers:resumeAll'),
     setConcurrency: (maxConcurrentTransfers) =>
       ipcRenderer.invoke('transfers:setConcurrency', maxConcurrentTransfers),
+    setSpeedLimits: (limits) => ipcRenderer.invoke('transfers:setSpeedLimits', limits),
     setPartSizeMB: (mb) => ipcRenderer.invoke('transfers:setPartSizeMB', mb),
     getSettings: () => ipcRenderer.invoke('transfers:getSettings'),
     getSnapshot: () => ipcRenderer.invoke('transfers:getSnapshot'),
@@ -85,7 +86,39 @@ contextBridge.exposeInMainWorld('electronAPI', {
     confirm: (message, detail) => ipcRenderer.invoke('dialogs:confirm', { message, detail })
   },
 
+  settings: {
+    openWindow: () => ipcRenderer.invoke('settings:openWindow'),
+    get: () => ipcRenderer.invoke('appSettings:get'),
+    set: (patch) => ipcRenderer.invoke('appSettings:set', patch),
+    onChange: (callback) => {
+      const listener = (_event, settings) => callback(settings);
+      ipcRenderer.on('appSettings:changed', listener);
+      return () => ipcRenderer.removeListener('appSettings:changed', listener);
+    }
+  },
+
+  // --- App lock (idle lock PIN) ---
+  lock: {
+    hasPin: () => ipcRenderer.invoke('lock:hasPin'),
+    setPin: (pin, currentPin) => ipcRenderer.invoke('lock:setPin', { pin, currentPin }),
+    clearPin: (currentPin) => ipcRenderer.invoke('lock:clearPin', currentPin),
+    verify: (pin) => ipcRenderer.invoke('lock:verify', pin)
+  },
+
+  updater: {
+    getState: () => ipcRenderer.invoke('updater:getState'),
+    check: () => ipcRenderer.invoke('updater:check'),
+    download: () => ipcRenderer.invoke('updater:download'),
+    install: () => ipcRenderer.invoke('updater:install'),
+    onState: (callback) => {
+      const listener = (_event, state) => callback(state);
+      ipcRenderer.on('updater:state', listener);
+      return () => ipcRenderer.removeListener('updater:state', listener);
+    }
+  },
+
   platform: process.platform,
+  versions: { electron: process.versions.electron, chrome: process.versions.chrome, node: process.versions.node },
 
   // Resolves a real filesystem path from a dropped File object. The old
   // `File.path` extension Electron used to patch onto dropped files is

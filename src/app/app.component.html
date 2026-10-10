@@ -98,6 +98,28 @@
     <span>{{ t.message }}</span>
   </div>
 
+  <div class="update-banner" role="status" *ngIf="updates.visible() && updates.state() as u">
+    <div class="update-banner__head">
+      <i class="fi fi-sr-download ic-blue"></i>
+      <span class="update-msg">
+        <ng-container *ngIf="u.status === 'available'">Flash S3 {{ u.version }} is available (you have {{ u.currentVersion }}).</ng-container>
+        <ng-container *ngIf="u.status === 'downloading'">Downloading update… {{ u.percent }}%</ng-container>
+        <ng-container *ngIf="u.status === 'ready'">Version {{ u.version }} is ready to install.</ng-container>
+        <ng-container *ngIf="u.status === 'error'">Update check failed: {{ u.error }}</ng-container>
+      </span>
+      <button class="update-close" title="Dismiss" (click)="updates.dismissed.set(true)"><i class="fi fi-sr-cross"></i></button>
+    </div>
+    <div class="update-banner__actions">
+      <span class="fill"></span>
+      <button *ngIf="u.status === 'available'" (click)="updates.download()">{{ u.manual ? 'View release' : 'Download' }}</button>
+      <button *ngIf="u.status === 'ready'" (click)="updates.install()">Restart &amp; update</button>
+      <button *ngIf="u.status === 'error'" (click)="updates.check()">Retry</button>
+    </div>
+  </div>
+
+  <app-confirm-host></app-confirm-host>
+  <app-lock-screen></app-lock-screen>
+
   <app-copy-move-dialog *ngIf="copyMoveMode()" [mode]="copyMoveMode()!" (closed)="copyMoveMode.set(null)"> </app-copy-move-dialog>
 
   <app-properties-dialog

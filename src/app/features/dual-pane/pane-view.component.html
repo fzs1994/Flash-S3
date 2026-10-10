@@ -43,7 +43,10 @@
   </div>
 
   <div class="pane__breadcrumbs" *ngIf="state.bucket">
-    <span *ngFor="let crumb of panes.breadcrumbs(paneId); let last = last">
+    <button class="crumb-back" (click)="goUp()" [disabled]="!canGoUp" title="Up a folder">
+      <i class="fi fi-sr-arrow-up"></i>
+    </button>
+    <span *ngFor="let crumb of panes.breadcrumbs(paneId); let last = last; trackBy: trackByPrefix">
       <a (click)="onBreadcrumbClick(crumb.prefix)" [class.last]="last">{{ crumb.label }}</a>
       <span class="sep" *ngIf="!last">/</span>
     </span>
@@ -81,7 +84,7 @@
         </td>
       </tr>
       <tr
-        *ngFor="let item of state.items"
+        *ngFor="let item of visibleItems()"
         [attr.data-select-key]="item.key"
         (click)="onRowClick(item, $event)"
         (dblclick)="onRowDoubleClick(item)"
@@ -99,6 +102,11 @@
           {{ item.name }}
         </td>
         <td class="col-size">{{ item.type === 'file' ? formatBytes(item.size) : '' }}</td>
+      </tr>
+      <tr *ngIf="state.nextContinuationToken">
+        <td colspan="2" class="pane__empty-row">
+          <button (click)="panes.loadMore(paneId)" [disabled]="state.loading">Load more…</button>
+        </td>
       </tr>
       <tr *ngIf="!state.items.length && !addingFolder()">
         <td colspan="2" class="pane__empty-row">This folder is empty.</td>

@@ -19,6 +19,7 @@ const {
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { Upload } = require('@aws-sdk/lib-storage');
+const { NodeHttpHandler } = require('@smithy/node-http-handler');
 
 /**
  * Reads the x-amz-bucket-region header directly over HTTPS, bypassing the
@@ -80,15 +81,20 @@ function csvField(value) {
  * connection profile itself was created with.
  */
 class S3Manager {
-  constructor(credentialStore) {
+  constructor(credentialStore, appSettings) {
     this.credentialStore = credentialStore;
+    this.appSettings = appSettings;
     this.clients = new Map(); // connectionId -> S3Client (profile's home region)
     this.regionalClients = new Map(); // "connectionId:region" -> S3Client
     this.bucketRegionCache = new Map(); // "connectionId:bucket" -> region
   }
 
   _buildClient(profile, region) {
+    // 0 = SDK default (no timeout). Otherwise bound how long a connection may take to open and how long a
+    // request may sit idle (socket inactivity, so long-running transfers that keep moving data are unaffected).
+    const timeoutMs = ((this.appSettings && this.appSettings.get().requestTimeoutSeconds) || 0) * 1000;
     return new S3Client({
+      ...(timeoutMs > 0 ? { requestHandler: new NodeHttpHandler({ connectionTimeout: timeoutMs, requestTimeout: timeoutMs }) } : {}),
       region: region || profile.region || 'us-east-1',
       credentials: {
         accessKeyId: profile.accessKeyId,
@@ -153,6 +159,12 @@ class S3Manager {
     return this._getRegionalClient(connectionId, region);
   }
 
+  /** Drops every cached client so the next call rebuilds them with current settings (e.g. a new request timeout). */
+  invalidateAllClients() {
+    this.clients.clear();
+    this.regionalClients.clear();
+  }
+
   invalidateClient(connectionId) {
     this.clients.delete(connectionId);
     for (const key of Array.from(this.regionalClients.keys())) {
@@ -193,7 +205,7 @@ class S3Manager {
         Prefix: prefix,
         Delimiter: '/',
         ContinuationToken: continuationToken,
-        MaxKeys: 1000
+        MaxKeys: this.appSettings ? this.appSettings.get().pageSize : 1000
       })
     );
 
