@@ -38,10 +38,46 @@ const MAX_PART_SIZE_MB = 500;               // sane practical ceiling
  * multipart UploadIds / HTTP Range requests per part and is a good
  * follow-up enhancement.
  */
+/**
+ * Shared bandwidth cap (bytes/sec, 0 = unlimited). Every chunk reserves a slot
+ * on a single timeline, so the limit holds across all concurrent transfers.
+ */
+class RateLimiter {
+  constructor() {
+    this.bytesPerSec = 0;
+    this.nextFree = 0;
+  }
+
+  setMBps(mbps) {
+    this.bytesPerSec = Math.max(0, Number(mbps) || 0) * 1024 * 1024;
+    this.nextFree = 0;
+  }
+
+  /** Milliseconds the caller should wait before letting `bytes` through. */
+  reserve(bytes) {
+    if (!this.bytesPerSec) return 0;
+    const now = Date.now();
+    const start = Math.max(now, this.nextFree);
+    this.nextFree = start + (bytes / this.bytesPerSec) * 1000;
+    return start - now;
+  }
+}
+
 class TransferQueueManager extends EventEmitter {
-  constructor(s3Manager) {
+  /**
+   * @param {object} s3Manager
+   * @param {{ get: () => object }} appSettings  live user preferences (retry, exists policy, ...)
+   * @param {(task: object) => Promise<{action: 'skip'|'overwrite'|'rename', applyAll?: boolean}>} askExists
+   *        prompts the user when a target already exists and the policy is "ask"
+   */
+  constructor(s3Manager, appSettings, askExists) {
     super();
     this.s3Manager = s3Manager;
+    this.appSettings = appSettings;
+    this.askExists = askExists;
+    this.sessionExistsPolicy = null; // set by "apply to all" in the ask dialog; cleared when the queue goes idle
+    this._askChain = Promise.resolve();
+    this._batch = { completed: 0, failed: 0, skipped: 0 };
     this.tasks = new Map(); // id -> task
     this.settingsStore = new Store({ name: 'flash-s3-transfer-settings' });
     this.maxConcurrentTransfers = Math.max(
@@ -53,8 +89,22 @@ class TransferQueueManager extends EventEmitter {
       MIN_PART_SIZE_MB,
       Math.min(MAX_PART_SIZE_MB, Number(this.settingsStore.get('partSizeMB', DEFAULT_PART_SIZE_MB)) | 0 || DEFAULT_PART_SIZE_MB)
     );
+    this.uploadLimiter = new RateLimiter();
+    this.downloadLimiter = new RateLimiter();
+    this.uploadLimiter.setMBps(this.settingsStore.get('uploadLimitMBps', 0));
+    this.downloadLimiter.setMBps(this.settingsStore.get('downloadLimitMBps', 0));
     this.activeCount = 0;
     this.globallyPaused = false;
+  }
+
+  /** Sets the upload/download speed caps in MB/s (0 = unlimited). Takes effect immediately, even mid-transfer. */
+  setSpeedLimits({ uploadMBps, downloadMBps }) {
+    const clean = (v) => Math.min(100000, Math.max(0, Number(v) || 0));
+    this.settingsStore.set('uploadLimitMBps', clean(uploadMBps));
+    this.settingsStore.set('downloadLimitMBps', clean(downloadMBps));
+    this.uploadLimiter.setMBps(clean(uploadMBps));
+    this.downloadLimiter.setMBps(clean(downloadMBps));
+    return this.getSettings();
   }
 
   setConcurrency(maxConcurrentTransfers) {
@@ -74,7 +124,12 @@ class TransferQueueManager extends EventEmitter {
 
   /** Current persisted transfer settings, sent to the renderer on startup so the Settings dialog reflects last session's values. */
   getSettings() {
-    return { concurrency: this.maxConcurrentTransfers, partSizeMB: this.partSizeMB };
+    return {
+      concurrency: this.maxConcurrentTransfers,
+      partSizeMB: this.partSizeMB,
+      uploadMBps: this.settingsStore.get('uploadLimitMBps', 0),
+      downloadMBps: this.settingsStore.get('downloadLimitMBps', 0)
+    };
   }
 
   // ---- Public enqueue API -------------------------------------------------
@@ -243,6 +298,7 @@ class TransferQueueManager extends EventEmitter {
       speedBps: 0,
       etaSeconds: null,
       error: null,
+      note: null,
       createdAt: Date.now(),
       startedAt: null,
       _lastTick: null,
@@ -298,9 +354,9 @@ class TransferQueueManager extends EventEmitter {
     this._emitUpdate();
 
     try {
-      if (task.type === 'upload') await this._runUpload(task);
-      else if (task.type === 'copy') await this._runCopy(task);
-      else await this._runDownload(task);
+      const skipped = await this._applyExistsPolicy(task);
+      if (skipped && !task.cancelRequested && !task.pauseRequested) task.note = 'Skipped - already exists';
+      else if (!skipped) await this._executeWithRetries(task);
 
       if (task.cancelRequested) {
         task.status = 'canceled';
@@ -328,12 +384,148 @@ class TransferQueueManager extends EventEmitter {
       } else {
         task.status = 'error';
         task.error = err && err.message ? err.message : String(err);
+        task.note = null;
       }
     } finally {
       task.abortController = null;
       this.activeCount -= 1;
+      if (task.status === 'completed') {
+        if (task.note) this._batch.skipped += 1;
+        else this._batch.completed += 1;
+      } else if (task.status === 'error') this._batch.failed += 1;
       this._emitUpdate();
       this._pump();
+      this._checkIdle();
+    }
+  }
+
+  /** Emits 'idle' (with what finished since the last idle) once nothing is running or waiting to run. */
+  _checkIdle() {
+    if (this.activeCount > 0) return;
+    if (Array.from(this.tasks.values()).some((t) => t.status === 'queued')) return;
+    this.sessionExistsPolicy = null;
+    const batch = this._batch;
+    this._batch = { completed: 0, failed: 0, skipped: 0 };
+    if (batch.completed + batch.failed > 0) this.emit('idle', batch);
+  }
+
+  /** Runs the task, re-trying failed attempts per the user's retry count with exponential backoff. */
+  async _executeWithRetries(task) {
+    const { retryCount, retryBackoffSeconds } = this.appSettings.get();
+    for (let attempt = 0; ; attempt++) {
+      task.note = attempt > 0 ? `Retry ${attempt} of ${retryCount}` : null;
+      try {
+        if (task.type === 'upload') await this._runUpload(task);
+        else if (task.type === 'copy') await this._runCopy(task);
+        else await this._runDownload(task);
+        task.note = null;
+        return;
+      } catch (err) {
+        if (task.cancelRequested || task.pauseRequested || attempt >= retryCount || !this._isRetryable(err)) throw err;
+        const delayMs = retryBackoffSeconds * 1000 * 2 ** attempt;
+        task.note = `Failed (${(err && err.message) || err}) - retrying in ${Math.round(delayMs / 1000)}s (${attempt + 1} of ${retryCount})`;
+        task.transferred = 0;
+        task.speedBps = 0;
+        task.etaSeconds = null;
+        this._emitUpdate();
+        await this._sleepUnlessAborted(delayMs, task);
+        if (task.cancelRequested || task.pauseRequested) throw err;
+        task.abortController = new AbortController();
+        task._lastTick = Date.now();
+        task._lastTransferred = 0;
+      }
+    }
+  }
+
+  /** Permission / not-found / bad-credential errors won't fix themselves, so they fail immediately. */
+  _isRetryable(err) {
+    const status = err && err.$metadata && err.$metadata.httpStatusCode;
+    if (status && status >= 400 && status < 500 && status !== 408 && status !== 429) return false;
+    const name = (err && (err.name || err.Code)) || '';
+    if (/^(AccessDenied|NoSuchKey|NoSuchBucket|InvalidAccessKeyId|SignatureDoesNotMatch|InvalidBucketName)$/.test(name)) return false;
+    const code = err && err.code;
+    if (code === 'ENOENT' || code === 'EACCES' || code === 'EPERM') return false;
+    return true;
+  }
+
+  _sleepUnlessAborted(ms, task) {
+    return new Promise((resolve) => {
+      const signal = task.abortController && task.abortController.signal;
+      if (signal && signal.aborted) return resolve();
+      const timer = setTimeout(done, ms);
+      function done() {
+        clearTimeout(timer);
+        if (signal) signal.removeEventListener('abort', done);
+        resolve();
+      }
+      if (signal) signal.addEventListener('abort', done);
+    });
+  }
+
+  // ---- "File already exists" handling ----------------------------------------
+
+  /** Returns true when the task should be skipped. Otherwise may have re-pointed the task at a free name. */
+  async _applyExistsPolicy(task) {
+    if (task.type !== 'upload' && task.type !== 'download') return false;
+    let policy = this.sessionExistsPolicy || this.appSettings.get().ifExists;
+    if (policy === 'overwrite') return false;
+    if (!(await this._targetExists(task))) return false;
+
+    if (policy === 'ask') {
+      const answer = await this._askExists(task);
+      if (task.cancelRequested || task.pauseRequested) return true;
+      policy = (answer && answer.action) || 'skip';
+      if (answer && answer.applyAll) this.sessionExistsPolicy = policy;
+      if (policy === 'overwrite') return false;
+    }
+    if (policy === 'skip') return true;
+    await this._renameToFreeName(task);
+    return false;
+  }
+
+  _askExists(task) {
+    const run = async () => {
+      if (this.sessionExistsPolicy) return { action: this.sessionExistsPolicy, applyAll: false };
+      return this.askExists(task);
+    };
+    const p = this._askChain.then(run, run);
+    this._askChain = p.catch(() => {});
+    return p;
+  }
+
+  async _targetExists(task, overrideKeyOrPath) {
+    if (task.type === 'download') return fs.existsSync(overrideKeyOrPath || task.localPath);
+    const client = await this.s3Manager.getClientForBucket(task.connectionId, task.bucket);
+    try {
+      await client.send(new HeadObjectCommand({ Bucket: task.bucket, Key: overrideKeyOrPath || task.key }));
+      return true;
+    } catch (_) {
+      // 404 = free. Anything else (e.g. no read permission) can't be told apart from "missing", so treat as free.
+      return false;
+    }
+  }
+
+  /** "report.pdf" -> "report (1).pdf", "report (2).pdf", ... first name that is free at the destination. */
+  async _renameToFreeName(task) {
+    const withSuffix = (name, n) => {
+      const dot = name.lastIndexOf('.');
+      return dot > 0 ? `${name.slice(0, dot)} (${n})${name.slice(dot)}` : `${name} (${n})`;
+    };
+    for (let n = 1; n < 1000; n++) {
+      if (task.type === 'download') {
+        const candidate = path.join(path.dirname(task.localPath), withSuffix(path.basename(task.localPath), n));
+        if (!fs.existsSync(candidate)) {
+          task.localPath = candidate;
+          return;
+        }
+      } else {
+        const slash = task.key.lastIndexOf('/');
+        const candidate = task.key.slice(0, slash + 1) + withSuffix(task.key.slice(slash + 1), n);
+        if (!(await this._targetExists(task, candidate))) {
+          task.key = candidate;
+          return;
+        }
+      }
     }
   }
 
@@ -462,15 +654,25 @@ class TransferQueueManager extends EventEmitter {
    * once it does.
    */
   _createProgressStream(source, onChunk) {
-    const progress = new Transform({
-      transform(chunk, encoding, callback) {
-        onChunk(chunk.length);
-        callback(null, chunk);
-      }
-    });
+    const progress = this._createThrottleStream(this.uploadLimiter, onChunk);
     source.on('error', (err) => progress.destroy(err));
     source.pipe(progress);
     return progress;
+  }
+
+  /** Pass-through Transform that waits for the limiter's slot, then reports the chunk size to `onChunk`. */
+  _createThrottleStream(limiter, onChunk) {
+    return new Transform({
+      transform(chunk, encoding, callback) {
+        const delay = limiter.reserve(chunk.length);
+        const pass = () => {
+          onChunk(chunk.length);
+          callback(null, chunk);
+        };
+        if (delay > 0) setTimeout(pass, delay);
+        else pass();
+      }
+    });
   }
 
   async _runSinglePutUpload(task, client) {
@@ -610,9 +812,18 @@ class TransferQueueManager extends EventEmitter {
       { abortSignal: task.abortController.signal }
     );
 
+    const keepPartial = this.appSettings.get().keepPartialDownloads;
     await new Promise((resolve, reject) => {
       const writeStream = fs.createWriteStream(task.localPath);
       let transferred = 0;
+      let finished = false;
+      writeStream.on('finish', () => {
+        finished = true;
+      });
+      // A failed/canceled/paused download leaves a truncated file; remove it unless the user opted to keep partials.
+      writeStream.on('close', () => {
+        if (!finished && !keepPartial) fs.rm(task.localPath, { force: true }, () => {});
+      });
 
       const onAbort = () => {
         res.Body.destroy();
@@ -620,12 +831,14 @@ class TransferQueueManager extends EventEmitter {
       };
       task.abortController.signal.addEventListener('abort', onAbort);
 
-      res.Body.on('data', (chunk) => {
-        transferred += chunk.length;
+      // Counting + throttling sit in a Transform between the network and the file,
+      // so a speed limit backpressures the socket instead of just delaying writes.
+      const counted = this._createThrottleStream(this.downloadLimiter, (bytes) => {
+        transferred += bytes;
         this._tickProgress(task, transferred);
       });
-
-      res.Body.pipe(writeStream);
+      counted.on('error', reject);
+      res.Body.pipe(counted).pipe(writeStream);
       writeStream.on('finish', resolve);
       writeStream.on('error', reject);
       res.Body.on('error', reject);
@@ -713,6 +926,7 @@ class TransferQueueManager extends EventEmitter {
       speedBps: task.speedBps,
       etaSeconds: task.etaSeconds,
       error: task.error,
+      note: task.note,
       progressPct: task.size > 0 ? Math.min(100, Math.round((task.transferred / task.size) * 100)) : task.status === 'completed' ? 100 : 0,
       ...(task.type === 'copy'
         ? { move: task.move, srcPrefix: task.srcPrefix, destConnectionId: task.destConnectionId, destBucket: task.destBucket, destPrefix: task.destPrefix }

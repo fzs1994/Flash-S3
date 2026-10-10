@@ -1,6 +1,14 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { ConnectionTabState, ObjectProperties, S3ListItem } from '../models/models';
+import { Injectable, computed, effect, signal, untracked } from '@angular/core';
+import { ConnectionProfile, ConnectionTabState, ObjectProperties, S3ListItem } from '../models/models';
+import { AppSettingsService } from './app-settings.service';
 import { ElectronService } from './electron.service';
+
+const SESSION_KEY = 's3b:lastSession';
+
+interface SavedSession {
+  activeConnectionId: string | null;
+  tabs: { connectionId: string; name: string; bucket: string | null; prefix: string }[];
+}
 
 /**
  * Multi-connection tab manager + "where am I" navigation state for the
@@ -50,7 +58,82 @@ export class S3BrowserService {
     return crumbs;
   });
 
-  constructor(private electron: ElectronService) {}
+  /** Session saving stays off until startup restore has finished, so an empty startup state can't overwrite the saved one. */
+  private savingSession = false;
+
+  constructor(
+    private electron: ElectronService,
+    private appSettings: AppSettingsService
+  ) {
+    effect(() => {
+      const tabs = this.tabs();
+      const active = this.activeConnectionId();
+      const enabled = this.appSettings.settings().restoreLastSession;
+      untracked(() => this.persistSession(tabs, active, enabled));
+    });
+  }
+
+  private persistSession(tabs: ConnectionTabState[], active: string | null, enabled: boolean): void {
+    if (!this.savingSession) return;
+    try {
+      if (!enabled) {
+        localStorage.removeItem(SESSION_KEY);
+        return;
+      }
+      const session: SavedSession = {
+        activeConnectionId: active,
+        tabs: tabs.map((t) => ({ connectionId: t.connectionId, name: t.name, bucket: t.currentBucket, prefix: t.currentPrefix }))
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch {
+      /* storage unavailable - session restore is a convenience only */
+    }
+  }
+
+  /** Reopens the tabs (and the bucket/folder each was showing) from the previous run, for connections that still exist. */
+  async restoreLastSession(connections: ConnectionProfile[]): Promise<void> {
+    let session: SavedSession | null = null;
+    try {
+      session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    } catch {
+      session = null;
+    }
+    if (!session?.tabs?.length) return;
+    const known = new Set(connections.map((c) => c.id));
+    for (const saved of session.tabs) {
+      if (!known.has(saved.connectionId)) continue;
+      const name = connections.find((c) => c.id === saved.connectionId)?.name ?? saved.name;
+      await this.openConnectionTab(saved.connectionId, name);
+      if (saved.bucket) await this.navigateTo(saved.bucket, saved.prefix || '');
+    }
+    if (session.activeConnectionId && known.has(session.activeConnectionId)) this.setActiveTab(session.activeConnectionId);
+  }
+
+  startSavingSession(): void {
+    this.savingSession = true;
+    // Persist the state we ended up in (restored or empty) right away.
+    this.persistSession(this.tabs(), this.activeConnectionId(), this.appSettings.settings().restoreLastSession);
+  }
+
+  /** Fetches the next page of the current folder (only offered when the listing was truncated at the page size). */
+  async loadMore(): Promise<void> {
+    const connectionId = this.activeConnectionId();
+    const tab = this.activeTab();
+    if (!connectionId || !tab?.currentBucket || !tab.nextContinuationToken) return;
+    this.updateTab(connectionId, { loading: true, errorMessage: null });
+    try {
+      const res = await this.electron.api.s3.listObjects(connectionId, tab.currentBucket, tab.currentPrefix, tab.nextContinuationToken);
+      const latest = this.tabs().find((t) => t.connectionId === connectionId);
+      this.updateTab(connectionId, {
+        items: [...(latest?.items ?? tab.items), ...res.items],
+        nextContinuationToken: res.nextContinuationToken
+      });
+    } catch (err: any) {
+      this.updateTab(connectionId, { errorMessage: err?.message || String(err) });
+    } finally {
+      this.updateTab(connectionId, { loading: false });
+    }
+  }
 
   // ---- Tab management -------------------------------------------------
 
@@ -122,6 +205,15 @@ export class S3BrowserService {
     if (!connectionId) return;
     this.updateTab(connectionId, { currentPrefix: prefix, selectedKeys: new Set() });
     await this.refreshListing();
+  }
+
+  /** Goes up one level from the current folder (no-op at the bucket root). */
+  async goUp(): Promise<void> {
+    const prefix = this.currentPrefix();
+    if (!prefix) return;
+    const parts = prefix.split('/').filter(Boolean);
+    parts.pop();
+    await this.openPrefix(parts.length ? `${parts.join('/')}/` : '');
   }
 
   async openFolderItem(item: S3ListItem): Promise<void> {

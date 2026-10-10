@@ -11,6 +11,7 @@ function emptyPane(): PaneState {
     bucket: null,
     prefix: '',
     items: [],
+    nextContinuationToken: null,
     selectedKeys: new Set(),
     loading: false,
     errorMessage: null
@@ -76,6 +77,7 @@ export class PaneService {
       bucket: null,
       prefix: '',
       items: [],
+      nextContinuationToken: null,
       selectedKeys: new Set(),
       errorMessage: null,
       loadingBuckets: true
@@ -110,7 +112,22 @@ export class PaneService {
     this.updatePane(id, { loading: true, errorMessage: null });
     try {
       const res = await this.electron.api.s3.listObjects(p.connectionId, p.bucket, p.prefix);
-      this.updatePane(id, { items: res.items });
+      this.updatePane(id, { items: res.items, nextContinuationToken: res.nextContinuationToken ?? null });
+    } catch (err: any) {
+      this.updatePane(id, { errorMessage: err?.message || String(err) });
+    } finally {
+      this.updatePane(id, { loading: false });
+    }
+  }
+
+  /** Fetches the next page of a pane's current folder (only offered when the listing was truncated at the page size). */
+  async loadMore(id: PaneId): Promise<void> {
+    const p = this.pane(id);
+    if (!p.connectionId || !p.bucket || !p.nextContinuationToken) return;
+    this.updatePane(id, { loading: true, errorMessage: null });
+    try {
+      const res = await this.electron.api.s3.listObjects(p.connectionId, p.bucket, p.prefix, p.nextContinuationToken);
+      this.updatePane(id, { items: [...this.pane(id).items, ...res.items], nextContinuationToken: res.nextContinuationToken ?? null });
     } catch (err: any) {
       this.updatePane(id, { errorMessage: err?.message || String(err) });
     } finally {

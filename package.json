@@ -30,6 +30,7 @@
     "@aws-sdk/lib-storage": "^3.629.0",
     "@aws-sdk/s3-request-presigner": "^3.629.0",
     "@flaticon/flaticon-uicons": "^3.3.1",
+    "@smithy/node-http-handler": "^4.12.1",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.8.9",
     "rxjs": "~7.8.0",

@@ -10,8 +10,9 @@ const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
  * in place - the UI is pointed at the release page instead.
  */
 class UpdaterService {
-  constructor(getWindow) {
+  constructor(getWindow, appSettings) {
     this.getWindow = getWindow;
+    this.appSettings = appSettings;
     this.state = { status: 'idle', version: null, percent: 0, error: null, manual: process.platform === 'darwin' };
     this.autoUpdater = null;
 
@@ -35,8 +36,10 @@ class UpdaterService {
 
   start() {
     if (!this.autoUpdater) return;
-    setTimeout(() => this.check(false), 5000);
-    setInterval(() => this.check(false), CHECK_INTERVAL_MS).unref();
+    // "Check for updates on launch" governs every automatic check; manual checks from Settings always work.
+    const auto = () => this.appSettings.get().checkUpdatesOnLaunch;
+    setTimeout(() => auto() && this.check(false), 5000);
+    setInterval(() => auto() && this.check(false), CHECK_INTERVAL_MS).unref();
   }
 
   getState() {

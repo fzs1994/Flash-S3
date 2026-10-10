@@ -117,6 +117,9 @@
     </div>
   </div>
 
+  <app-confirm-host></app-confirm-host>
+  <app-lock-screen></app-lock-screen>
+
   <app-copy-move-dialog *ngIf="copyMoveMode()" [mode]="copyMoveMode()!" (closed)="copyMoveMode.set(null)"> </app-copy-move-dialog>
 
   <app-properties-dialog

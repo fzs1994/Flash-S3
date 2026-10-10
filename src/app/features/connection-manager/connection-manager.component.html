@@ -52,6 +52,12 @@
       <label>Region</label>
       <app-dropdown [options]="regionOptions" [(value)]="form.region" [searchable]="true" searchPlaceholder="Search regions…"></app-dropdown>
 
+      <label class="prod-flag">
+        <input type="checkbox" [(ngModel)]="form.isProduction" />
+        Production connection
+        <span class="hint">Can require typing the item name before deleting (see General Settings &rarr; Safety).</span>
+      </label>
+
       <div class="test-result" *ngIf="testResult() as r" [class.ok]="r.ok" [class.fail]="!r.ok">
         {{ r.ok ? 'Connection successful.' : 'Failed: ' + r.error }}
       </div>

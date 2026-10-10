@@ -1,6 +1,7 @@
 import { computed, Injectable, NgZone, OnDestroy, signal } from '@angular/core';
 import { S3ListItem, TransferTask } from '../models/models';
 import { S3BrowserService } from './s3-browser.service';
+import { AppSettingsService } from './app-settings.service';
 import { ElectronService } from './electron.service';
 import { PaneService } from './pane.service';
 
@@ -40,7 +41,8 @@ export class TransferService implements OnDestroy {
     private electron: ElectronService,
     private s3: S3BrowserService,
     private panes: PaneService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private appSettings: AppSettingsService
   ) {
     if (this.electron.isElectron) {
       // ipcRenderer 'on' listeners fire outside Angular's zone (they aren't a
@@ -150,7 +152,8 @@ export class TransferService implements OnDestroy {
   ): Promise<void> {
     const connId = connectionId ?? this.s3.activeConnectionId();
     if (!connId || !items.length) return;
-    const destDir = await this.electron.api.dialogs.chooseDownloadDestination();
+    // A configured default download folder skips the folder picker entirely.
+    const destDir = this.appSettings.settings().defaultDownloadFolder || (await this.electron.api.dialogs.chooseDownloadDestination());
     if (!destDir) return;
     await this.electron.api.transfers.enqueueDownload(connId, bucket, items, destDir);
   }

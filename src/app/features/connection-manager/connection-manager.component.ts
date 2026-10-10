@@ -58,7 +58,7 @@ export class ConnectionManagerComponent {
   }
 
   newConnection(): void {
-    this.form = { name: '', region: 'us-east-1', accessKeyId: '', secretAccessKey: '' };
+    this.form = { name: '', region: 'us-east-1', accessKeyId: '', secretAccessKey: '', isProduction: false };
     this.isEditing.set(false);
     this.testResult.set(null);
     this.showForm.set(true);
@@ -71,7 +71,8 @@ export class ConnectionManagerComponent {
       name: c.name,
       region: c.region,
       accessKeyId: c.accessKeyId,
-      secretAccessKey: ''
+      secretAccessKey: '',
+      isProduction: !!c.isProduction
     };
     this.isEditing.set(true);
     this.testResult.set(null);

@@ -1,15 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, HostListener, Input, OnInit, Output, signal } from '@angular/core';
 import { ObjectProperties, S3ListItem } from '../../core/models/models';
+import { AppSettingsService } from '../../core/services/app-settings.service';
 import { ElectronService } from '../../core/services/electron.service';
-
-function formatBytes(bytes?: number): string {
-  if (bytes === undefined || bytes === null) return '';
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-}
 
 /**
  * Properties popup for a single selected file/folder. Takes the already-known
@@ -38,9 +31,12 @@ export class PropertiesDialogComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly properties = signal<ObjectProperties | null>(null);
 
-  constructor(private electron: ElectronService) {}
+  constructor(
+    private electron: ElectronService,
+    public appSettings: AppSettingsService
+  ) {}
 
-  formatBytes = formatBytes;
+  formatBytes = (bytes?: number) => this.appSettings.formatSize(bytes);
 
   async ngOnInit(): Promise<void> {
     if (this.item.type !== 'file' || !this.connectionId || !this.bucket) return;

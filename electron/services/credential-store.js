@@ -39,6 +39,7 @@ class CredentialStore {
       name: p.name,
       region: p.region,
       accessKeyId: p.accessKeyId,
+      isProduction: !!p.isProduction,
       // Never send the decrypted secret back to the renderer for listing.
       hasSecret: !!p.secretAccessKeyEnc,
       createdAt: p.createdAt
@@ -68,6 +69,7 @@ class CredentialStore {
       name: profile.name,
       region: profile.region || 'us-east-1',
       accessKeyId: profile.accessKeyId,
+      isProduction: !!profile.isProduction,
       secretAccessKeyEnc: profile.secretAccessKey
         ? this._encrypt(profile.secretAccessKey)
         : existingIndex >= 0

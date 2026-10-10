@@ -1,4 +1,5 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, effect, signal, untracked } from '@angular/core';
+import { AppSettingsService } from './app-settings.service';
 
 const STORAGE_KEY = 's3b:theme';
 type Theme = 'light' | 'dark';
@@ -23,7 +24,21 @@ function loadInitialTheme(): Theme {
 export class ThemeService {
   readonly theme = signal<Theme>(loadInitialTheme());
 
-  constructor() {
+  constructor(private appSettings: AppSettingsService) {
+    // The persisted choice (shared by every window through the main process) wins over this window's stored value.
+    effect(
+      () => {
+        const saved = this.appSettings.settings().theme;
+        if (saved === 'light' || saved === 'dark') untracked(() => this.theme.set(saved));
+      },
+      { allowSignalWrites: true }
+    );
+    // The settings window is a separate renderer - follow theme changes made there (and vice versa).
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key === STORAGE_KEY && (e.newValue === 'light' || e.newValue === 'dark')) this.theme.set(e.newValue);
+      });
+    }
     effect(() => {
       const mode = this.theme();
       if (typeof document !== 'undefined') {
@@ -35,7 +50,13 @@ export class ThemeService {
     });
   }
 
+  setTheme(mode: Theme): void {
+    this.theme.set(mode);
+    // Persist through the main process so the other window follows (localStorage isn't shared between them).
+    this.appSettings.update({ theme: mode }).catch(() => {});
+  }
+
   toggle(): void {
-    this.theme.set(this.theme() === 'dark' ? 'light' : 'dark');
+    this.setTheme(this.theme() === 'dark' ? 'light' : 'dark');
   }
 }

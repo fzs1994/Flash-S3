@@ -3,62 +3,21 @@ import { Component, EventEmitter, HostListener, Output, computed, effect, signal
 import { FormsModule } from '@angular/forms';
 import { MarqueeSelectDirective, MarqueeSelectEvent, rangeKeys } from '../../core/directives/marquee-select.directive';
 import { S3ListItem } from '../../core/models/models';
+import { AppSettingsService } from '../../core/services/app-settings.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { ElectronService } from '../../core/services/electron.service';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
 import { ToastService } from '../../core/services/toast.service';
 import { TransferService } from '../../core/services/transfer.service';
+import { extensionOf, SortKey, sortItems, withoutHidden } from '../../core/utils/list-utils';
 import { isPreviewable } from '../../core/utils/preview-types';
 import { ContextMenuComponent, ContextMenuEntry } from '../context-menu/context-menu.component';
 import { AclDialogComponent } from '../dialogs/acl-dialog.component';
 import { DropdownComponent } from '../dropdown/dropdown.component';
 import { PreviewDialogComponent } from '../dialogs/preview-dialog.component';
 
-function formatBytes(bytes?: number): string {
-  if (bytes === undefined || bytes === null) return '';
-  if (bytes === 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-}
-
-type SortKey = 'name' | 'ext' | 'size' | 'date' | 'class';
 const NO_EXT = '__none__';
 const FOLDERS_ONLY = '__folders__';
-
-/** Lower-cased extension without the dot; '' for folders, extensionless files and dotfiles like ".env". */
-function extensionOf(item: S3ListItem): string {
-  if (item.type === 'folder') return '';
-  const dot = item.name.lastIndexOf('.');
-  return dot > 0 ? item.name.slice(dot + 1).toLowerCase() : '';
-}
-
-/** Explorer-style: folders always group above files, then the chosen column, with name as the tiebreaker. */
-function sortItems(items: S3ListItem[], key: SortKey, dir: 'asc' | 'desc'): S3ListItem[] {
-  const sign = dir === 'asc' ? 1 : -1;
-  const byName = (a: S3ListItem, b: S3ListItem) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-  const value = (i: S3ListItem): string | number => {
-    switch (key) {
-      case 'ext':
-        return extensionOf(i);
-      case 'size':
-        return i.size ?? -1;
-      case 'date':
-        return i.lastModified ? new Date(i.lastModified).getTime() : -1;
-      case 'class':
-        return i.storageClass ?? '';
-      default:
-        return '';
-    }
-  };
-  return [...items].sort((a, b) => {
-    if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
-    if (key === 'name') return sign * byName(a, b);
-    const va = value(a);
-    const vb = value(b);
-    const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb));
-    return cmp !== 0 ? sign * cmp : byName(a, b);
-  });
-}
 
 @Component({
   selector: 'app-object-list',
@@ -99,7 +58,7 @@ export class ObjectListComponent {
   readonly filteredItems = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const type = this.typeFilter();
-    let items = this.s3.items();
+    let items = withoutHidden(this.s3.items(), this.appSettings.settings());
     if (term) items = items.filter((i) => i.name.toLowerCase().includes(term));
     if (type === FOLDERS_ONLY) items = items.filter((i) => i.type === 'folder');
     else if (type) items = items.filter((i) => i.type === 'file' && (extensionOf(i) || NO_EXT) === type);
@@ -219,8 +178,17 @@ export class ObjectListComponent {
     public s3: S3BrowserService,
     private electron: ElectronService,
     private transfers: TransferService,
-    private toast: ToastService
+    private toast: ToastService,
+    public appSettings: AppSettingsService,
+    private confirm: ConfirmService
   ) {
+    // Apply the default sort whenever it is (re)loaded or changed in General Settings.
+    effect(() => {
+      const { defaultSortKey, defaultSortDir } = this.appSettings.settings();
+      this.sortKey.set(defaultSortKey);
+      this.sortDir.set(defaultSortDir);
+    }, { allowSignalWrites: true });
+
     // Clear any active search when navigating to a different folder/bucket -
     // otherwise a leftover filter term could make a freshly-opened folder
     // look empty for no apparent reason.
@@ -232,7 +200,7 @@ export class ObjectListComponent {
     }, { allowSignalWrites: true });
   }
 
-  formatBytes = formatBytes;
+  formatBytes = (bytes?: number) => this.appSettings.formatSize(bytes);
 
   /**
    * Delete key removes the current selection; F2 renames it and Space
@@ -399,7 +367,8 @@ export class ObjectListComponent {
     const selectedKeys = this.s3.selectedKeys();
     const count = selectedKeys.size;
     if (!count) return;
-    const ok = await this.electron.api.dialogs.confirm(`Delete ${count} item(s)?`, 'This action cannot be undone.');
+    const only = count === 1 ? this.s3.items().find((i) => selectedKeys.has(i.key)) : null;
+    const ok = await this.confirm.confirmDelete({ count, singleName: only?.name, connectionId: this.s3.activeConnectionId() });
     if (!ok) return;
 
     const label =

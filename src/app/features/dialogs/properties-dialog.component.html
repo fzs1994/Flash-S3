@@ -33,7 +33,7 @@
         </div>
         <div class="prop-row" *ngIf="p.lastModified">
           <span class="prop-label">Last modified</span>
-          <span class="prop-value">{{ p.lastModified | date: 'medium' }}</span>
+          <span class="prop-value">{{ p.lastModified | date: appSettings.dateFormat() : appSettings.timeZone() }}</span>
         </div>
         <div class="prop-row">
           <span class="prop-label">Storage class</span>

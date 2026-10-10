@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { S3BrowserService } from '../../core/services/s3-browser.service';
-import { ThemeService } from '../../core/services/theme.service';
+import { ElectronService } from '../../core/services/electron.service';
 import { TransferService } from '../../core/services/transfer.service';
 import { BookmarksComponent } from '../bookmarks/bookmarks.component';
 
@@ -22,8 +22,12 @@ export class ToolbarComponent {
   constructor(
     public s3: S3BrowserService,
     public transfers: TransferService,
-    public theme: ThemeService
+    private electron: ElectronService
   ) {}
+
+  openSettings(): void {
+    this.electron.api.settings.openWindow();
+  }
 
   get hasBucket(): boolean {
     return !!this.s3.currentBucket();
