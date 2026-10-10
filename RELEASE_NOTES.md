@@ -1,3 +1,48 @@
+# Flash S3 — next release (draft)
+
+A General Settings window, in-app updates, transfer controls, and folder
+navigation improvements. See the [README](./README.md) for the full list.
+
+## Highlights
+
+- **General Settings window** — a separate window (top-right **Settings**
+  button) with Transfers, Browsing, Safety, App and About tabs. The theme
+  toggle now lives here and applies to every window.
+- **Transfer controls** — global upload/download **speed limits**, automatic
+  **retries** with exponential backoff, a **file-exists policy** (overwrite /
+  ask / skip / keep both), keep-or-discard partial downloads, and a request
+  timeout.
+- **Auto-update** — checks GitHub Releases on launch and every 6 hours; a
+  dismissable notice offers *Download* then *Restart & update* (Windows and
+  Linux; macOS opens the release page). Release assets now use space-free
+  names so the update manifest resolves.
+- **Browsing preferences** — default sort and single/dual-pane startup view,
+  hidden-item toggle, date format and time zone, size units, and an
+  objects-per-page setting with a **Load more…** row (folders with more than
+  1,000 objects are no longer cut off).
+- **Safety** — optional delete confirmation, type-the-name confirmation for
+  connections marked **Production**, configurable share-link expiry, a default
+  download folder, and a PIN-protected idle lock.
+- **App behavior** — start minimized or in the system tray, keep running in
+  the tray on close, reopen the last connections and folders, and desktop
+  notifications when transfers finish.
+- **Up a folder** — an up-arrow in front of the breadcrumbs in single and dual
+  pane. Dual-pane breadcrumb links now respond to clicks (they were being
+  re-created on every mouse move).
+- **About tab** — version, project links (opened in your browser), and
+  runtime versions.
+
+## Known limitations
+
+- Speed limits don't apply to server-side copy/move between buckets.
+- The idle lock is a UI cover, not encryption.
+- In-place updates aren't available on macOS until builds are signed.
+- A release published before these changes (v0.0.3) has an update manifest
+  that points at renamed assets, so it can't update itself; install the next
+  release manually once.
+
+---
+
 # Flash S3 — v0.0.3
 
 **Release date:** October 8, 2026

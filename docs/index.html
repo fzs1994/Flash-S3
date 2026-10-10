@@ -1129,6 +1129,12 @@
           { mark: '3', title: 'Custom endpoints', body: 'Anything that speaks the S3 API — MinIO, Wasabi, R2 — works by pointing a connection at its endpoint.' },
           { mark: '4', title: 'Keychain storage', body: 'Secrets go into the operating system credential store, never into plaintext next to the app.' },
         ]},
+        { id: 'settings', label: 'Settings', items: [
+          { mark: '1', title: 'General settings window', body: 'One tabbed window for transfers, browsing, safety and app behavior — theme included — applied to every window instantly.' },
+          { mark: '2', title: 'Speed limits & retries', body: 'Cap upload and download bandwidth, retry failures with backoff, and choose what happens when a file already exists.' },
+          { mark: '3', title: 'Safety nets', body: 'Mark a connection as Production to require typing the item name before a delete; add a PIN-protected idle lock.' },
+          { mark: '4', title: 'Stays up to date', body: 'Checks GitHub Releases and offers a one-click download and restart. Tray mode, session restore and finish notifications are optional.' },
+        ]},
         { id: 'ops', label: 'Housekeeping', items: [
           { mark: '1', title: 'Upload files or folders', body: 'Whole directory trees upload with their structure intact and land in the queue as individual objects.' },
           { mark: '2', title: 'Export CSV', body: 'Dump the current listing — names, sizes, timestamps, storage class — for an audit or a spreadsheet.' },
@@ -1160,7 +1166,8 @@
         { label: 'Bucket policy / ACL / CORS / lifecycle editors', a: 'ACL only', b: 'Yes' },
         { label: 'Versioning UI, storage-class management', a: 'No', b: 'Yes' },
         { label: 'CloudFront management', a: 'No', b: 'Yes' },
-        { label: 'Client-side encryption, transfer acceleration, throttling', a: 'No', b: 'Yes' },
+        { label: 'Bandwidth throttling', a: 'Yes', b: 'Yes' },
+        { label: 'Client-side encryption, transfer acceleration', a: 'No', b: 'Yes' },
         { label: 'AWS SSO / IAM tooling, CLI automation', a: 'No', b: 'Yes' },
       ];
 
@@ -1178,7 +1185,7 @@
         { title: 'Viewing & navigation — Bucket-wide search', body: 'Recursive search across every bucket in a connection, not just the current folder.' },
         { title: 'Viewing & navigation — Recent folders history', body: 'Separate from bookmarks.' },
         { title: 'Transfers & reliability — True resumable pause', body: 'Byte-offset resume instead of restarting a paused file from 0.' },
-        { title: 'Transfers & reliability — Bandwidth throttling', body: 'Cap transfer speed per task or globally.' },
+        { title: 'Transfers & reliability — Bandwidth throttling', body: 'Global upload/download caps are in; per-task limits are still open.', done: true },
         { title: 'Transfers & reliability — Persistent transfer log', body: 'An exportable report of past transfers.' },
         { title: 'Security & accounts — SSO & assumed roles', body: 'IAM Identity Center, MFA and role chaining alongside static keys.' },
         { title: 'Security & accounts — IAM access diagnostics', body: 'A "why don’t I have access" helper.' },
