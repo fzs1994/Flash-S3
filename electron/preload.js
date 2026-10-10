@@ -85,6 +85,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     confirm: (message, detail) => ipcRenderer.invoke('dialogs:confirm', { message, detail })
   },
 
+  updater: {
+    getState: () => ipcRenderer.invoke('updater:getState'),
+    check: () => ipcRenderer.invoke('updater:check'),
+    download: () => ipcRenderer.invoke('updater:download'),
+    install: () => ipcRenderer.invoke('updater:install'),
+    onState: (callback) => {
+      const listener = (_event, state) => callback(state);
+      ipcRenderer.on('updater:state', listener);
+      return () => ipcRenderer.removeListener('updater:state', listener);
+    }
+  },
+
   platform: process.platform,
 
   // Resolves a real filesystem path from a dropped File object. The old

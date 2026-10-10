@@ -3,6 +3,7 @@ import { Component, HostListener, effect, signal, untracked } from '@angular/cor
 import { S3ListItem } from './core/models/models';
 import { ConnectionService } from './core/services/connection.service';
 import { S3BrowserService } from './core/services/s3-browser.service';
+import { UpdateService } from './core/services/update.service';
 import { ToastService } from './core/services/toast.service';
 import { BucketTreeComponent } from './features/bucket-tree/bucket-tree.component';
 import { ConnectionManagerComponent } from './features/connection-manager/connection-manager.component';
@@ -75,7 +76,8 @@ export class AppComponent {
   constructor(
     public s3: S3BrowserService,
     public connectionService: ConnectionService,
-    public toast: ToastService
+    public toast: ToastService,
+    public updates: UpdateService
   ) {
     // The toolbar sits above the Manage Connections overlay, so Bookmarks and Dual Pane work with no
     // connection open. Get the overlay out of the way once either one takes the user somewhere.

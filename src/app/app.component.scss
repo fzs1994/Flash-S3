@@ -196,3 +196,52 @@
 .connections-modal__header button:disabled {
   opacity: 0.4;
 }
+
+.update-banner {
+  position: fixed;
+  right: 16px;
+  bottom: 36px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--s3b-surface);
+  border: 1px solid var(--s3b-border);
+  border-left: 3px solid var(--s3b-blue);
+  border-radius: 6px;
+  box-shadow: 0 8px 30px var(--s3b-shadow);
+  color: var(--s3b-text);
+  font-size: 12px;
+  z-index: 85;
+}
+.update-banner__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.update-banner__head .update-msg {
+  flex: 1;
+  line-height: 1.4;
+}
+.update-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.update-banner .fill {
+  flex: 1;
+}
+.update-banner button {
+  background: var(--s3b-blue);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.update-banner .update-close {
+  background: none;
+  color: var(--s3b-muted);
+  padding: 0 2px;
+}

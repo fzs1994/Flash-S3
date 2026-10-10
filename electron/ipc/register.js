@@ -3,12 +3,20 @@ const { CredentialStore } = require('../services/credential-store');
 const { BookmarkStore } = require('../services/bookmark-store');
 const { S3Manager } = require('../services/s3-manager');
 const { TransferQueueManager } = require('../services/transfer-queue');
+const { UpdaterService } = require('../services/updater');
 
 function registerIpcHandlers(ipcMain, getWindow) {
   const credentialStore = new CredentialStore();
   const bookmarkStore = new BookmarkStore();
   const s3Manager = new S3Manager(credentialStore);
   const transferQueue = new TransferQueueManager(s3Manager);
+
+  const updater = new UpdaterService(getWindow);
+  ipcMain.handle('updater:getState', () => updater.getState());
+  ipcMain.handle('updater:check', () => updater.check(true));
+  ipcMain.handle('updater:download', () => updater.download());
+  ipcMain.handle('updater:install', () => updater.install());
+  updater.start();
 
   transferQueue.on('update', (snapshot) => {
     const win = getWindow();
