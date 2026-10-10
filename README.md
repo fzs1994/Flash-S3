@@ -37,7 +37,9 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 - **Local search & filters** — instantly filter the current folder's files/folders, or bucket lists, by name as you type, without hitting the network.
 - **Sortable, filterable columns** — click a header to sort by name, type (extension), size, date or storage class (folders stay grouped on top); a file-type filter narrows the list to folders or a single extension. Bucket and region dropdowns are searchable.
 - **Export to CSV** — dump the current folder's full listing (every page, not just what's on screen) via a native save dialog, for an audit or a spreadsheet.
+- **Up a folder** — an up-arrow in front of the breadcrumbs (single and dual pane) steps to the parent folder, like File Explorer.
 - **Dark mode**, resizable sidebar and transfer queue panel, with sizes remembered across restarts.
+- **Large folders** — listings page at the size you choose (100–1000 objects); a "Load more…" row fetches the next page.
 - **Any S3-compatible endpoint** — MinIO, Wasabi, R2, and others, not just AWS.
 
 **Object actions**
@@ -60,6 +62,11 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 **Fast multi-threaded transfer queue**
 
 - Any number of uploads, downloads, and copy/move operations queued at once, with a configurable number transferring concurrently (1–16, default 4), persisted across restarts.
+- **Speed limits** — cap total upload and/or download bandwidth in MB/s; the cap is shared by every running transfer and applies immediately, even mid-transfer.
+- **Automatic retries** — failed transfers retry 0–10 times with exponential backoff (permission and not-found errors fail straight away); the queue row shows the countdown.
+- **If the file already exists** — overwrite, ask each time (with "apply to all"), skip, or keep both (`name (1).ext`), for uploads and downloads.
+- Failed or canceled downloads can keep or discard the partial file; an optional request timeout stops hung connections.
+- A desktop notification when the queue finishes while the app is in the background.
 - Parallel multipart transfers via `@aws-sdk/lib-storage` — a 150 MB archive moves as 7 concurrent parts at 8.7 MB/s — with per-part progress; chunk size is also configurable and persisted.
 - Per-task pause / resume / cancel / retry, plus pause-all / resume-all; failed parts retry without restarting the whole file.
 - Live progress %, transfer speed, and ETA per task, updated in real time via IPC.
@@ -67,6 +74,24 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 - Drag-and-drop upload directly onto the file grid, plus toolbar Upload Files/Folder buttons using native OS pickers.
 - Cross-pane copy/move runs through this same queue, so it's visible, cancelable, and reports errors instead of happening silently.
 - Whichever open tab or pane is looking at an affected folder auto-refreshes the moment its transfer completes.
+
+**General settings**
+
+Open **Settings** (top-right) for a separate settings window with tabs:
+
+| Tab | What you can set |
+| --- | --- |
+| Transfers | Concurrency, part size, upload/download speed limits, retries and backoff, request timeout, file-exists policy, keep partial downloads |
+| Browsing | Default sort and sort order, single/dual pane at startup, show hidden (dot) items, date format and time zone (local/UTC), size units (binary/decimal/bytes), objects per page |
+| Safety | Delete confirmation, type-the-name confirmation for connections marked **Production**, share-link expiry (15 min–7 days), default download folder, PIN-protected idle lock |
+| App | Theme, start normally / minimized / in the system tray, keep running in the tray on close, reopen last connections and folders, completion notifications, check for updates on launch |
+| About | Version, links, Electron/Chromium/Node versions, manual update check |
+
+Settings are stored per user and apply to every window immediately. The idle lock covers the window until the PIN is entered; it is a UI lock, not encryption, and transfers keep running underneath.
+
+**Updates**
+
+Installed builds check GitHub Releases shortly after launch (if enabled) and every 6 hours. When a newer version exists a dismissable notice appears in the corner; **Download** fetches it and **Restart & update** installs it. Windows (installer) and Linux (AppImage) update in place; macOS builds are unsigned, so the notice opens the release page instead. Development runs (`npm start`) never check.
 
 ### Known limitations (v0.0.2)
 
@@ -79,6 +104,8 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 - Glacier objects list but can't be restored (or previewed) from the app.
 - Text previews show the first 1 MB of a file; formats outside the supported list (Office documents, archives, etc.) aren't previewable.
 - Cross-region moves of very large objects fall back to download + re-upload.
+- Speed limits don't apply to server-side copy/move between buckets (that traffic doesn't pass through the app).
+- In-place auto-update isn't available on macOS until builds are signed.
 
 ## How this compares to S3 Browser
 
@@ -99,7 +126,8 @@ Flash S3 is an Electron + Angular desktop client for Amazon S3 (and any S3-compa
 | Bucket policy / ACL / CORS / lifecycle editors                      | ACL only (rest: see Roadmap)                                                                       | Yes                                                                                          |
 | Versioning UI, storage class management                             | No (see Roadmap)                                                                         | Yes                                                                                          |
 | CloudFront management                                               | No (see Roadmap)                                                                         | Yes                                                                                          |
-| Client-side encryption, transfer acceleration, bandwidth throttling | No (see Roadmap)                                                                         | Yes                                                                                          |
+| Bandwidth throttling                                                | Yes — global upload/download caps                                                        | Yes                                                                                          |
+| Client-side encryption, transfer acceleration                       | No (see Roadmap)                                                                         | Yes                                                                                          |
 | AWS SSO / IAM tooling, CLI automation                               | No (see Roadmap)                                                                         | Yes                                                                                          |
 
 In short: this build is currently strongest where day-to-day browsing and moving files around is concerned — especially the dual-pane workflow and cross-platform support — while S3 Browser remains far ahead on bucket administration, sync, and account/security tooling. The Roadmap below tracks closing that gap.
@@ -110,11 +138,11 @@ Download an installer from the [Releases page](https://github.com/fzs1994/Flash-
 
 | Platform | File                       |
 | -------- | -------------------------- |
-| Windows  | `Flash-S3-Setup-0.0.2.exe` |
-| macOS    | `Flash-S3-0.0.2.dmg`       |
-| Linux    | `Flash-S3-0.0.2.AppImage`  |
+| Windows  | `Flash-S3-win-<version>.exe`      |
+| macOS    | `Flash-S3-mac-<version>.dmg`      |
+| Linux    | `Flash-S3-linux-<version>.AppImage` |
 
-Add an account under **Connections → New**. Credentials go to the OS credential store, not the repo.
+Add an account under **Connections → New**. Credentials go to the OS credential store, not the repo. Tick **Production connection** on accounts where deletes should require typing the item name (enable it under Settings → Safety).
 
 ## Build from source
 
@@ -137,6 +165,7 @@ npm run dist:linux   # Linux (AppImage)
 Notes:
 
 - Changes under `electron/` (main process, IPC, preload) require a full restart of `npm start` to take effect — only the Angular renderer live-reloads.
+- Auto-update reads `latest*.yml` and `.blockmap` files published with each GitHub release (the release workflow uploads them) and only runs in packaged builds. Installers use space-free names (`Flash-S3-<os>-<version>.<ext>`) so those URLs resolve.
 - Output lands in `release/`. Icons are expected at `build-resources/icon.ico` / `.icns` / `.png` — add your own before building an installer (a default Electron icon is used if they're missing, which electron-builder will warn about).
 
 ## Architecture
@@ -152,11 +181,14 @@ Notes:
   - `electron/services/s3-manager.js` — bucket/object CRUD, cross-account copy/move, CSV export, and preview (presigned URLs + ranged text reads) via `@aws-sdk/client-s3`.
   - `electron/services/transfer-queue.js` — the concurrent upload/download/copy-move engine.
   - `electron/services/credential-store.js` — encrypted profile storage.
+  - `electron/services/app-settings.js` — validated, persisted General Settings (plus the salted-hash lock PIN); changes are broadcast to every window.
+  - `electron/services/updater.js` — GitHub Releases update checks via `electron-updater`.
   - `electron/ipc/register.js` — wires it all to `ipcMain.handle(...)`.
+  - `electron/main.js` — windows (main + the separate General Settings window), tray, startup mode, single-instance lock.
   - `electron/preload.js` — the only bridge exposed to the renderer (`window.electronAPI`), via `contextBridge` with `contextIsolation: true`.
 - **Angular renderer** (`src/`) is a standalone-component Angular 17 app that only ever calls `window.electronAPI.*`.
-  - `core/services/*` — state + IPC-calling services: `s3-browser.service.ts` (single active-tab browsing), `pane.service.ts` (independent dual-pane browsing state), `transfer.service.ts` (transfer queue + auto-refresh), `bookmark.service.ts`, `connection.service.ts`.
-  - `features/*` — UI components: toolbar, bucket tree, object grid, dual-pane view, context menu, bookmarks, transfer queue panel, connection manager, dialogs.
+  - `core/services/*` — state + IPC-calling services: `s3-browser.service.ts` (single active-tab browsing), `pane.service.ts` (independent dual-pane browsing state), `transfer.service.ts` (transfer queue + auto-refresh), `bookmark.service.ts`, `connection.service.ts`, `app-settings.service.ts` (live settings mirror), `confirm.service.ts` (delete confirmations), `update.service.ts`.
+  - `features/*` — UI components: toolbar, bucket tree, object grid, dual-pane view, context menu, bookmarks, transfer queue panel, connection manager, dialogs, settings window, lock screen.
 
 ## Roadmap
 
@@ -187,7 +219,7 @@ Notes:
 **Transfers & reliability**
 
 - [ ] True resumable pause (currently restarts from byte 0 for uploads/downloads, and re-copies from the first item for copy/move — see Known limitations).
-- [ ] Bandwidth throttling for transfers.
+- [x] Bandwidth throttling for transfers (global upload/download caps; per-task limits still open).
 - [ ] A persistent transfer log/report you can export.
 
 **Security & accounts**
@@ -202,6 +234,7 @@ Notes:
 - Credentials live in Keychain / Credential Manager / libsecret via Electron's `safeStorage`; if the OS has no available encryption backend, they fall back to base64 (not secure) — flagged in `credential-store.js` for follow-up (e.g., requiring OS keychain unlock).
 - `contextIsolation: true` and `nodeIntegration: false` are enforced in `electron/main.js`; the renderer only ever sees the explicit API surface defined in `electron/preload.js`.
 - Nothing leaves your machine except signed HTTPS requests to AWS (or your chosen S3-compatible endpoint) — no telemetry, no account. Presigned share links are generated locally and expire.
+- The optional idle-lock PIN is stored only as a salted scrypt hash. It blocks casual access to an unattended window; it does not encrypt data on disk.
 - Previews load from presigned URLs that expire after 15 minutes; text files are fetched by the main process and shown as plain source, so HTML or scripts in a previewed file are never rendered or executed.
 
 ## Contributing
