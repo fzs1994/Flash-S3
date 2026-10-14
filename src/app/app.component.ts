@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnInit, effect, signal, untracked } from '@angular/core';
+import { Component, HostListener, OnInit, computed, effect, signal, untracked } from '@angular/core';
 import { S3ListItem } from './core/models/models';
 import { AppSettingsService } from './core/services/app-settings.service';
 import { ConnectionService } from './core/services/connection.service';
 import { S3BrowserService } from './core/services/s3-browser.service';
 import { ThemeService } from './core/services/theme.service';
+import { ElectronService } from './core/services/electron.service';
 import { UpdateService } from './core/services/update.service';
 import { ToastService } from './core/services/toast.service';
 import { BucketTreeComponent } from './features/bucket-tree/bucket-tree.component';
@@ -82,12 +83,14 @@ export class AppComponent implements OnInit {
   readonly propertiesItem = signal<S3ListItem | null>(null);
   dialogValue = '';
 
-  get shareUrlChoices(): PromptDialogChoice[] {
-    return [
-      { id: 'signed', label: `Signed URL (expires in ${formatDuration(this.appSettings.settings().presignExpirySeconds)})`, icon: 'fi-sr-lock ic-amber' },
-      { id: 'unsigned', label: 'Unsigned URL (plain S3 path)', icon: 'fi-sr-link ic-teal' }
-    ];
-  }
+  /**
+   * A computed (not a getter): the dialog's choice buttons must keep the same objects between change-detection
+   * passes, otherwise they are re-created on every mouse move and a click lands on a button that no longer exists.
+   */
+  readonly shareUrlChoices = computed<PromptDialogChoice[]>(() => [
+    { id: 'signed', label: `Signed URL (expires in ${formatDuration(this.appSettings.settings().presignExpirySeconds)})`, icon: 'fi-sr-lock ic-amber' },
+    { id: 'unsigned', label: 'Unsigned URL (plain S3 path)', icon: 'fi-sr-link ic-teal' }
+  ]);
 
   readonly sidebarWidth = signal(loadPanelSize('s3b:sidebarWidth', 240));
   readonly queueHeight = signal(loadPanelSize('s3b:queueHeight', 240));
@@ -99,6 +102,7 @@ export class AppComponent implements OnInit {
     public toast: ToastService,
     public updates: UpdateService,
     private appSettings: AppSettingsService,
+    private electron: ElectronService,
     // Not referenced directly: injecting it is what applies the saved theme (and follows changes from the settings window).
     _theme: ThemeService
   ) {
@@ -217,7 +221,7 @@ export class AppComponent implements OnInit {
     const label = choiceId === 'signed' ? 'Signed URL' : 'Unsigned URL';
     try {
       const url = choiceId === 'signed' ? await this.s3.generatePresignedUrl(keys[0], this.appSettings.settings().presignExpirySeconds) : await this.s3.generatePublicUrl(keys[0]);
-      await navigator.clipboard.writeText(url);
+      await this.electron.copyText(url);
       this.toast.show(`${label} copied to clipboard`, 'success');
     } catch (err: any) {
       this.toast.show(`Failed to copy ${label}: ${err?.message || err}`, 'danger');

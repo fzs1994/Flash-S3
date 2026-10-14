@@ -20,6 +20,15 @@ export class ElectronService {
     return window.electronAPI;
   }
 
+  /** Copies text via Electron's native clipboard, falling back to the web API outside the shell. */
+  async copyText(text: string): Promise<void> {
+    if (window.electronAPI?.clipboard?.writeText) {
+      window.electronAPI.clipboard.writeText(text);
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+  }
+
   get isElectron(): boolean {
     return !!window.electronAPI;
   }

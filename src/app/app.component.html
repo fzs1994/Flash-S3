@@ -82,7 +82,7 @@
     *ngIf="dialogMode() === 'shareUrlChoice'"
     title="Share URL"
     label="Choose a link type:"
-    [choices]="shareUrlChoices"
+    [choices]="shareUrlChoices()"
     (choiceSelected)="onShareUrlChoice($event)"
     (cancelled)="onDialogCancel()"
   >

@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, webUtils } = require('electron');
+const { clipboard, contextBridge, ipcRenderer, webUtils } = require('electron');
 
 /**
  * Thin, explicit bridge between the Angular renderer and the Electron main process.
@@ -116,6 +116,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return () => ipcRenderer.removeListener('updater:state', listener);
     }
   },
+
+  // Native clipboard: works regardless of document focus / user-gesture rules that can block navigator.clipboard.
+  clipboard: { writeText: (text) => clipboard.writeText(String(text)) },
 
   platform: process.platform,
   versions: { electron: process.versions.electron, chrome: process.versions.chrome, node: process.versions.node },
