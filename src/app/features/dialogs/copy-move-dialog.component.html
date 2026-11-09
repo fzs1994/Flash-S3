@@ -35,15 +35,42 @@
     <div class="cm-browser" *ngIf="destBucket(); else pickBucket">
       <div class="cm-crumbs">
         <button class="cm-up" (click)="goUp()" [disabled]="!browsePrefix()" title="Up one level"><i class="fi fi-sr-arrow-up"></i></button>
-        <button class="cm-crumb" (click)="openFolder('')">{{ destBucket() }}</button>
-        <ng-container *ngFor="let c of crumbs()">
-          <span class="cm-sep">/</span>
-          <button class="cm-crumb" (click)="openFolder(c.prefix)">{{ c.name }}</button>
-        </ng-container>
+        <div class="cm-path">
+          <button class="cm-crumb" (click)="openFolder('')">{{ destBucket() }}</button>
+          <ng-container *ngFor="let c of crumbs()">
+            <span class="cm-sep">/</span>
+            <button class="cm-crumb" (click)="openFolder(c.prefix)">{{ c.name }}</button>
+          </ng-container>
+        </div>
+        <button
+          class="cm-newfolder"
+          (click)="startNewFolder()"
+          [disabled]="loadingFolders() || creatingFolder()"
+          title="New folder"
+          aria-label="New folder"
+        >
+          <i class="fi fi-sr-folder"></i><i class="fi fi-sr-plus cm-newfolder__plus"></i>
+        </button>
       </div>
       <div class="cm-folders">
+        <div class="cm-folder cm-folder--new" *ngIf="creatingFolder()">
+          <i class="fi fi-sr-folder ic-amber"></i>
+          <input
+            #newFolderInput
+            type="text"
+            placeholder="New folder name"
+            [(ngModel)]="newFolderName"
+            [disabled]="creatingBusy()"
+            (keydown.enter)="confirmNewFolder()"
+            (keydown.escape)="$event.stopPropagation(); cancelNewFolder()"
+          />
+          <button class="cm-mini" title="Create" [disabled]="creatingBusy() || !newFolderName.trim()" (click)="confirmNewFolder()">
+            <i class="fi fi-sr-check"></i>
+          </button>
+          <button class="cm-mini" title="Cancel" [disabled]="creatingBusy()" (click)="cancelNewFolder()"><i class="fi fi-sr-cross"></i></button>
+        </div>
         <div class="cm-empty" *ngIf="loadingFolders()"><span class="s3b-spinner"></span> Loading…</div>
-        <div class="cm-empty" *ngIf="!loadingFolders() && !folders().length">No subfolders</div>
+        <div class="cm-empty" *ngIf="!loadingFolders() && !folders().length && !creatingFolder()">No subfolders</div>
         <div
           class="cm-folder"
           *ngFor="let f of folders()"

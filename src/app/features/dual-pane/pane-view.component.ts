@@ -235,6 +235,17 @@ export class PaneViewComponent {
   onDocumentKeydown(ev: KeyboardEvent): void {
     if (this.panes.activePaneId() !== this.paneId) return;
     if (this.isTypingTarget(ev.target) || this.isModalOpen()) return;
+
+    // Ctrl/Cmd+A selects every row shown in this pane.
+    if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && ev.key.toLowerCase() === 'a') {
+      if (!this.state.bucket) return;
+      ev.preventDefault();
+      const keys = this.visibleItems().map((i) => i.key);
+      this.panes.setSelection(this.paneId, keys);
+      this.selectionAnchor = keys[0] ?? null;
+      return;
+    }
+
     if (!this.state.selectedKeys.size) return;
     if (ev.key === 'Delete') {
       ev.preventDefault();

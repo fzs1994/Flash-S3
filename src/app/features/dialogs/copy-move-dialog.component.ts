@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, OnInit, Output, computed, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BucketInfo, S3ListItem } from '../../core/models/models';
 import { DropdownComponent, DropdownOption } from '../dropdown/dropdown.component';
@@ -34,6 +34,14 @@ export class CopyMoveDialogComponent implements OnInit {
   readonly selectedFolder = signal<string | null>(null);
   readonly folders = signal<S3ListItem[]>([]);
   readonly loadingFolders = signal(false);
+
+  /** Inline "new folder" row at the top of the folder list. */
+  readonly creatingFolder = signal(false);
+  readonly creatingBusy = signal(false);
+  newFolderName = '';
+  @ViewChild('newFolderInput') set newFolderInput(ref: ElementRef<HTMLInputElement> | undefined) {
+    if (ref) setTimeout(() => ref.nativeElement.focus());
+  }
 
   readonly destPrefix = computed(() => this.selectedFolder() ?? this.browsePrefix());
   readonly crumbs = computed(() => {
@@ -99,6 +107,47 @@ export class CopyMoveDialogComponent implements OnInit {
       this.errorMsg.set(err?.message || String(err));
     } finally {
       this.loadingFolders.set(false);
+    }
+  }
+
+  startNewFolder(): void {
+    this.newFolderName = '';
+    this.errorMsg.set(null);
+    this.creatingFolder.set(true);
+  }
+
+  cancelNewFolder(): void {
+    this.creatingFolder.set(false);
+    this.newFolderName = '';
+  }
+
+  /** Creates the folder inside the open folder, then reloads the list and picks the new folder as the destination. */
+  async confirmNewFolder(): Promise<void> {
+    const name = this.newFolderName.trim();
+    const connectionId = this.destConnectionId();
+    const bucket = this.destBucket();
+    if (!name || !connectionId || !bucket || this.creatingBusy()) return;
+    if (name.includes('/')) {
+      this.errorMsg.set('Folder names cannot contain "/".');
+      return;
+    }
+    const key = `${this.browsePrefix()}${name}/`;
+    if (this.folders().some((f) => f.key === key)) {
+      this.errorMsg.set(`A folder named "${name}" already exists here.`);
+      return;
+    }
+    this.creatingBusy.set(true);
+    this.errorMsg.set(null);
+    try {
+      await this.electron.api.s3.createFolder(connectionId, bucket, key);
+      this.creatingFolder.set(false);
+      this.newFolderName = '';
+      await this.openFolder(this.browsePrefix());
+      this.selectedFolder.set(key);
+    } catch (err: any) {
+      this.errorMsg.set(err?.message || String(err));
+    } finally {
+      this.creatingBusy.set(false);
     }
   }
 

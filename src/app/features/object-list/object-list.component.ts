@@ -214,6 +214,17 @@ export class ObjectListComponent {
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(ev: KeyboardEvent): void {
     if (this.isTypingTarget(ev.target) || this.isModalOpen()) return;
+
+    // Ctrl/Cmd+A selects every row currently shown (respecting the search/type filter).
+    if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && ev.key.toLowerCase() === 'a') {
+      if (!this.s3.currentBucket()) return;
+      ev.preventDefault();
+      const keys = this.filteredItems().map((i) => i.key);
+      this.s3.setSelection(keys);
+      this.selectionAnchor = keys[0] ?? null;
+      return;
+    }
+
     const count = this.s3.selectedKeys().size;
     if (!count) return;
 

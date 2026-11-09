@@ -63,8 +63,8 @@
 .cm-crumbs {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 2px;
+  flex-wrap: nowrap;
+  gap: 4px;
   padding: 4px 6px;
   border-bottom: 1px solid var(--s3b-border);
   font-size: 12px;
@@ -82,6 +82,68 @@
 }
 .cm-crumbs button:disabled {
   opacity: 0.4;
+  cursor: default;
+}
+.cm-path {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}
+.cm-path .cm-crumb {
+  flex-shrink: 0;
+}
+.cm-newfolder {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0 !important;
+  color: var(--s3b-amber) !important;
+}
+.cm-newfolder__plus {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  font-size: 9px;
+  color: var(--s3b-blue);
+  background: var(--s3b-surface);
+  border-radius: 50%;
+}
+.cm-folder--new input {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 1px solid var(--s3b-blue);
+  border-radius: 3px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  font-size: 13px;
+}
+.cm-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--s3b-border);
+  border-radius: 3px;
+  background: var(--s3b-surface);
+  color: var(--s3b-text);
+  cursor: pointer;
+}
+.cm-mini:disabled {
+  opacity: 0.5;
   cursor: default;
 }
 .cm-sep {
